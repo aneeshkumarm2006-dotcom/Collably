@@ -18,6 +18,16 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
+    // Allow intentionally-unused args/vars when prefixed with `_` (e.g. the
+    // mandatory 4-arg Express error-handler signature `(err, req, res, _next)`).
+    rules: {
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
+      ],
+    },
+  },
+  {
     // The `string & {}` literal-union trick in this file needs an empty object type.
     files: ['shared/types/Notification.ts'],
     rules: {

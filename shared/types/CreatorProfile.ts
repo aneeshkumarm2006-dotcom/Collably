@@ -44,4 +44,6 @@ export interface CreatorProfile extends Timestamped {
   totalRewardsEarned: number;
   /** UGC-only creators produce content without a public following (PRD §1.3). */
   isUGCOnly: boolean;
+  /** Admin moderation flag (PRD §7.5, §14). */
+  isSuspended: boolean;
 }

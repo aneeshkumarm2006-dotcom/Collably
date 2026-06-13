@@ -1,0 +1,6 @@
+/* NativeWind v4 entry stylesheet. Tailwind injects its base/components/utilities
+ * layers here; Metro compiles this via `withNativeWind({ input: './global.css' })`.
+ * Keep this minimal — runtime theming lives in `constants/theme.ts` + ThemeProvider. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

@@ -38,4 +38,8 @@ export interface Campaign extends Timestamped {
   tags: string[];
   coverImage?: string | null;
   applicationsCount: number;
+  /** Admin: promoted to the top of the explore feed (PRD §7.5, §13). */
+  isFeatured: boolean;
+  /** Admin: flagged as spam — hidden from discovery (PRD §7.5, §14). */
+  isSpam: boolean;
 }

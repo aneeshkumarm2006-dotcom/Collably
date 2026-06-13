@@ -6,3 +6,4 @@ export * from './CreatorProfile';
 export * from './Campaign';
 export * from './Application';
 export * from './Notification';
+export * from './Report';

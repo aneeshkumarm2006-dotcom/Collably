@@ -19,6 +19,8 @@ export interface BusinessProfile extends Timestamped {
   socialLinks: BusinessSocialLinks;
   logo?: string | null;
   isVerified: boolean;
+  /** Admin moderation flag (PRD §7.5, §14). */
+  isSuspended: boolean;
   totalCampaigns: number;
   totalCollabsCompleted: number;
 }

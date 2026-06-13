@@ -5,3 +5,4 @@ export * from './contentTypes';
 export * from './platforms';
 export * from './rewards';
 export * from './statuses';
+export * from './reports';

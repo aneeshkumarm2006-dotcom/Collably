@@ -1,0 +1,19 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "node16",
+    "moduleResolution": "node16",
+    "outDir": "dist",
+    // rootDir is the monorepo `app/` dir so the shared workspace compiles
+    // alongside the backend. Output mirrors the source tree:
+    //   src/index.ts        → dist/backend/src/index.js
+    //   ../shared/**/*.ts   → dist/shared/**/*.js
+    // Relative imports like `../../../shared/...` keep resolving after build.
+    "rootDir": "..",
+    "types": ["node"],
+    "sourceMap": true,
+    "declaration": false
+  },
+  "include": ["src/**/*.ts", "../shared/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}
