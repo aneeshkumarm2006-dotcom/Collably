@@ -53,7 +53,11 @@ export const AuthInput = forwardRef<TextInput, AuthInputProps>(function AuthInpu
 ) {
   const { colors } = useTheme();
   const [hidden, setHidden] = useState(secure);
-  const borderColor = error ? colors.danger : colors.hair;
+  const [focused, setFocused] = useState(false);
+
+  // Premium focus treatment: green ring + highlighted icon when active; red on error.
+  const borderColor = error ? colors.danger : focused ? colors.brandGreen : colors.hairStrong;
+  const iconColor = error ? colors.danger : focused ? colors.brandGreenText : colors.text3;
 
   return (
     <View style={{ marginBottom: 16 }}>
@@ -73,20 +77,34 @@ export const AuthInput = forwardRef<TextInput, AuthInputProps>(function AuthInpu
         style={{
           flexDirection: 'row',
           alignItems: 'center',
-          backgroundColor: colors.card,
-          borderWidth: 1,
+          backgroundColor: colors.cardSunk,
+          // Constant 1.5px border (no width change on focus → no flicker/jump).
+          borderWidth: 1.5,
           borderColor,
-          borderRadius: 12,
-          paddingHorizontal: 13,
+          borderRadius: 14,
+          paddingHorizontal: 14,
         }}
       >
         {icon && (
-          <Icon name={icon} size={18} color={colors.text3} strokeWidth={1.9} />
+          <View
+            style={{
+              width: 30,
+              height: 30,
+              borderRadius: 9,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: focused && !error ? colors.brandGreenSoft : colors.card,
+            }}
+          >
+            <Icon name={icon} size={17} color={iconColor} strokeWidth={1.9} />
+          </View>
         )}
         <TextInput
           ref={ref}
           value={value}
           onChangeText={onChangeText}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           placeholder={placeholder}
           placeholderTextColor={colors.text3}
           secureTextEntry={hidden}
@@ -98,10 +116,14 @@ export const AuthInput = forwardRef<TextInput, AuthInputProps>(function AuthInpu
           onSubmitEditing={onSubmitEditing}
           editable={editable}
           maxLength={maxLength}
+          // Kill Android's default green accent underline (the "green stripe").
+          underlineColorAndroid="transparent"
+          selectionColor={colors.brandGreen}
+          cursorColor={colors.brandGreen}
           style={{
             flex: 1,
-            paddingVertical: 13,
-            paddingLeft: icon ? 10 : 0,
+            paddingVertical: 14,
+            paddingLeft: icon ? 11 : 0,
             fontSize: 16,
             color: colors.text,
           }}
@@ -114,7 +136,7 @@ export const AuthInput = forwardRef<TextInput, AuthInputProps>(function AuthInpu
             accessibilityLabel={hidden ? 'Show password' : 'Hide password'}
             style={({ pressed }) => ({ padding: 4, opacity: pressed ? 0.6 : 1 })}
           >
-            <Icon name="eye" size={19} color={hidden ? colors.text3 : colors.accent} strokeWidth={1.9} />
+            <Icon name="eye" size={19} color={hidden ? colors.text3 : colors.brandGreenText} strokeWidth={1.9} />
           </Pressable>
         )}
       </View>

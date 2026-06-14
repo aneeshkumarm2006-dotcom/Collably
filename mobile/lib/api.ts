@@ -17,7 +17,7 @@ import axios, {
   type AxiosInstance,
   type InternalAxiosRequestConfig,
 } from 'axios';
-import { API_BASE_URL } from './env';
+import { API_BASE_URL, USE_MOCKS } from './env';
 import { getAccessToken, getRefreshToken, setTokens, forceSignOut } from './auth';
 import { showToast } from './toast';
 
@@ -40,6 +40,15 @@ export const api: AxiosInstance = axios.create({
   timeout: 20000,
   headers: { 'Content-Type': 'application/json' },
 });
+
+// Demo/showcase mode: serve every request from the in-memory mock world instead
+// of a live backend. The request interceptor below still runs (so the bearer
+// token reaches the adapter), but no network call is made. Lazy `require` keeps
+// the mock data out of the bundle when `USE_MOCKS` is false.
+if (USE_MOCKS) {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  api.defaults.adapter = require('./mockApi').mockAdapter;
+}
 
 // --- Request: attach bearer token --------------------------------------------
 
@@ -105,13 +114,31 @@ api.interceptors.response.use(
   },
 );
 
+/** Pull a human, render-safe string out of whatever shape the backend returned. */
+function extractMessage(raw: unknown): string | null {
+  if (typeof raw === 'string') return raw;
+  if (raw && typeof raw === 'object') {
+    // Nested `{ message: '…' }` (some handlers double-wrap the error).
+    const nested = (raw as { message?: unknown }).message;
+    if (typeof nested === 'string') return nested;
+    // Validation errors as an array of issues — surface the first one.
+    if (Array.isArray(raw) && raw.length > 0) {
+      const first = raw[0];
+      if (typeof first === 'string') return first;
+      const fm = (first as { message?: unknown })?.message;
+      if (typeof fm === 'string') return fm;
+    }
+  }
+  return null;
+}
+
 /** Turn an AxiosError into the normalized `ApiError` shape. */
 function toApiError(error: AxiosError): ApiError {
   const status = error.response?.status ?? 0;
-  const data = error.response?.data as { message?: string; error?: string } | undefined;
+  const data = error.response?.data as { message?: unknown; error?: unknown } | undefined;
   const message =
-    data?.message ??
-    data?.error ??
+    extractMessage(data?.message) ??
+    extractMessage(data?.error) ??
     (status === 0 ? 'Network error — check your connection.' : 'Something went wrong.');
   // Network failures (no HTTP response) get a global toast — screens surface HTTP
   // errors inline (FormBanner/ErrorState), but a dropped connection can happen on

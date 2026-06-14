@@ -4,7 +4,7 @@
  * `NotificationBell` or an action button). Two visual styles: `plain` (sits on
  * the page background) and `card` (elevated surface with a hairline bottom border).
  */
-import { Pressable, Text, View, type ViewStyle } from 'react-native';
+import { Platform, Pressable, Text, View, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/components/ThemeProvider';
 import { Icon } from '@/components/ui';
@@ -47,7 +47,8 @@ export function Header({ title, subtitle, onBack, right, variant = 'plain', larg
             hitSlop={8}
             style={({ pressed }) => ({ marginRight: 8, marginLeft: -4, padding: 4, opacity: pressed ? 0.6 : 1 })}
           >
-            <Icon name="chevL" size={24} color={colors.text} strokeWidth={2} />
+            {/* Android uses a back arrow; iOS uses a chevron (platform-native). */}
+            <Icon name={Platform.OS === 'android' ? 'arrowL' : 'chevL'} size={Platform.OS === 'android' ? 23 : 24} color={colors.text} strokeWidth={2} />
           </Pressable>
         )}
 

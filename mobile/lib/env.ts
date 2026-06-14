@@ -78,3 +78,11 @@ export const GOOGLE_OAUTH_CONFIGURED = Boolean(
 export const APP_VERSION = Constants.expoConfig?.version ?? '0.0.0';
 
 export const IS_DEV = __DEV__;
+
+/**
+ * Demo/showcase mode: serve the whole app from `lib/mockData` via a fake axios
+ * adapter (`lib/mockApi`) instead of a live backend. ON by default so a fresh
+ * checkout is fully navigable with realistic data; set `EXPO_PUBLIC_USE_MOCKS=false`
+ * to point at a real server (see `API_BASE_URL` above).
+ */
+export const USE_MOCKS = (process.env.EXPO_PUBLIC_USE_MOCKS ?? 'true').toLowerCase() !== 'false';

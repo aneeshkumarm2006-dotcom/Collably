@@ -7,15 +7,20 @@
  * Phase 10 fills in the real screens; Phase 9 ships navigable placeholders.
  */
 import { Stack } from 'expo-router';
+import { useTheme } from '@/components/ThemeProvider';
 
 export default function AuthLayout() {
+  const { colors } = useTheme();
   return (
-    <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
-      <Stack.Screen name="welcome" />
+    // The yellow `contentStyle` matches the auth hero, so entering login/signup
+    // never flashes a white frame under the slide. The Sign up ⇄ Sign in toggle is
+    // now in-place (PremiumAuthLayout owns it) — no route change, no crossfade.
+    <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right', contentStyle: { backgroundColor: colors.brandYellow } }}>
+      <Stack.Screen name="welcome" options={{ contentStyle: { backgroundColor: colors.bg } }} />
       <Stack.Screen name="login" />
       <Stack.Screen name="signup" />
-      <Stack.Screen name="forgot-password" />
-      <Stack.Screen name="reset-password" />
+      <Stack.Screen name="forgot-password" options={{ contentStyle: { backgroundColor: colors.bg } }} />
+      <Stack.Screen name="reset-password" options={{ contentStyle: { backgroundColor: colors.bg } }} />
     </Stack>
   );
 }

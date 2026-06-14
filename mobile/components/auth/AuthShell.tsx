@@ -15,6 +15,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/components/ThemeProvider';
 import { Icon } from '@/components/ui';
+import { BrandMark } from '@/components/shared';
 
 export type AuthShellProps = {
   title: string;
@@ -23,9 +24,11 @@ export type AuthShellProps = {
   children: React.ReactNode;
   /** Pinned footer content (e.g. "Don't have an account?") below the scroll area. */
   footer?: React.ReactNode;
+  /** Show the Collably brand mark above the title (default true). */
+  brand?: boolean;
 };
 
-export function AuthShell({ title, subtitle, onBack, children, footer }: AuthShellProps) {
+export function AuthShell({ title, subtitle, onBack, children, footer, brand = true }: AuthShellProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
 
@@ -60,8 +63,14 @@ export function AuthShell({ title, subtitle, onBack, children, footer }: AuthShe
               opacity: pressed ? 0.6 : 1,
             })}
           >
-            <Icon name="chevL" size={26} color={colors.text} strokeWidth={2} />
+            <Icon name={Platform.OS === 'android' ? 'arrowL' : 'chevL'} size={Platform.OS === 'android' ? 24 : 26} color={colors.text} strokeWidth={2} />
           </Pressable>
+        )}
+
+        {brand && (
+          <View style={{ marginBottom: 20 }}>
+            <BrandMark size={44} />
+          </View>
         )}
 
         <Text className="text-3xl font-extrabold" style={{ color: colors.text, letterSpacing: -0.6 }}>

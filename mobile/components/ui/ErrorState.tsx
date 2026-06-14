@@ -28,6 +28,9 @@ export function ErrorState({
   style,
 }: ErrorStateProps) {
   const { colors } = useTheme();
+  // Defensive: callers occasionally pass a non-string (e.g. an unexpected error
+  // object). Never let that crash the screen — coerce to a readable line.
+  const bodyText = typeof body === 'string' ? body : body == null ? '' : 'Please check your connection and try again.';
   return (
     <View style={{ alignItems: 'center', paddingVertical: 48, paddingHorizontal: 36, ...style }}>
       <View
@@ -46,11 +49,11 @@ export function ErrorState({
       <Text style={{ fontSize: 19, fontWeight: '700', color: colors.text, letterSpacing: -0.3, textAlign: 'center' }}>
         {title}
       </Text>
-      {body && (
+      {bodyText ? (
         <Text style={{ fontSize: 14.5, color: colors.text2, marginTop: 7, lineHeight: 21, maxWidth: 280, textAlign: 'center' }}>
-          {body}
+          {bodyText}
         </Text>
-      )}
+      ) : null}
       {onRetry && (
         <View style={{ marginTop: 20 }}>
           <Button variant="outline" icon="refresh" onPress={onRetry}>

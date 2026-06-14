@@ -13,16 +13,33 @@
  * push hiccup never blocks login.
  */
 import { Platform } from 'react-native';
-import Constants from 'expo-constants';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 import * as Device from 'expo-device';
-import * as Notifications from 'expo-notifications';
 import { api } from './api';
+
+// Push notifications were removed from Expo Go (Android) in SDK 53: merely
+// importing `expo-notifications` there throws. Detect Expo Go so we can no-op
+// instead of crashing — real dev/production builds get the full native module.
+const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+
+/**
+ * Lazily load `expo-notifications` so the module is never imported under Expo Go.
+ * Returns `null` in Expo Go (and lets every caller below degrade gracefully).
+ */
+type NotificationsModule = typeof import('expo-notifications');
+function getNotifications(): NotificationsModule | null {
+  if (isExpoGo) return null;
+  return require('expo-notifications') as NotificationsModule;
+}
 
 /** How notifications behave while the app is foregrounded. */
 export function configureNotificationHandler(): void {
   // No push runtime on web — setting a handler only logs a "not supported"
   // warning, so skip it (this runs at module load on every platform).
   if (Platform.OS === 'web') return;
+
+  const Notifications = getNotifications();
+  if (!Notifications) return;
 
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
@@ -49,6 +66,10 @@ export async function registerForPushNotifications(): Promise<string | null> {
 
   // Push only works on physical devices.
   if (!Device.isDevice) return null;
+
+  // Not available in Expo Go (SDK 53+ removed Android push) — skip silently.
+  const Notifications = getNotifications();
+  if (!Notifications) return null;
 
   // Android needs a notification channel before tokens/notifications work well.
   if (Platform.OS === 'android') {

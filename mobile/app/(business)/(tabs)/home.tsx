@@ -1,32 +1,43 @@
 /**
- * Business home (PRD §7.4). A glanceable dashboard: summary stat cards, quick
- * actions, a recent-activity preview, and the active campaigns (compact). Each
- * section deep-links into the fuller screen. Pulls the business profile (lifetime
- * stats), the business's campaigns, recent applications, and recent notifications.
+ * Business home (PRD §7.4) — premium "Blinkit" design (the CollabSpace handoff's
+ * definitive home). A yellow brand header with the business identity, a green
+ * "N WAITING" badge and hook headline, a prominent "Post a new campaign" CTA
+ * straddling the seam, 2×2 stat tiles, a "Content waiting on you" review queue,
+ * and "Your live campaigns" with green progress bars.
  */
 import { useCallback } from 'react';
 import { RefreshControl, ScrollView, Text, View } from 'react-native';
+import { setStatusBarStyle } from 'expo-status-bar';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Header, NotificationBell } from '@/components/shared';
-import { CampaignCard } from '@/components/campaign';
-import { Button, Card, EmptyState, ErrorState, Icon, StatCard, SkeletonCard, type IconName } from '@/components/ui';
+import {
+  HookHeadline,
+  INK,
+  INK_SOFT,
+  Press,
+  SectionHead,
+  UrgencyBadge,
+  YellowHeader,
+  YellowIconBtn,
+} from '@/components/home';
+import { Avatar, Icon, ErrorState, SkeletonCard, type IconName } from '@/components/ui';
 import { useTheme } from '@/components/ThemeProvider';
 import { api } from '@/lib/api';
 import { useFetch } from '@/lib/useFetch';
-import { formatRelativeTime } from '@/lib/utils';
+import { formatRelativeTime, formatReward } from '@/lib/utils';
 import { useAuthStore } from '@/store/authStore';
-import type { Application, Campaign, BusinessProfile, Notification } from '@/types';
+import type { Application, Campaign, BusinessProfile, CreatorProfile, Notification, UserSummary } from '@/types';
 
+type AppFull = Application & { creator?: CreatorProfile; creatorUser?: UserSummary | null; campaign?: Campaign };
 type HomeData = {
   profile: BusinessProfile | null;
   campaigns: Campaign[];
-  apps: Application[];
+  apps: AppFull[];
   notifs: Notification[];
 };
 
 export default function BusinessHomeScreen() {
-  const { colors } = useTheme();
+  const { colors, shadows, isDark } = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user);
@@ -34,7 +45,7 @@ export default function BusinessHomeScreen() {
   const { data, loading, error, reload } = useFetch<HomeData>(async () => {
     const [campaignsRes, appsRes, notifRes] = await Promise.all([
       api.get<{ data: Campaign[] }>('/campaigns', { params: { mine: 'true', limit: 50 } }),
-      api.get<{ data: Application[] }>('/applications', { params: { limit: 50 } }),
+      api.get<{ data: AppFull[] }>('/applications', { params: { limit: 50 } }),
       api.get<{ data: Notification[] }>('/notifications', { params: { limit: 3 } }),
     ]);
     let profile: BusinessProfile | null = null;
@@ -49,13 +60,22 @@ export default function BusinessHomeScreen() {
 
   useFocusEffect(useCallback(() => reload(), [reload]));
 
-  const firstName = (user?.name ?? 'there').split(' ')[0];
+  // The yellow header needs dark status-bar icons in both themes; restore the
+  // theme default when leaving so other (paper/dark) screens read correctly.
+  useFocusEffect(
+    useCallback(() => {
+      setStatusBarStyle('dark', true);
+      return () => setStatusBarStyle(isDark ? 'light' : 'dark', true);
+    }, [isDark]),
+  );
 
   if (loading && !data) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.bg }}>
-        <Header title={`Hi, ${firstName}`} large />
-        <View style={{ padding: 16, gap: 14 }}>
+        <YellowHeader pb={26}>
+          <HomeTopBarSkeleton />
+        </YellowHeader>
+        <View style={{ padding: 20, gap: 14 }}>
           <SkeletonCard />
           <SkeletonCard />
         </View>
@@ -66,182 +86,274 @@ export default function BusinessHomeScreen() {
   if (error && !data) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.bg }}>
-        <Header title={`Hi, ${firstName}`} large />
+        <YellowHeader pb={26}>
+          <HomeTopBarSkeleton />
+        </YellowHeader>
         <ErrorState body={error} onRetry={reload} />
       </View>
     );
   }
 
+  const profile = data?.profile ?? null;
   const campaigns = data?.campaigns ?? [];
   const apps = data?.apps ?? [];
   const activeCampaigns = campaigns.filter((c) => c.status === 'Active');
-  const pending = apps.filter((a) => a.status === 'Pending').length;
-  const awaitingReview = apps.filter((a) => a.status === 'Accepted' && a.submittedAt).length;
-  const completed = data?.profile?.totalCollabsCompleted ?? 0;
-  const notifs = data?.notifs ?? [];
+  const applicants = apps.length;
+  const toReview = apps.filter((a) => (a.status === 'Accepted' || a.status === 'Overdue') && a.submittedAt);
+  const completed = profile?.totalCollabsCompleted ?? 0;
+
+  const name = profile?.businessName ?? user?.name ?? 'Your business';
+  const city = profile?.location?.city ?? 'your area';
+
+  const tiles: { icon: IconName; value: string | number; label: string; fg: string; bg: string }[] = [
+    { icon: 'briefcase', value: activeCampaigns.length, label: 'Active campaigns', fg: colors.brandGreenText, bg: colors.brandGreenSoft },
+    { icon: 'users', value: applicants, label: 'Total applicants', fg: '#D9601F', bg: colors.warnSoft },
+    { icon: 'inbox', value: toReview.length, label: 'To review', fg: '#2E7CC2', bg: colors.accentSoft },
+    { icon: 'checkcircle', value: completed, label: 'Collabs done', fg: colors.success, bg: colors.successSoft },
+  ];
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <Header
-        title={`Hi, ${firstName}`}
-        large
-        right={<NotificationBell onPress={() => router.push('/(business)/notifications')} />}
-      />
-
       <ScrollView
-        contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 24, gap: 20 }}
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={loading} onRefresh={reload} tintColor={colors.accent} />}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 96 }}
+        refreshControl={<RefreshControl refreshing={loading} onRefresh={reload} tintColor={colors.brandGreen} />}
       >
-        {/* Stats */}
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
-          <View style={{ flex: 1, minWidth: '46%' }}>
-            <StatCard icon="briefcase" value={activeCampaigns.length} label="Active campaigns" tone="accent" />
+        {/* ── Yellow brand header ── */}
+        <YellowHeader pb={26}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Press onPress={() => router.push('/(business)/(tabs)/profile')} style={{ flexDirection: 'row', alignItems: 'center', gap: 11 }}>
+              <Avatar src={profile?.logo} name={name} size={42} />
+              <View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Text style={{ fontSize: 16.5, fontWeight: '800', color: INK, letterSpacing: -0.3 }}>{name}</Text>
+                  {profile?.isVerified ? <Icon name="badge" size={16} color="#0C831F" /> : null}
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <Icon name="mappin" size={12} color={INK_SOFT} />
+                  <Text style={{ fontSize: 12.5, color: INK_SOFT, fontWeight: '600' }}>{city}</Text>
+                </View>
+              </View>
+            </Press>
+            <YellowIconBtn name="bell" badge onPress={() => router.push('/(business)/notifications')} />
           </View>
-          <View style={{ flex: 1, minWidth: '46%' }}>
-            <StatCard icon="inbox" value={pending} label="Pending applications" tone="warn" />
+
+          <View style={{ marginTop: 18 }}>
+            {toReview.length > 0 ? <UrgencyBadge icon="inbox" label={`${toReview.length} WAITING`} /> : null}
+            <HookHeadline>
+              {applicants > 0 ? `${applicants} creators want to work with you.` : 'Post a campaign and start collaborating.'}
+            </HookHeadline>
           </View>
-          <View style={{ flex: 1, minWidth: '46%' }}>
-            <StatCard icon="upload" value={awaitingReview} label="To review" tone="accent" />
-          </View>
-          <View style={{ flex: 1, minWidth: '46%' }}>
-            <StatCard icon="checkcircle" value={completed} label="Collabs done" tone="success" />
-          </View>
+        </YellowHeader>
+
+        {/* ── Primary CTA straddling the seam ── */}
+        <View style={{ paddingHorizontal: 20, marginTop: -24 }}>
+          <Press
+            onPress={() => router.push('/(business)/campaigns/new')}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 9,
+              backgroundColor: colors.brandGreen,
+              borderRadius: 15,
+              paddingVertical: 15,
+              shadowColor: '#0C831F',
+              shadowOpacity: 0.34,
+              shadowRadius: 18,
+              shadowOffset: { width: 0, height: 10 },
+              elevation: 6,
+            }}
+          >
+            <Icon name="plus" size={20} color="#fff" />
+            <Text style={{ fontSize: 16, fontWeight: '800', color: '#fff', letterSpacing: -0.2 }}>Post a new campaign</Text>
+          </Press>
         </View>
 
-        {/* Quick actions */}
-        <View style={{ flexDirection: 'row', gap: 12 }}>
-          <QuickAction icon="plus" label="New campaign" colors={colors} onPress={() => router.push('/(business)/campaigns/new')} />
-          <QuickAction icon="inbox" label="Applications" colors={colors} onPress={() => router.push('/(business)/(tabs)/applications')} />
-          <QuickAction icon="upload" label="Submissions" colors={colors} onPress={() => router.push('/(business)/submissions')} />
+        {/* ── Stat tiles ── */}
+        <View style={{ paddingHorizontal: 20, marginTop: 16, flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+          {tiles.map((tile) => (
+            <View
+              key={tile.label}
+              style={{
+                width: '47%',
+                flexGrow: 1,
+                backgroundColor: colors.card,
+                borderWidth: 1,
+                borderColor: colors.hair,
+                borderRadius: 18,
+                padding: 15,
+                ...shadows.card,
+              }}
+            >
+              <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: tile.bg, alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
+                <Icon name={tile.icon} size={19} color={tile.fg} />
+              </View>
+              <Text style={{ fontFamily: 'monospace', fontSize: 23, fontWeight: '700', color: colors.text, letterSpacing: -0.5 }}>{tile.value}</Text>
+              <Text style={{ fontSize: 12, color: colors.text2, marginTop: 1 }}>{tile.label}</Text>
+            </View>
+          ))}
         </View>
 
-        {/* Active campaigns */}
-        <Section
-          title="Active campaigns"
-          actionLabel={campaigns.length ? 'See all' : undefined}
-          onAction={() => router.push('/(business)/(tabs)/campaigns')}
-          colors={colors}
-        >
+        {/* ── Content waiting on you ── */}
+        {toReview.length > 0 ? (
+          <View style={{ marginTop: 26 }}>
+            <SectionHead icon="inbox" action="Review all" onAction={() => router.push('/(business)/(tabs)/applications')}>
+              Content waiting on you
+            </SectionHead>
+            <View style={{ gap: 11, paddingHorizontal: 20 }}>
+              {toReview.slice(0, 4).map((a) => (
+                <Press
+                  key={a._id}
+                  onPress={() => router.push({ pathname: '/(business)/submissions', params: { applicationId: a._id } })}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 12,
+                    backgroundColor: colors.card,
+                    borderWidth: 1,
+                    borderColor: colors.hair,
+                    borderRadius: 16,
+                    paddingHorizontal: 14,
+                    paddingVertical: 12,
+                    ...shadows.card,
+                  }}
+                >
+                  <Avatar src={a.creatorUser?.avatar} name={a.creatorUser?.name} size={44} />
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <Text numberOfLines={1} style={{ fontSize: 14.5, fontWeight: '800', color: colors.text, letterSpacing: -0.2 }}>
+                      {a.creatorUser?.name ?? 'Creator'}
+                    </Text>
+                    <Text numberOfLines={1} style={{ fontSize: 12.5, color: colors.text2 }}>
+                      {a.campaign?.title ?? 'Campaign'}
+                      {a.submittedAt ? ` · ${formatRelativeTime(a.submittedAt)}` : ''}
+                    </Text>
+                  </View>
+                  <View style={{ backgroundColor: colors.brandGreen, paddingHorizontal: 15, paddingVertical: 8, borderRadius: 20 }}>
+                    <Text style={{ fontSize: 13, fontWeight: '800', color: '#fff' }}>Review</Text>
+                  </View>
+                </Press>
+              ))}
+            </View>
+          </View>
+        ) : null}
+
+        {/* ── Your live campaigns ── */}
+        <View style={{ marginTop: 26 }}>
+          <SectionHead icon="briefcase" action={campaigns.length ? 'All' : undefined} onAction={() => router.push('/(business)/(tabs)/campaigns')}>
+            Your live campaigns
+          </SectionHead>
           {activeCampaigns.length === 0 ? (
-            <EmptyState
-              icon="briefcase"
-              title="No active campaigns"
-              body="Post a campaign to start receiving applications."
-              action="New campaign"
-              onAction={() => router.push('/(business)/campaigns/new')}
-              style={{ paddingVertical: 24 }}
-            />
+            <View style={{ paddingHorizontal: 20 }}>
+              <Press
+                onPress={() => router.push('/(business)/campaigns/new')}
+                style={{
+                  alignItems: 'center',
+                  gap: 6,
+                  backgroundColor: colors.card,
+                  borderWidth: 1,
+                  borderColor: colors.hair,
+                  borderRadius: 18,
+                  paddingVertical: 28,
+                  ...shadows.card,
+                }}
+              >
+                <Icon name="briefcase" size={26} color={colors.text3} />
+                <Text style={{ fontSize: 14.5, fontWeight: '700', color: colors.text }}>No active campaigns yet</Text>
+                <Text style={{ fontSize: 13, color: colors.text2 }}>Post one to start receiving applications.</Text>
+              </Press>
+            </View>
           ) : (
-            <View style={{ gap: 10 }}>
-              {activeCampaigns.slice(0, 3).map((c) => (
-                <CampaignCard
+            <View style={{ gap: 13, paddingHorizontal: 20 }}>
+              {activeCampaigns.map((c) => (
+                <BlinkBizCard
                   key={c._id}
                   campaign={c}
-                  businessName="Your campaign"
-                  compact
                   onPress={() => router.push({ pathname: '/(business)/campaigns/[id]/applications', params: { id: c._id } })}
                 />
               ))}
             </View>
           )}
-        </Section>
-
-        {/* Recent activity */}
-        <Section
-          title="Recent activity"
-          actionLabel={notifs.length ? 'See all' : undefined}
-          onAction={() => router.push('/(business)/notifications')}
-          colors={colors}
-        >
-          {notifs.length === 0 ? (
-            <EmptyHint icon="bell" text="No activity yet." colors={colors} />
-          ) : (
-            <Card padding={0}>
-              {notifs.map((n, i) => (
-                <View
-                  key={n._id}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 10,
-                    paddingHorizontal: 14,
-                    paddingVertical: 12,
-                    borderTopWidth: i === 0 ? 0 : 1,
-                    borderTopColor: colors.hair,
-                  }}
-                >
-                  {!n.isRead && <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: colors.accent }} />}
-                  <Text numberOfLines={1} style={{ flex: 1, fontSize: 13.5, color: colors.text }}>
-                    {n.message}
-                  </Text>
-                  <Text style={{ fontSize: 11.5, color: colors.text3 }}>{formatRelativeTime(n.createdAt)}</Text>
-                </View>
-              ))}
-            </Card>
-          )}
-        </Section>
+        </View>
       </ScrollView>
     </View>
   );
 }
 
-function QuickAction({ icon, label, colors, onPress }: { icon: IconName; label: string; colors: ReturnType<typeof useTheme>['colors']; onPress: () => void }) {
+/** Premium business campaign card — green progress + applicants + Manage. */
+function BlinkBizCard({ campaign, onPress }: { campaign: Campaign; onPress: () => void }) {
+  const { colors, shadows } = useTheme();
+  const filled = Math.max(0, campaign.spotsTotal - campaign.spotsRemaining);
+  const pct = campaign.spotsTotal > 0 ? Math.round((filled / campaign.spotsTotal) * 100) : 0;
   return (
-    <View style={{ flex: 1 }}>
-      <Card onPress={onPress} padding={14} style={{ alignItems: 'center' }}>
-        <View
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: 12,
-            backgroundColor: colors.accentSoft,
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: 8,
-          }}
-        >
-          <Icon name={icon} size={21} color={colors.accent} />
+    <Press
+      onPress={onPress}
+      style={{
+        backgroundColor: colors.card,
+        borderWidth: 1,
+        borderColor: colors.hair,
+        borderRadius: 18,
+        padding: 16,
+        ...shadows.card,
+      }}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text numberOfLines={1} style={{ fontSize: 16.5, fontWeight: '800', color: colors.text, letterSpacing: -0.3 }}>
+            {campaign.title}
+          </Text>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              alignSelf: 'flex-start',
+              gap: 6,
+              marginTop: 7,
+              backgroundColor: colors.brandGreenSoft,
+              paddingHorizontal: 10,
+              paddingVertical: 5,
+              borderRadius: 10,
+            }}
+          >
+            <Icon name="gift" size={14} color={colors.brandGreenText} />
+            <Text style={{ fontSize: 13, fontWeight: '800', color: colors.brandGreenText }}>{formatReward(campaign.reward)}</Text>
+          </View>
         </View>
-        <Text style={{ fontSize: 12.5, fontWeight: '600', color: colors.text, textAlign: 'center' }}>{label}</Text>
-      </Card>
-    </View>
-  );
-}
-
-function Section({
-  title,
-  actionLabel,
-  onAction,
-  colors,
-  children,
-}: {
-  title: string;
-  actionLabel?: string;
-  onAction?: () => void;
-  colors: ReturnType<typeof useTheme>['colors'];
-  children: React.ReactNode;
-}) {
-  return (
-    <View style={{ gap: 12 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Text style={{ fontSize: 17, fontWeight: '800', color: colors.text, letterSpacing: -0.3 }}>{title}</Text>
-        {actionLabel && onAction && (
-          <Button variant="ghost" size="sm" iconRight="chevR" onPress={onAction}>
-            {actionLabel}
-          </Button>
-        )}
+        <View style={{ backgroundColor: colors.brandGreenSoft, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 }}>
+          <Text style={{ fontSize: 11.5, fontWeight: '800', color: colors.brandGreenText }}>Live</Text>
+        </View>
       </View>
-      {children}
-    </View>
+
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 15, marginBottom: 7 }}>
+        <Text style={{ fontSize: 12, color: colors.text2 }}>
+          <Text style={{ color: colors.text, fontFamily: 'monospace', fontWeight: '700' }}>{filled}</Text> of {campaign.spotsTotal} spots filled
+        </Text>
+        <Text style={{ fontFamily: 'monospace', fontSize: 12, fontWeight: '700', color: colors.brandGreenText }}>{pct}%</Text>
+      </View>
+      <View style={{ backgroundColor: colors.cardSunk, borderRadius: 6, height: 7, overflow: 'hidden' }}>
+        <View style={{ width: `${pct}%`, height: '100%', backgroundColor: colors.brandGreen, borderRadius: 6 }} />
+      </View>
+
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 14, paddingTop: 13, borderTopWidth: 1, borderTopColor: colors.hair }}>
+        <Icon name="users" size={15} color={colors.text2} />
+        <Text style={{ fontSize: 13, color: colors.text2, fontWeight: '600' }}>{campaign.applicationsCount} applicants</Text>
+        <View style={{ marginLeft: 'auto', flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          <Text style={{ fontSize: 13.5, fontWeight: '800', color: colors.brandGreenText }}>Manage</Text>
+          <Icon name="chevR" size={15} color={colors.brandGreenText} />
+        </View>
+      </View>
+    </Press>
   );
 }
 
-function EmptyHint({ icon, text, colors }: { icon: IconName; text: string; colors: ReturnType<typeof useTheme>['colors'] }) {
+function HomeTopBarSkeleton() {
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: colors.cardSunk, borderRadius: 12, padding: 14 }}>
-      <Icon name={icon} size={18} color={colors.text3} />
-      <Text style={{ flex: 1, fontSize: 13.5, color: colors.text2 }}>{text}</Text>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 11 }}>
+      <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: 'rgba(26,27,16,0.12)' }} />
+      <View style={{ gap: 6 }}>
+        <View style={{ width: 140, height: 16, borderRadius: 8, backgroundColor: 'rgba(26,27,16,0.12)' }} />
+        <View style={{ width: 90, height: 12, borderRadius: 6, backgroundColor: 'rgba(26,27,16,0.1)' }} />
+      </View>
     </View>
   );
 }

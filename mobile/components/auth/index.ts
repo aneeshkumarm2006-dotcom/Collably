@@ -4,6 +4,15 @@
  * from file layout.
  */
 export { AuthShell, type AuthShellProps } from './AuthShell';
+export {
+  PremiumAuthLayout,
+  type PremiumAuthLayoutProps,
+  type PremiumAuthRole,
+  type PremiumAuthMode,
+} from './PremiumAuthLayout';
+export { SignupForm, type SignupFormProps, type SignupRole } from './SignupForm';
+export { LoginForm } from './LoginForm';
+export { AuthFooter, type AuthFooterProps } from './AuthFooter';
 export { AuthInput, type AuthInputProps } from './AuthInput';
 export { GoogleButton, type GoogleButtonProps } from './GoogleButton';
 export { FormBanner, type FormBannerProps } from './FormBanner';

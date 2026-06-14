@@ -28,12 +28,20 @@
  */
 import { useEffect, useRef } from 'react';
 import { useRouter } from 'expo-router';
-import * as Notifications from 'expo-notifications';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 
 import { registerForPushNotifications } from './notifications';
 import { resolveDeepLink } from './deepLink';
 import { useAuthStore } from '@/store/authStore';
 import { useNotificationStore } from '@/store/notificationStore';
+
+// expo-notifications can't be imported under Expo Go (Android push was removed in
+// SDK 53). Load it lazily so this module is safe there; push receipts/taps then
+// degrade to a no-op while registration (itself a no-op in Expo Go) still runs.
+const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+const Notifications = isExpoGo
+  ? null
+  : (require('expo-notifications') as typeof import('expo-notifications'));
 
 /**
  * Wire push registration, the unread badge, and tap-to-navigate deep linking.
@@ -44,7 +52,12 @@ export function usePushNotifications(ready: boolean): void {
   const router = useRouter();
   const status = useAuthStore((s) => s.status);
   const role = useAuthStore((s) => s.role);
-  const lastResponse = Notifications.useLastNotificationResponse();
+  // `isExpoGo` is constant for the app's lifetime, so this conditional hook call
+  // keeps a stable order across renders — safe despite the rules-of-hooks shape.
+  const lastResponse = Notifications
+    ? // eslint-disable-next-line react-hooks/rules-of-hooks
+      Notifications.useLastNotificationResponse()
+    : null;
   const handledId = useRef<string | null>(null);
 
   // 1. Register this device + prime the unread badge once authenticated.
@@ -56,6 +69,7 @@ export function usePushNotifications(ready: boolean): void {
 
   // 2. Foreground receipts: keep the bell badge fresh as pushes arrive.
   useEffect(() => {
+    if (!Notifications) return;
     const sub = Notifications.addNotificationReceivedListener(() => {
       void useNotificationStore.getState().refresh();
     });

@@ -1,135 +1,308 @@
 /**
- * Welcome / landing screen (PRD §7.1).
+ * Welcome / landing screen (PRD §7.1) — premium onboarding carousel matching the
+ * CollabSpace design: full-bleed lifestyle photography, an eyebrow + big title +
+ * body per slide, pagination dots, and the role-pick CTAs pinned at the bottom.
  *
- * The entry point for unauthenticated users: brand mark, tagline, a short "how it
- * works" explainer, and the four entry CTAs. Each CTA drives a real navigation /
- * state transition the root auth gate reacts to:
+ * Responsive: the carousel measures the space left above the pinned CTA block and
+ * sizes each slide (image + copy) to fit it exactly, so nothing clips or overflows
+ * on short phones, large phones, or tablets.
+ *
+ * Each CTA drives a real navigation / state transition the root auth gate reacts to:
  *   - Join as Business / Creator → signup (role pre-selected via `?role=`)
  *   - Browse Campaigns          → guest mode (PRD §8.6) → creator explore
  *   - Log in                    → login
  */
-import { ScrollView, Text, View } from 'react-native';
-import { router } from 'expo-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  Pressable,
+  ScrollView,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { setStatusBarStyle } from 'expo-status-bar';
+import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/components/ThemeProvider';
-import { Button, Icon, type IconName } from '@/components/ui';
+import { CoverImage } from '@/components/campaign';
+import { Icon, type IconName } from '@/components/ui';
 import { useAuthStore } from '@/store/authStore';
+import type { Category } from '@/constants';
 
-/** The three-step pitch shown under the brand mark. */
-const HOW_IT_WORKS: { icon: IconName; title: string; body: string }[] = [
+type Slide = { category: Category; img: string; eyebrow: string; title: string; body: string };
+
+/** Real lifestyle photography (Unsplash) — the design's "realism" pick. */
+const unsplash = (id: string) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=900&q=80`;
+
+const SLIDES: Slide[] = [
   {
-    icon: 'compass',
-    title: 'Discover campaigns',
-    body: 'Brands post gifting collabs. Creators browse and apply in seconds.',
+    category: 'Restaurant',
+    img: '1504674900247-0877df9cc836',
+    eyebrow: 'REAL REWARDS',
+    title: 'Earn perks worth real money',
+    body: 'Every campaign spells out exactly what you earn — from tasting menus to skincare sets — with the value up front.',
   },
   {
-    icon: 'handshake',
-    title: 'Get matched',
-    body: 'Businesses accept the creators they want and reserve a spot.',
+    category: 'Fashion',
+    img: '1490481651871-ab68de25d43d',
+    eyebrow: 'NO GATEKEEPING',
+    title: 'No follower minimums, ever',
+    body: 'Nano and UGC creators welcome. Brands match on fit and quality — not vanity metrics or agency rosters.',
   },
   {
-    icon: 'gift',
-    title: 'Collab & deliver',
-    body: 'Receive the gift, post your content, and mark it done. Simple.',
+    category: 'Cafe',
+    img: '1517248135467-4c7edcad34c4',
+    eyebrow: 'LOCAL FIRST',
+    title: 'Collab with spots near you',
+    body: 'Campaigns surface by city and niche, so you work with brands right in your neighbourhood.',
   },
 ];
 
 export default function WelcomeScreen() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
   const continueAsGuest = useAuthStore((s) => s.continueAsGuest);
+  const [index, setIndex] = useState(0);
 
-  // Enter guest mode (PRD §8.6) and jump straight to Explore. The root gate keeps
-  // guests inside (auth) when they're there on purpose (e.g. Login to Apply), so
-  // this first hop from welcome → explore is made explicitly here.
+  // The dark photo at the top needs light status-bar icons; restore the theme
+  // default on the way out so the auth forms read correctly.
+  useFocusEffect(
+    useCallback(() => {
+      setStatusBarStyle('light', true);
+      return () => setStatusBarStyle(isDark ? 'light' : 'dark', true);
+    }, [isDark]),
+  );
+  // Height of the carousel area (everything above the pinned CTA block). Measured
+  // so slides fit any screen exactly instead of guessing from window height.
+  const [carouselH, setCarouselH] = useState(0);
+
+  const scrollRef = useRef<ScrollView>(null);
+  const indexRef = useRef(0); // current slide, readable inside the timer without re-subscribing
+
+  // Auto-advance every 3.5s, looping back to the first slide after the last. It
+  // always advances from wherever the user last landed (indexRef), so manual
+  // swipes never leave it stuck — the carousel keeps playing on its own.
+  useEffect(() => {
+    if (carouselH === 0 || width === 0 || SLIDES.length < 2) return;
+    const id = setInterval(() => {
+      const next = (indexRef.current + 1) % SLIDES.length;
+      indexRef.current = next;
+      setIndex(next);
+      scrollRef.current?.scrollTo({ x: next * width, animated: true });
+    }, 3500);
+    return () => clearInterval(id);
+  }, [carouselH, width]);
+
+  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const i = Math.round(e.nativeEvent.contentOffset.x / width);
+    if (i !== indexRef.current) {
+      indexRef.current = i;
+      setIndex(i);
+    }
+  };
+
+  // Enter guest mode (PRD §8.6) and jump straight to Explore.
   const browseAsGuest = () => {
     continueAsGuest();
     router.replace('/(creator)/(tabs)/explore');
   };
 
-  return (
-    <View className="flex-1" style={{ backgroundColor: colors.bg }}>
-      <ScrollView
-        contentContainerStyle={{
-          flexGrow: 1,
-          padding: 24,
-          paddingTop: insets.top + 40,
-          paddingBottom: insets.bottom + 24,
-        }}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Brand */}
-        <View className="items-center">
-          <View
-            className="h-20 w-20 items-center justify-center rounded-3xl"
-            style={{ backgroundColor: colors.accent }}
-          >
-            <Icon name="gift" size={38} color={colors.accentText} />
-          </View>
-          <Text className="mt-5 text-3xl font-extrabold" style={{ color: colors.text }}>
-            Collably
-          </Text>
-          <Text className="mt-2 text-center text-base" style={{ color: colors.text2 }}>
-            Where brands and creators collab on gifting campaigns — and they
-            actually happen.
-          </Text>
-        </View>
+  // Image gets ~55% of the available area; copy fills the rest. Clamp so the image
+  // never dominates a very tall tablet or starves a very short phone.
+  const imageHeight = Math.max(180, Math.min(Math.round(carouselH * 0.55), 460));
 
-        {/* How it works */}
-        <View className="mt-10">
-          {HOW_IT_WORKS.map((step, i) => (
-            <View key={step.title} className="flex-row items-center" style={{ marginTop: i === 0 ? 0 : 16 }}>
-              <View
-                className="h-11 w-11 items-center justify-center rounded-2xl"
-                style={{ backgroundColor: colors.accentSoft }}
-              >
-                <Icon name={step.icon} size={21} color={colors.accent} strokeWidth={1.9} />
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+      {/* ── Photo carousel (fills the space above the CTAs) ── */}
+      <View style={{ flex: 1 }} onLayout={(e) => setCarouselH(e.nativeEvent.layout.height)}>
+        {carouselH > 0 ? (
+          <ScrollView
+            ref={scrollRef}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onScroll={onScroll}
+            onMomentumScrollEnd={(e) => {
+              const i = Math.round(e.nativeEvent.contentOffset.x / width);
+              indexRef.current = i;
+              setIndex(i);
+            }}
+            scrollEventThrottle={16}
+          >
+            {SLIDES.map((s) => (
+              <View key={s.eyebrow} style={{ width, height: carouselH }}>
+                {/* Each slide scrolls vertically so its image + copy are always
+                    reachable, however short the screen. */}
+                <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1, paddingBottom: 14 }}>
+                  <View style={{ height: imageHeight }}>
+                    <CoverImage src={unsplash(s.img)} category={s.category} style={{ width, height: imageHeight }}>
+                      <LinearGradient
+                        colors={['transparent', colors.bg]}
+                        start={{ x: 0, y: 0.45 }}
+                        end={{ x: 0, y: 1 }}
+                        style={{ position: 'absolute', left: 0, right: 0, bottom: 0, top: 0 }}
+                      />
+                      {/* Brand lockup over the image */}
+                      <View
+                        style={{
+                          position: 'absolute',
+                          top: insets.top + 14,
+                          left: 24,
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 9,
+                        }}
+                      >
+                        <View style={{ width: 34, height: 34, borderRadius: 9, backgroundColor: colors.brandGreen, alignItems: 'center', justifyContent: 'center' }}>
+                          <Icon name="gift" size={19} color="#fff" />
+                        </View>
+                        <Text style={{ fontSize: 19, fontWeight: '800', color: '#fff', letterSpacing: -0.4 }}>Collably</Text>
+                      </View>
+                    </CoverImage>
+                  </View>
+
+                  <View style={{ paddingHorizontal: 30, paddingTop: 10, alignItems: 'center' }}>
+                    <Text style={{ fontFamily: 'monospace', fontSize: 12, letterSpacing: 1.6, color: colors.brandGreenText, fontWeight: '600' }}>
+                      {s.eyebrow}
+                    </Text>
+                    <Text style={{ fontSize: 26, fontWeight: '800', color: colors.text, letterSpacing: -0.6, lineHeight: 31, marginTop: 12, textAlign: 'center' }}>
+                      {s.title}
+                    </Text>
+                    <Text style={{ fontSize: 15, color: colors.text2, lineHeight: 22, marginTop: 12, textAlign: 'center' }}>
+                      {s.body}
+                    </Text>
+                  </View>
+                </ScrollView>
               </View>
-              <View className="ml-3.5 flex-1">
-                <Text className="text-[15px] font-bold" style={{ color: colors.text }}>
-                  {step.title}
-                </Text>
-                <Text className="mt-0.5 text-[13px]" style={{ color: colors.text2, lineHeight: 18 }}>
-                  {step.body}
-                </Text>
-              </View>
-            </View>
+            ))}
+          </ScrollView>
+        ) : null}
+      </View>
+
+      {/* ── Dots + role-pick CTAs (always pinned + visible) ── */}
+      <View style={{ paddingHorizontal: 28, paddingTop: 8, paddingBottom: insets.bottom + 18 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 7, marginBottom: 20 }}>
+          {SLIDES.map((s, d) => (
+            <View
+              key={s.eyebrow}
+              style={{
+                width: d === index ? 22 : 7,
+                height: 7,
+                borderRadius: 4,
+                backgroundColor: d === index ? colors.brandGreen : colors.hairStrong,
+              }}
+            />
           ))}
         </View>
 
-        {/* CTAs */}
-        <View className="mt-auto pt-12">
-          <Button block icon="briefcase" onPress={() => router.push('/(auth)/signup?role=business')}>
-            Join as Business
-          </Button>
-          <View className="h-3" />
-          <Button
-            block
-            variant="success"
-            icon="sparkles"
-            onPress={() => router.push('/(auth)/signup?role=creator')}
-          >
-            Join as Creator
-          </Button>
-          <View className="h-3" />
-          <Button block variant="outline" icon="compass" onPress={browseAsGuest}>
-            Browse Campaigns
-          </Button>
+        <Text style={{ fontSize: 12.5, color: colors.text3, textAlign: 'center', marginBottom: 12 }}>How do you want to start?</Text>
 
-          <View className="mt-5 flex-row items-center justify-center">
-            <Text className="text-sm" style={{ color: colors.text2 }}>
-              Already have an account?{' '}
-            </Text>
-            <Text
-              className="text-sm font-semibold"
-              style={{ color: colors.accent }}
-              onPress={() => router.push('/(auth)/login')}
-            >
-              Log in
-            </Text>
-          </View>
+        <View style={{ flexDirection: 'row', gap: 12 }}>
+          <RoleTile
+            variant="secondary"
+            icon="briefcase"
+            title="Business"
+            subtitle="Post campaigns"
+            onPress={() => router.push({ pathname: '/(auth)/signup', params: { role: 'business' } })}
+          />
+          <RoleTile
+            variant="primary"
+            icon="sparkles"
+            title="Creator"
+            subtitle="Find collabs"
+            onPress={() => router.push({ pathname: '/(auth)/signup', params: { role: 'creator' } })}
+          />
         </View>
-      </ScrollView>
+
+        <View style={{ marginTop: 14, alignItems: 'center' }}>
+          <Text style={{ fontSize: 14, fontWeight: '700', color: colors.brandGreenText }} onPress={browseAsGuest}>
+            Browse campaigns
+          </Text>
+        </View>
+
+        <View style={{ marginTop: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ fontSize: 14, color: colors.text2 }}>Already have an account? </Text>
+          <Text style={{ fontSize: 14, fontWeight: '700', color: colors.brandGreenText }} onPress={() => router.push('/(auth)/login')}>
+            Log in
+          </Text>
+        </View>
+      </View>
     </View>
+  );
+}
+
+/** Premium role-pick tile: green-gradient "Creator" (primary), outlined "Business". */
+function RoleTile({
+  variant,
+  icon,
+  title,
+  subtitle,
+  onPress,
+}: {
+  variant: 'primary' | 'secondary';
+  icon: IconName;
+  title: string;
+  subtitle: string;
+  onPress: () => void;
+}) {
+  const { colors } = useTheme();
+  const primary = variant === 'primary';
+
+  const inner = (
+    <>
+      <View
+        style={{
+          width: 46,
+          height: 46,
+          borderRadius: 14,
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: 10,
+          backgroundColor: primary ? 'rgba(255,255,255,0.22)' : colors.brandGreenSoft,
+        }}
+      >
+        <Icon name={icon} size={23} color={primary ? '#fff' : colors.brandGreenText} />
+      </View>
+      <Text style={{ fontSize: 16.5, fontWeight: '800', letterSpacing: -0.3, textAlign: 'center', color: primary ? '#fff' : colors.text }}>
+        {title}
+      </Text>
+      <Text style={{ fontSize: 12, marginTop: 2, textAlign: 'center', color: primary ? 'rgba(255,255,255,0.85)' : colors.text2 }}>{subtitle}</Text>
+    </>
+  );
+
+  // Identical box for both tiles → guaranteed equal height + matching shadow so
+  // they line up perfectly (no green-glow size mismatch).
+  const boxStyle = {
+    borderRadius: 18,
+    paddingHorizontal: 12,
+    height: 120,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 3,
+  };
+
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [{ flex: 1 }, pressed && { transform: [{ scale: 0.97 }], opacity: 0.96 }]}
+    >
+      {primary ? (
+        <LinearGradient colors={[colors.brandGreen, colors.brandGreenDeep]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={boxStyle}>
+          {inner}
+        </LinearGradient>
+      ) : (
+        <View style={{ ...boxStyle, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.hair }}>
+          {inner}
+        </View>
+      )}
+    </Pressable>
   );
 }
