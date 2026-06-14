@@ -9,10 +9,12 @@
  * mirror that into the auth store so the root gate routes to the business home.
  */
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
+import { Pressable } from '@/components/ui/SafePressable';
 import { OnboardingShell } from '@/components/onboarding';
 import { FormBanner } from '@/components/auth';
-import { Field, TextField, TextArea, TagChip, Icon, Button, RemoteImage } from '@/components/ui';
+import { Field, TextField, TextArea, TagChip, Icon, Button, RemoteImage, AutocompleteField } from '@/components/ui';
+import { COUNTRIES, REGIONS, CITY_NAMES, locationForCity } from '@/lib/locations';
 import { useTheme } from '@/components/ThemeProvider';
 import { CATEGORIES, type Category } from '@/constants';
 import type { GeoLocation, PublicUser, BusinessProfile } from '@/types';
@@ -184,27 +186,33 @@ export default function BusinessOnboardingScreen() {
         {step === 2 && (
           <>
             <Field label="City">
-              <TextField
+              <AutocompleteField
                 value={form.location.city ?? ''}
                 onChangeText={(city) => setLoc({ city })}
-                placeholder="e.g. Bengaluru"
-                autoCapitalize="words"
+                onSelect={(city) => {
+                  const loc = locationForCity(city);
+                  setLoc({ city, state: loc?.state ?? form.location.state, country: loc?.country ?? form.location.country });
+                }}
+                options={CITY_NAMES}
+                placeholder="Start typing your city…"
               />
             </Field>
             <Field label="State / Region">
-              <TextField
+              <AutocompleteField
                 value={form.location.state ?? ''}
                 onChangeText={(state) => setLoc({ state })}
+                options={REGIONS}
+                icon="mappin"
                 placeholder="e.g. Karnataka"
-                autoCapitalize="words"
               />
             </Field>
             <Field label="Country">
-              <TextField
+              <AutocompleteField
                 value={form.location.country ?? ''}
                 onChangeText={(country) => setLoc({ country })}
+                options={COUNTRIES}
+                icon="mappin"
                 placeholder="e.g. India"
-                autoCapitalize="words"
               />
             </Field>
             <Field label="Website (optional)">

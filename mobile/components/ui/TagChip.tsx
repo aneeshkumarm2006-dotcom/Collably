@@ -6,7 +6,8 @@
  *
  * For multi-select rows, render a list of these and lift the `selected` state.
  */
-import { Pressable, Text, View, type ViewStyle } from 'react-native';
+import { Text, View, type ViewStyle } from 'react-native';
+import { Pressable } from '@/components/ui/SafePressable';
 import { useTheme } from '@/components/ThemeProvider';
 import { Icon, type IconName } from './Icon';
 

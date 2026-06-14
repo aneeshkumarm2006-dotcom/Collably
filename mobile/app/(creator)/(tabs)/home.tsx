@@ -311,11 +311,15 @@ export default function CreatorHomeScreen() {
                         borderTopColor: colors.hair,
                       }}
                     >
-                      <Text style={{ fontSize: 13, fontWeight: '700', color: colors.brandGreenText }}>
+                      <Text
+                        numberOfLines={1}
+                        style={{ flex: 1, marginRight: 10, fontSize: 13, fontWeight: '700', color: colors.brandGreenText }}
+                      >
                         {c ? formatReward(c.reward) : 'Perk'}
                       </Text>
                       <View
                         style={{
+                          flexShrink: 0,
                           flexDirection: 'row',
                           alignItems: 'center',
                           gap: 5,
@@ -376,9 +380,10 @@ export default function CreatorHomeScreen() {
                   <Text style={{ fontSize: 24, fontWeight: '800', color: '#fff', letterSpacing: -0.6, marginTop: 5, lineHeight: 27 }}>
                     {hero.title}
                   </Text>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 11, marginTop: 14 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 14 }}>
                     <View
                       style={{
+                        flexShrink: 1,
                         flexDirection: 'row',
                         alignItems: 'center',
                         gap: 6,
@@ -389,11 +394,13 @@ export default function CreatorHomeScreen() {
                       }}
                     >
                       <Icon name="gift" size={16} color="#fff" />
-                      <Text style={{ fontSize: 14, fontWeight: '800', color: '#fff' }}>{formatReward(hero.reward)}</Text>
+                      <Text numberOfLines={1} style={{ flexShrink: 1, fontSize: 14, fontWeight: '800', color: '#fff' }}>
+                        {formatReward(hero.reward)}
+                      </Text>
                     </View>
                     <View
                       style={{
-                        marginLeft: 'auto',
+                        flexShrink: 0,
                         flexDirection: 'row',
                         alignItems: 'center',
                         gap: 6,
@@ -496,6 +503,7 @@ function BlinkCollabCard({ campaign, onPress }: { campaign: CampaignWithBiz; onP
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 9 }}>
           <View
             style={{
+              flexShrink: 1,
               flexDirection: 'row',
               alignItems: 'center',
               gap: 6,
@@ -506,11 +514,13 @@ function BlinkCollabCard({ campaign, onPress }: { campaign: CampaignWithBiz; onP
             }}
           >
             <Icon name="gift" size={14} color={colors.brandGreenText} />
-            <Text style={{ fontSize: 13, fontWeight: '800', color: colors.brandGreenText }}>{formatReward(campaign.reward)}</Text>
+            <Text numberOfLines={1} style={{ flexShrink: 1, fontSize: 13, fontWeight: '800', color: colors.brandGreenText }}>
+              {formatReward(campaign.reward)}
+            </Text>
           </View>
           <View
             style={{
-              marginLeft: 'auto',
+              flexShrink: 0,
               backgroundColor: colors.brandGreen,
               paddingHorizontal: 15,
               paddingVertical: 7,

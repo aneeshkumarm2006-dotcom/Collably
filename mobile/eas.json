@@ -1,5 +1,4 @@
 {
-  "//": "EAS Build/Submit profiles. Baseline scaffold — build numbers, credentials, and the production API URL are finalized in Phase 18. Run `eas init` to attach a project id (writes expo.extra.eas.projectId in app.json).",
   "cli": {
     "version": ">= 20.1.0",
     "appVersionSource": "remote"
@@ -14,8 +13,12 @@
     },
     "preview": {
       "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://api.collably.app/api"
+        "EXPO_PUBLIC_API_URL": "https://api.collably.app/api",
+        "EXPO_PUBLIC_USE_MOCKS": "true"
       }
     },
     "production": {

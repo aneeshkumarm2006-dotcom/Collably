@@ -8,7 +8,8 @@
  * `compact` renders the slim row variant used in dense lists (home feed, pickers).
  * Pass `applicationStatus` to show the viewer's own application state in the corner.
  */
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
+import { Pressable } from '@/components/ui/SafePressable';
 import { useTheme } from '@/components/ThemeProvider';
 import { formatCountdown, formatCompactNumber } from '@/lib/utils';
 import type { Campaign } from '@/types';

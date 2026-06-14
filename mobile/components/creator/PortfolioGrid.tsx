@@ -3,7 +3,8 @@
  * grid of cached thumbnails (max 6 per PRD §7.2). In `editable` mode it shows a
  * remove affordance per tile and an "add" tile until the cap is reached.
  */
-import { Pressable, Text, View, type LayoutChangeEvent } from 'react-native';
+import { Text, View, type LayoutChangeEvent } from 'react-native';
+import { Pressable } from '@/components/ui/SafePressable';
 import { useState } from 'react';
 import { useTheme } from '@/components/ThemeProvider';
 import { RemoteImage } from '@/components/ui/RemoteImage';

@@ -11,7 +11,8 @@
  * Convention (matches the rest of the library): NativeWind handles layout; color
  * comes from `useTheme().colors` inline so light/dark stay in sync.
  */
-import { Pressable, Switch, Text, TextInput, View } from 'react-native';
+import { Switch, Text, TextInput, View } from 'react-native';
+import { Pressable } from '@/components/ui/SafePressable';
 import { useTheme } from '@/components/ThemeProvider';
 import { Icon } from './Icon';
 

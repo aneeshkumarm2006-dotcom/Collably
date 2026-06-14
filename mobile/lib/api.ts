@@ -1,5 +1,5 @@
 /**
- * Axios instance for the Collably backend.
+ * Axios instance for the CollabSpace backend.
  *
  *  - baseURL comes from `lib/env` (LAN IP in dev, prod URL otherwise).
  *  - Request interceptor attaches the JWT access token from `lib/auth`.

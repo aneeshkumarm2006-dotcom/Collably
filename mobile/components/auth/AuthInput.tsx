@@ -8,7 +8,8 @@
  * the eye toggle). `error` turns the border red and shows the message below.
  */
 import { forwardRef, useState } from 'react';
-import { Pressable, Text, TextInput, View, type TextInputProps } from 'react-native';
+import { Text, TextInput, View, type TextInputProps } from 'react-native';
+import { Pressable } from '@/components/ui/SafePressable';
 import { useTheme } from '@/components/ThemeProvider';
 import { Icon, type IconName } from '@/components/ui';
 

@@ -17,7 +17,7 @@
  */
 import '../global.css';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Stack,
   useRouter,
@@ -35,6 +35,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { ToastHost } from '@/components/ui';
 import { useAuthStore } from '@/store/authStore';
+import { useThemeStore } from '@/store/themeStore';
 import { configureNotificationHandler } from '@/lib/notifications';
 import { usePushNotifications } from '@/lib/usePushNotifications';
 
@@ -50,20 +51,37 @@ export default function RootLayout() {
   const [fontsLoaded] = useFonts({});
   const hydrate = useAuthStore((s) => s.hydrate);
   const status = useAuthStore((s) => s.status);
+  const hydrateTheme = useThemeStore((s) => s.hydrate);
 
-  // Restore the session from SecureStore exactly once on boot.
+  // Restore the session + theme preference from storage exactly once on boot.
   useEffect(() => {
     void hydrate();
-  }, [hydrate]);
+    void hydrateTheme();
+  }, [hydrate, hydrateTheme]);
 
-  // Hide the splash only once fonts are ready AND auth has resolved.
+  // Minimum time the branded CollabSpace splash (app/index.tsx) stays visible
+  // before the auth gate routes away — otherwise it flashes for ~1 frame.
+  // TEMP: 5s for review; drop back to ~1500 once confirmed.
+  const SPLASH_MIN_MS = 5000;
+  const [minElapsed, setMinElapsed] = useState(false);
+
+  // Hide the native splash once fonts are ready AND auth has resolved — this
+  // reveals the JS BootScreen. The minimum-display countdown starts HERE (not at
+  // mount) so the splash is guaranteed to show for SPLASH_MIN_MS even when the
+  // dev bundle load itself takes several seconds.
   const booted = fontsLoaded && status !== 'loading';
   useEffect(() => {
-    if (booted) void SplashScreen.hideAsync();
+    if (!booted) return;
+    void SplashScreen.hideAsync();
+    const id = setTimeout(() => setMinElapsed(true), SPLASH_MIN_MS);
+    return () => clearTimeout(id);
   }, [booted]);
 
-  useAuthGate(booted);
-  usePushNotifications(booted);
+  // Only let the gate redirect once boot is done AND the splash has shown long
+  // enough, so the CollabSpace intro is actually visible.
+  const ready = booted && minElapsed;
+  useAuthGate(ready);
+  usePushNotifications(ready);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

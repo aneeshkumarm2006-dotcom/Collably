@@ -14,19 +14,15 @@
  */
 import { useCallback, useState } from 'react';
 import {
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
-} from 'react-native';
+  KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
+import { Pressable } from '@/components/ui/SafePressable';
 import { LinearGradient } from 'expo-linear-gradient';
 import { setStatusBarStyle } from 'expo-status-bar';
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/components/ThemeProvider';
 import { Icon } from '@/components/ui';
+import { BrandMark } from '@/components/shared';
 import { SignupForm, type SignupRole } from './SignupForm';
 import { LoginForm } from './LoginForm';
 
@@ -50,7 +46,7 @@ function headlineFor(mode: PremiumAuthMode, role: PremiumAuthRole): string {
   if (mode === 'signin') return 'Welcome back.\nLet’s get to it.';
   if (role === 'creator') return 'Get paid in perks for\ncontent you already make.';
   if (role === 'business') return 'Find creators who fit\nyour brand — fast.';
-  return 'Create your\nCollably account.';
+  return 'Create your\nCollabSpace account.';
 }
 
 export function PremiumAuthLayout({ initialMode, initialRole = null, onBack }: PremiumAuthLayoutProps) {
@@ -125,12 +121,9 @@ export function PremiumAuthLayout({ initialMode, initialRole = null, onBack }: P
           ) : null}
         </View>
 
-        {/* brand lockup */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 24 }}>
-          <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: colors.brandGreen, alignItems: 'center', justifyContent: 'center' }}>
-            <Icon name="gift" size={23} color="#fff" />
-          </View>
-          <Text style={{ fontSize: 25, fontWeight: '800', color: INK, letterSpacing: -0.8 }}>Collably</Text>
+        {/* brand lockup — the design's connector mark, ink on yellow */}
+        <View style={{ marginTop: 24 }}>
+          <BrandMark size={44} wordmark color={INK} wordmarkColor={INK} bg={colors.brandYellow} />
         </View>
 
         {/* headline */}

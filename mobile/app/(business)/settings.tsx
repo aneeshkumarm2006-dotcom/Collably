@@ -6,9 +6,10 @@
  * is business-scoped (campaigns + applications cascade server-side).
  */
 import { useRef, useState } from 'react';
-import { Alert, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Alert, ScrollView, Text, TextInput, View } from 'react-native';
+import { Pressable } from '@/components/ui/SafePressable';
 import { useRouter } from 'expo-router';
-import { Header } from '@/components/shared';
+import { Header, ThemeModeRow } from '@/components/shared';
 import { Button, Card, Icon, SwitchRow, BottomSheet, type BottomSheetRef, type IconName } from '@/components/ui';
 import { useTheme } from '@/components/ThemeProvider';
 import { api, isApiError } from '@/lib/api';
@@ -69,6 +70,11 @@ export default function BusinessSettingsScreen() {
             <Row icon="message" label="Email" value={user?.email} onPress={() => emailRef.current?.present()} colors={colors} first />
             <Row icon="lock" label="Password" value="Change password" onPress={() => passwordRef.current?.present()} colors={colors} />
           </Card>
+        </Group>
+
+        {/* Appearance */}
+        <Group title="Appearance" colors={colors}>
+          <ThemeModeRow />
         </Group>
 
         {/* Notifications */}

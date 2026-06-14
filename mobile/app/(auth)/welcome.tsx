@@ -14,14 +14,8 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-  Pressable,
-  ScrollView,
-  Text,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+  NativeScrollEvent, NativeSyntheticEvent, ScrollView, Text, useWindowDimensions, View } from 'react-native';
+import { Pressable } from '@/components/ui/SafePressable';
 import { LinearGradient } from 'expo-linear-gradient';
 import { setStatusBarStyle } from 'expo-status-bar';
 import { router, useFocusEffect } from 'expo-router';
@@ -29,6 +23,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/components/ThemeProvider';
 import { CoverImage } from '@/components/campaign';
 import { Icon, type IconName } from '@/components/ui';
+import { BrandMark } from '@/components/shared';
 import { useAuthStore } from '@/store/authStore';
 import type { Category } from '@/constants';
 
@@ -146,21 +141,9 @@ export default function WelcomeScreen() {
                         end={{ x: 0, y: 1 }}
                         style={{ position: 'absolute', left: 0, right: 0, bottom: 0, top: 0 }}
                       />
-                      {/* Brand lockup over the image */}
-                      <View
-                        style={{
-                          position: 'absolute',
-                          top: insets.top + 14,
-                          left: 24,
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          gap: 9,
-                        }}
-                      >
-                        <View style={{ width: 34, height: 34, borderRadius: 9, backgroundColor: colors.brandGreen, alignItems: 'center', justifyContent: 'center' }}>
-                          <Icon name="gift" size={19} color="#fff" />
-                        </View>
-                        <Text style={{ fontSize: 19, fontWeight: '800', color: '#fff', letterSpacing: -0.4 }}>Collably</Text>
+                      {/* Brand lockup over the image — design connector mark, white */}
+                      <View style={{ position: 'absolute', top: insets.top + 14, left: 24 }}>
+                        <BrandMark size={34} wordmark color="#fff" wordmarkColor="#fff" />
                       </View>
                     </CoverImage>
                   </View>

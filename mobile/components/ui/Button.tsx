@@ -5,7 +5,8 @@
  * money, danger). Supports leading/trailing icons, three sizes, full-width `block`,
  * and a `loading` spinner. Colors come from `useTheme()` so light/dark stay in sync.
  */
-import { ActivityIndicator, Pressable, Text, type PressableProps } from 'react-native';
+import { useState } from 'react';
+import { ActivityIndicator, Pressable, Text, type PressableProps, type ViewStyle } from 'react-native';
 import { useTheme } from '@/components/ThemeProvider';
 import { Icon, type IconName } from './Icon';
 
@@ -55,26 +56,33 @@ export function Button({
   };
   const v = variants[variant];
   const isDisabled = disabled || loading;
+  const [pressed, setPressed] = useState(false);
+
+  // NativeWind v4's `cssInterop` silently DROPS a function-form `style` on core
+  // components (it rendered the CTA as unstyled stacked text). So we track press
+  // via state and pass a plain static array `style`, which it resolves correctly.
+  const base: ViewStyle = {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    alignSelf: block ? 'stretch' : 'flex-start',
+    width: block ? '100%' : undefined,
+    paddingVertical: padV,
+    paddingHorizontal: padH,
+    borderRadius: 13,
+    backgroundColor: v.bg,
+    borderWidth: v.border ? 1.5 : 0,
+    borderColor: v.border,
+  };
 
   return (
     <Pressable
       onPress={isDisabled ? undefined : onPress}
+      onPressIn={() => setPressed(true)}
+      onPressOut={() => setPressed(false)}
       disabled={isDisabled}
-      style={({ pressed }) => ({
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 8,
-        alignSelf: block ? 'stretch' : 'flex-start',
-        width: block ? '100%' : undefined,
-        paddingVertical: padV,
-        paddingHorizontal: padH,
-        borderRadius: 13,
-        backgroundColor: v.bg,
-        borderWidth: v.border ? 1.5 : 0,
-        borderColor: v.border,
-        opacity: isDisabled ? 0.45 : pressed ? 0.85 : 1,
-      })}
+      style={[base, { opacity: isDisabled ? 0.45 : pressed ? 0.85 : 1 }]}
     >
       {loading ? (
         <ActivityIndicator size="small" color={v.fg} />

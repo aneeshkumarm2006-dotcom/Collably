@@ -3,7 +3,8 @@
  * border + soft shadow from the theme. Pass `onPress` to make it a tappable row
  * (adds press feedback); otherwise it's a plain `View`.
  */
-import { Pressable, View, type PressableProps, type ViewProps, type ViewStyle } from 'react-native';
+import { View, type PressableProps, type ViewProps, type ViewStyle } from 'react-native';
+import { Pressable } from '@/components/ui/SafePressable';
 import { useTheme } from '@/components/ThemeProvider';
 
 export type CardProps = {

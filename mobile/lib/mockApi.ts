@@ -299,7 +299,10 @@ export async function mockAdapter(config: InternalAxiosRequestConfig): Promise<A
       const creatorId = creatorProfileByUser(me)?._id ?? ME_CREATOR_PROFILE;
       list = list.filter((a) => a.creatorId === creatorId);
     }
-    if (status) list = list.filter((a) => a.status === status);
+    if (status) {
+      const allowed = status.split(',').map((s) => s.trim());
+      list = list.filter((a) => allowed.includes(a.status));
+    }
     list.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     const limit = num(param(params, 'limit'), list.length);
     return response(config, { data: list.slice(0, limit).map(withRefs) });

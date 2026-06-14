@@ -6,7 +6,7 @@
  *
  * These are presentation-only primitives — screens own the data wiring.
  */
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Pressable, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -55,7 +55,12 @@ export function categoryTint(category: Category, dark: boolean): { bg: string; f
   return { bg: dark ? db : lb, fg };
 }
 
-/** A pressable that scales/dims slightly on press (the design's `.cs-press`). */
+/** A pressable that scales/dims slightly on press (the design's `.cs-press`).
+ *
+ * Uses onPressIn/Out + a STATIC array style instead of Pressable's function
+ * `style` form: NativeWind v4's `cssInterop` silently drops a function-form
+ * `style` on core components (the bug behind the broken CTAs/cards), but resolves
+ * a plain array fine. */
 export function Press({
   children,
   onPress,
@@ -65,10 +70,13 @@ export function Press({
   onPress?: () => void;
   style?: StyleProp<ViewStyle>;
 }) {
+  const [pressed, setPressed] = useState(false);
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [style, pressed && { opacity: 0.92, transform: [{ scale: 0.985 }] }]}
+      onPressIn={() => setPressed(true)}
+      onPressOut={() => setPressed(false)}
+      style={[style, pressed && { opacity: 0.92, transform: [{ scale: 0.985 }] }]}
     >
       {children}
     </Pressable>

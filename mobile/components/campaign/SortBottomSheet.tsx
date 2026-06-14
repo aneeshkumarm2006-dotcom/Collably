@@ -5,7 +5,8 @@
  * pass `allowRelevance={false}` for guests to hide it.
  */
 import { forwardRef } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
+import { Pressable } from '@/components/ui/SafePressable';
 import { useTheme } from '@/components/ThemeProvider';
 import { BottomSheet, type BottomSheetRef, Icon } from '@/components/ui';
 import { CAMPAIGN_SORTS, CAMPAIGN_SORT_LABEL, type CampaignSort } from './filterTypes';

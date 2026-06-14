@@ -3,7 +3,8 @@
  * §15). Drop into a Header `right` slot; tapping routes to the notifications screen.
  * The badge hides at zero and caps the display at "9+".
  */
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
+import { Pressable } from '@/components/ui/SafePressable';
 import { useTheme } from '@/components/ThemeProvider';
 import { useNotificationStore } from '@/store/notificationStore';
 import { Icon } from '@/components/ui';

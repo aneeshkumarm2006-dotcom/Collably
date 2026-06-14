@@ -8,7 +8,8 @@
  * shows an inline role picker and reports the choice up via `onPickRole`.
  */
 import { useRef, useState } from 'react';
-import { Pressable, Text, View, type TextInput } from 'react-native';
+import { Text, View, type TextInput } from 'react-native';
+import { Pressable } from '@/components/ui/SafePressable';
 import { AuthInput } from './AuthInput';
 import { GoogleButton } from './GoogleButton';
 import { FormBanner } from './FormBanner';

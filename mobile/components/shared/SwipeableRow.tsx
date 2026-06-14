@@ -9,7 +9,8 @@
  * gesture.
  */
 import { useRef } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
+import { Pressable } from '@/components/ui/SafePressable';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { Icon, type IconName } from '@/components/ui';
 

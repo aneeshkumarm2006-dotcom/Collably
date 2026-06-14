@@ -5,7 +5,8 @@
  * deep-linking finished in Phase 15.
  */
 import { useCallback } from 'react';
-import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
+import { FlatList, RefreshControl, Text, View } from 'react-native';
+import { Pressable } from '@/components/ui/SafePressable';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Header } from '@/components/shared';

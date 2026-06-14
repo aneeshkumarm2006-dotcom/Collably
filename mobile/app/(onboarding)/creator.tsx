@@ -14,7 +14,8 @@ import { ScrollView, Text, View } from 'react-native';
 import { OnboardingShell } from '@/components/onboarding';
 import { FormBanner } from '@/components/auth';
 import { PortfolioGrid } from '@/components/creator';
-import { Field, TextField, TextArea, SwitchRow, TagChip } from '@/components/ui';
+import { Field, TextField, TextArea, SwitchRow, TagChip, AutocompleteField } from '@/components/ui';
+import { COUNTRIES, REGIONS, CITY_NAMES, locationForCity } from '@/lib/locations';
 import { useTheme } from '@/components/ThemeProvider';
 import {
   NICHES,
@@ -212,13 +213,34 @@ export default function CreatorOnboardingScreen() {
               Where are you based? This helps brands find local creators.
             </Text>
             <Field label="City">
-              <TextField value={form.location.city ?? ''} onChangeText={(city) => setLoc({ city })} placeholder="e.g. Bengaluru" autoCapitalize="words" />
+              <AutocompleteField
+                value={form.location.city ?? ''}
+                onChangeText={(city) => setLoc({ city })}
+                onSelect={(city) => {
+                  const loc = locationForCity(city);
+                  setLoc({ city, state: loc?.state ?? form.location.state, country: loc?.country ?? form.location.country });
+                }}
+                options={CITY_NAMES}
+                placeholder="Start typing your city…"
+              />
             </Field>
             <Field label="State / Region">
-              <TextField value={form.location.state ?? ''} onChangeText={(state) => setLoc({ state })} placeholder="e.g. Karnataka" autoCapitalize="words" />
+              <AutocompleteField
+                value={form.location.state ?? ''}
+                onChangeText={(state) => setLoc({ state })}
+                options={REGIONS}
+                icon="mappin"
+                placeholder="e.g. Karnataka"
+              />
             </Field>
             <Field label="Country">
-              <TextField value={form.location.country ?? ''} onChangeText={(country) => setLoc({ country })} placeholder="e.g. India" autoCapitalize="words" />
+              <AutocompleteField
+                value={form.location.country ?? ''}
+                onChangeText={(country) => setLoc({ country })}
+                options={COUNTRIES}
+                icon="mappin"
+                placeholder="e.g. India"
+              />
             </Field>
           </>
         )}

@@ -3,7 +3,8 @@
  * (platform · content type · quantity · optional requirements). Add/remove rows;
  * each maps to a `CampaignDeliverable` on the campaign model.
  */
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
+import { Pressable } from '@/components/ui/SafePressable';
 import { useTheme } from '@/components/ThemeProvider';
 import { PLATFORMS, CONTENT_TYPES } from '@/constants';
 import type { CampaignDeliverable } from '@/types';

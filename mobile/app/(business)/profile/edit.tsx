@@ -5,7 +5,8 @@
  * so the look is identical; on save it returns to the profile tab.
  */
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
+import { Pressable } from '@/components/ui/SafePressable';
 import { useRouter } from 'expo-router';
 import { Header } from '@/components/shared';
 import { FormBanner } from '@/components/auth';

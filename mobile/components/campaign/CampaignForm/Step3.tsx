@@ -4,7 +4,9 @@
  * `isRemote` + optional `location` shape.
  */
 import { ScrollView, View } from 'react-native';
-import { Field, TextField, SwitchRow } from './fields';
+import { Field, SwitchRow } from './fields';
+import { AutocompleteField } from '@/components/ui';
+import { COUNTRIES, REGIONS, CITY_NAMES, locationForCity } from '@/lib/locations';
 import type { CampaignStepProps } from './Step1';
 
 export function Step3({ value, patch }: CampaignStepProps) {
@@ -24,27 +26,33 @@ export function Step3({ value, patch }: CampaignStepProps) {
       {!value.isRemote && (
         <>
           <Field label="City">
-            <TextField
+            <AutocompleteField
               value={value.location.city ?? ''}
               onChangeText={(city) => setLoc({ city })}
-              placeholder="e.g. Bengaluru"
-              autoCapitalize="words"
+              onSelect={(city) => {
+                const loc = locationForCity(city);
+                setLoc({ city, state: loc?.state ?? value.location.state, country: loc?.country ?? value.location.country });
+              }}
+              options={CITY_NAMES}
+              placeholder="Start typing the city…"
             />
           </Field>
           <Field label="State / Region">
-            <TextField
+            <AutocompleteField
               value={value.location.state ?? ''}
               onChangeText={(state) => setLoc({ state })}
+              options={REGIONS}
+              icon="mappin"
               placeholder="e.g. Karnataka"
-              autoCapitalize="words"
             />
           </Field>
           <Field label="Country">
-            <TextField
+            <AutocompleteField
               value={value.location.country ?? ''}
               onChangeText={(country) => setLoc({ country })}
+              options={COUNTRIES}
+              icon="mappin"
               placeholder="e.g. India"
-              autoCapitalize="words"
             />
           </Field>
         </>

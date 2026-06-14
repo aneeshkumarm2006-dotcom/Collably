@@ -4,7 +4,8 @@
  * campaign's `deadline`, `spotsTotal`, `minFollowers`, and `tags`.
  */
 import { useState } from 'react';
-import { Platform, Pressable, ScrollView, Text, View } from 'react-native';
+import { Platform, ScrollView, Text, View } from 'react-native';
+import { Pressable } from '@/components/ui/SafePressable';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useTheme } from '@/components/ThemeProvider';
 import { formatDate } from '@/lib/utils';

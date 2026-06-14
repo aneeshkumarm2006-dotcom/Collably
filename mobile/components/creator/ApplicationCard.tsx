@@ -4,7 +4,8 @@
  * countdown when the collab is active. Pass `footer` to add contextual CTAs
  * (Submit when Accepted, Withdraw when Pending, View when done).
  */
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
+import { Pressable } from '@/components/ui/SafePressable';
 import { useTheme } from '@/components/ThemeProvider';
 import { formatCountdown, formatReward, isOverdue } from '@/lib/utils';
 import type { Application, Campaign } from '@/types';

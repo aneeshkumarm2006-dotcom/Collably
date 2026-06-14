@@ -5,9 +5,10 @@
  * credential changes use confirmation sheets; destructive actions confirm first.
  */
 import { useRef, useState } from 'react';
-import { Alert, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Alert, ScrollView, Text, TextInput, View } from 'react-native';
+import { Pressable } from '@/components/ui/SafePressable';
 import { useRouter } from 'expo-router';
-import { Header } from '@/components/shared';
+import { Header, ThemeModeRow } from '@/components/shared';
 import {
   Button,
   Card,
@@ -76,6 +77,11 @@ export default function SettingsScreen() {
             <Row icon="message" label="Email" value={user?.email} onPress={() => emailRef.current?.present()} colors={colors} first />
             <Row icon="lock" label="Password" value="Change password" onPress={() => passwordRef.current?.present()} colors={colors} />
           </Card>
+        </Group>
+
+        {/* Appearance */}
+        <Group title="Appearance" colors={colors}>
+          <ThemeModeRow />
         </Group>
 
         {/* Notifications */}

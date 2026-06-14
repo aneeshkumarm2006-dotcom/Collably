@@ -6,7 +6,8 @@
  * opens its applicant list.
  */
 import { useCallback, useMemo, useState } from 'react';
-import { Alert, FlatList, Pressable, RefreshControl, ScrollView, View } from 'react-native';
+import { Alert, FlatList, RefreshControl, ScrollView, View } from 'react-native';
+import { Pressable } from '@/components/ui/SafePressable';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Header, NotificationBell, SwipeableRow, type SwipeAction } from '@/components/shared';

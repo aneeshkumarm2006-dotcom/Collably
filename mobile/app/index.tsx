@@ -1,31 +1,38 @@
 /**
- * Boot splash bridge (Phase 9).
+ * Boot splash (Phase 9) — the CollabSpace brand splash from the design handoff.
  *
  * `/` is the initial route. The native splash stays up until the root layout has
  * loaded fonts + hydrated the session; the auth gate then `replace()`s into the
- * correct route group. This screen only shows in the brief window between splash
- * hide and that redirect, so it's a minimal themed spinner matching the splash —
- * no flash of content, no decisions of its own.
+ * correct route group. This screen shows in the brief window between splash hide
+ * and that redirect, so it mirrors the design's `Splash`: a yellow brand wash, the
+ * CollabSpace lockup, and a "LOCAL COLLAB MARKETPLACE" caption — no flash of the
+ * wrong content, no decisions of its own.
  */
 import { ActivityIndicator, Text, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/components/ThemeProvider';
-import { Icon } from '@/components/ui';
+import { BrandMark } from '@/components/shared/BrandMark';
+
+const INK = '#1A1B10';
 
 export default function BootScreen() {
   const { colors } = useTheme();
 
   return (
-    <View className="flex-1 items-center justify-center" style={{ backgroundColor: colors.bg }}>
-      <View
-        className="h-20 w-20 items-center justify-center rounded-3xl"
-        style={{ backgroundColor: colors.accent }}
-      >
-        <Icon name="gift" size={38} color={colors.accentText} />
+    <LinearGradient
+      colors={[colors.brandYellow, colors.brandYellowDeep]}
+      start={{ x: 0.15, y: 0 }}
+      end={{ x: 0, y: 1 }}
+      style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
+    >
+      <BrandMark size={56} wordmark color={INK} wordmarkColor={INK} bg={colors.brandYellow} />
+
+      <View style={{ position: 'absolute', bottom: 72, alignItems: 'center', gap: 14 }}>
+        <ActivityIndicator size="small" color="rgba(26,27,16,0.8)" />
+        <Text style={{ fontFamily: 'monospace', fontSize: 12, letterSpacing: 1.4, color: 'rgba(26,27,16,0.62)', fontWeight: '600' }}>
+          LOCAL COLLAB MARKETPLACE
+        </Text>
       </View>
-      <Text className="mt-5 text-2xl font-extrabold" style={{ color: colors.text }}>
-        Collably
-      </Text>
-      <ActivityIndicator className="mt-6" size="small" color={colors.accent} />
-    </View>
+    </LinearGradient>
   );
 }

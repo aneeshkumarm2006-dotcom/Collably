@@ -30,3 +30,4 @@ export {
   type TextFieldProps,
   type NumberStepperProps,
 } from './FormFields';
+export { AutocompleteField, type AutocompleteFieldProps } from './AutocompleteField';

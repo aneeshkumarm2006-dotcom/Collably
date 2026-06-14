@@ -4,7 +4,8 @@
  * `NotificationBell` or an action button). Two visual styles: `plain` (sits on
  * the page background) and `card` (elevated surface with a hairline bottom border).
  */
-import { Platform, Pressable, Text, View, type ViewStyle } from 'react-native';
+import { Platform, Text, View, type ViewStyle } from 'react-native';
+import { Pressable } from '@/components/ui/SafePressable';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/components/ThemeProvider';
 import { Icon } from '@/components/ui';

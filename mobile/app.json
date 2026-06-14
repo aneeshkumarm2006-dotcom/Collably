@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "Collably",
+    "name": "CollabSpace",
     "slug": "collably",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "collably",
@@ -11,7 +11,9 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.collably.app",
-      "associatedDomains": ["applinks:collably.app"]
+      "associatedDomains": [
+        "applinks:collably.app"
+      ]
     },
     "android": {
       "package": "com.collably.app",
@@ -26,12 +28,26 @@
         {
           "action": "VIEW",
           "autoVerify": true,
-          "category": ["BROWSABLE", "DEFAULT"],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ],
           "data": [
-            { "scheme": "https", "host": "collably.app", "pathPrefix": "/reset-password" },
-            { "scheme": "https", "host": "collably.app", "pathPrefix": "/campaign" }
+            {
+              "scheme": "https",
+              "host": "collably.app",
+              "pathPrefix": "/reset-password"
+            },
+            {
+              "scheme": "https",
+              "host": "collably.app",
+              "pathPrefix": "/campaign"
+            }
           ]
         }
+      ],
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "web": {
@@ -58,8 +74,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Collably needs access to your photos so you can upload a profile picture, business logo, campaign cover, and content proof.",
-          "cameraPermission": "Collably needs camera access so you can take photos for your profile and content submissions."
+          "photosPermission": "CollabSpace needs access to your photos so you can upload a profile picture, business logo, campaign cover, and content proof.",
+          "cameraPermission": "CollabSpace needs camera access so you can take photos for your profile and content submissions."
         }
       ],
       [
@@ -72,6 +88,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "a7e78633-34dd-4079-83e7-85cfd6b2a421"
+      }
+    },
+    "owner": "aneeshkumarm"
   }
 }

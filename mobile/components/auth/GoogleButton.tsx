@@ -4,7 +4,8 @@
  * stroke icon set has no brand logos). Shows a spinner while a sign-in is in
  * flight. Render only when `useGoogleSignIn().available` is true.
  */
-import { ActivityIndicator, Pressable, Text } from 'react-native';
+import { ActivityIndicator, Text } from 'react-native';
+import { Pressable } from '@/components/ui/SafePressable';
 import Svg, { Path } from 'react-native-svg';
 import { useTheme } from '@/components/ThemeProvider';
 

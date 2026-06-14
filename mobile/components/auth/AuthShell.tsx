@@ -4,14 +4,8 @@
  * (with subtitle). Keeps login / signup / forgot / reset visually consistent and
  * out of the way of the on-screen keyboard.
  */
-import {
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
-} from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
+import { Pressable } from '@/components/ui/SafePressable';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/components/ThemeProvider';
 import { Icon } from '@/components/ui';
@@ -24,7 +18,7 @@ export type AuthShellProps = {
   children: React.ReactNode;
   /** Pinned footer content (e.g. "Don't have an account?") below the scroll area. */
   footer?: React.ReactNode;
-  /** Show the Collably brand mark above the title (default true). */
+  /** Show the CollabSpace brand mark above the title (default true). */
   brand?: boolean;
 };
 

@@ -5,7 +5,8 @@
  * Settings. Reads `GET /api/profile/business`.
  */
 import { useCallback, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { RefreshControl, ScrollView, Text, View } from 'react-native';
+import { Pressable } from '@/components/ui/SafePressable';
 import { useFocusEffect, useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

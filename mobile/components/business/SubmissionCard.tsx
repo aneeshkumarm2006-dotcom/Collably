@@ -7,7 +7,8 @@
  * Only renders the action bar when the application is awaiting review (a submitted,
  * still-Accepted application). Completed/cancelled rows show a status badge instead.
  */
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
+import { Pressable } from '@/components/ui/SafePressable';
 import { useTheme } from '@/components/ThemeProvider';
 import { formatRelativeTime } from '@/lib/utils';
 import type { Application } from '@/types';
