@@ -22,6 +22,11 @@ export default function EditCampaignScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [submitting, setSubmitting] = useState(false);
 
+  const dismiss = () => {
+    if (router.canGoBack()) router.back();
+    else router.replace('/(business)/(tabs)/campaigns');
+  };
+
   const { data, loading, error, reload } = useFetch(async () => {
     const { data: res } = await api.get<{ campaign: CampaignWithBusiness }>(`/campaigns/${id}`);
     return res.campaign;
@@ -33,7 +38,7 @@ export default function EditCampaignScreen() {
       // The payload carries no status — the campaign keeps its current status,
       // which is changed only through the pause/close controls (PRD §12).
       await api.put(`/campaigns/${id}`, payload);
-      router.back();
+      dismiss();
     } catch (err) {
       setSubmitting(false);
       Alert.alert('Could not save', isApiError(err) ? err.message : 'Could not update the campaign.');
@@ -43,7 +48,7 @@ export default function EditCampaignScreen() {
   if (loading && !data) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.bg }}>
-        <Header title="Edit campaign" onBack={() => router.back()} variant="card" />
+        <Header title="Edit campaign" onBack={dismiss} variant="card" />
         <View style={{ padding: 16, gap: 14 }}>
           <SkeletonCard />
           <SkeletonCard />
@@ -55,7 +60,7 @@ export default function EditCampaignScreen() {
   if (error || !data) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.bg }}>
-        <Header title="Edit campaign" onBack={() => router.back()} variant="card" />
+        <Header title="Edit campaign" onBack={dismiss} variant="card" />
         <ErrorState body={error ?? 'Campaign not found.'} onRetry={reload} />
       </View>
     );

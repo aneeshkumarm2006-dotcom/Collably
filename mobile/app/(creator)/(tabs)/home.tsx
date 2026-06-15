@@ -20,7 +20,7 @@ import {
 } from '@/components/ui';
 import {
   BrandSearch,
-  CATEGORY_EMOJI,
+  CATEGORY_ICON,
   categoryTint,
   HookHeadline,
   INK,
@@ -224,7 +224,7 @@ export default function CreatorHomeScreen() {
                         justifyContent: 'center',
                       }}
                     >
-                      <Text style={{ fontSize: 32 }}>{CATEGORY_EMOJI[cat]}</Text>
+                      <Icon name={CATEGORY_ICON[cat]} size={32} color={tint.fg} />
                     </View>
                     <Text numberOfLines={1} style={{ fontSize: 12.5, fontWeight: '700', color: colors.text, marginTop: 7, letterSpacing: -0.2 }}>
                       {cat}
@@ -369,7 +369,7 @@ export default function CreatorHomeScreen() {
                     borderRadius: 20,
                   }}
                 >
-                  <Text style={{ fontSize: 11.5 }}>{CATEGORY_EMOJI[hero.category]}</Text>
+                  <Icon name={CATEGORY_ICON[hero.category]} size={13} color={INK} />
                   <Text style={{ fontSize: 11.5, fontWeight: '800', color: INK }}>{hero.category}</Text>
                 </View>
                 <View style={{ position: 'absolute', left: 18, right: 18, bottom: 17 }}>
@@ -464,7 +464,9 @@ function BlinkCollabCard({ campaign, onPress }: { campaign: CampaignWithBiz; onP
     >
       <View>
         <CoverImage src={campaign.coverImage} category={campaign.category} radius={14} style={{ width: 92, height: 92 }} />
-        <Text style={{ position: 'absolute', top: 6, left: 6, fontSize: 15 }}>{CATEGORY_EMOJI[campaign.category]}</Text>
+        <View style={{ position: 'absolute', top: 6, left: 6 }}>
+          <Icon name={CATEGORY_ICON[campaign.category]} size={16} color="#fff" />
+        </View>
       </View>
       <View style={{ flex: 1, minWidth: 0 }}>
         <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>

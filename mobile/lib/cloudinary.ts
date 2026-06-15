@@ -9,6 +9,7 @@
  * Pair this with `expo-image-manipulator` compression (Phase 16) before calling,
  * so we never upload more than ~1MB.
  */
+import { Platform } from 'react-native';
 import { api } from './api';
 
 /** Folders the backend's sign route accepts (must match its zod enum). */
@@ -44,8 +45,16 @@ export async function uploadImage(image: LocalImage, folder: UploadFolder): Prom
   const form = new FormData();
   const mime = image.mimeType ?? 'image/jpeg';
   const name = image.fileName ?? `upload.${mime.split('/')[1] ?? 'jpg'}`;
-  // React Native's FormData accepts this {uri,name,type} shape for file parts.
-  form.append('file', { uri: image.uri, name, type: mime } as unknown as Blob);
+  if (Platform.OS === 'web') {
+    // Browsers' native FormData stringifies a plain object to "[object Object]"
+    // (Cloudinary then rejects it as "Unsupported source URL"). Fetch the local
+    // uri (blob:/data:/http:) into a real Blob and append that instead.
+    const blob = await (await fetch(image.uri)).blob();
+    form.append('file', blob, name);
+  } else {
+    // React Native's FormData accepts this {uri,name,type} shape for file parts.
+    form.append('file', { uri: image.uri, name, type: mime } as unknown as Blob);
+  }
   form.append('api_key', signed.apiKey);
   form.append('timestamp', String(signed.timestamp));
   form.append('folder', signed.folder);

@@ -3,7 +3,7 @@
  * number of spots, minimum follower requirement, and freeform tags. These feed the
  * campaign's `deadline`, `spotsTotal`, `minFollowers`, and `tags`.
  */
-import { useState } from 'react';
+import { createElement, useState } from 'react';
 import { Platform, ScrollView, Text, View } from 'react-native';
 import { Pressable } from '@/components/ui/SafePressable';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
@@ -20,6 +20,7 @@ export function Step6({ value, patch }: CampaignStepProps) {
 
   const deadlineDate = value.deadline ? new Date(value.deadline) : null;
   const minDate = new Date(); // can't pick a past deadline
+  const toYMD = (d: Date) => d.toISOString().slice(0, 10); // <input type="date"> wants YYYY-MM-DD
 
   const onPickDate = (event: DateTimePickerEvent, date?: Date) => {
     // Android fires once and closes; iOS stays open (inline spinner).
@@ -58,18 +59,44 @@ export function Step6({ value, patch }: CampaignStepProps) {
           </Text>
           <Icon name="chevD" size={18} color={colors.text3} />
         </Pressable>
-        {showPicker && (
-          <View style={{ marginTop: 8, alignItems: 'center' }}>
-            <DateTimePicker
-              value={deadlineDate ?? minDate}
-              mode="date"
-              minimumDate={minDate}
-              display={Platform.OS === 'ios' ? 'inline' : 'default'}
-              onChange={onPickDate}
-              themeVariant={colors.dark ? 'dark' : 'light'}
-            />
-          </View>
-        )}
+        {showPicker &&
+          (Platform.OS === 'web' ? (
+            // @react-native-community/datetimepicker has no web build, so on web we
+            // render a real HTML date input (rendered as a DOM node by react-native-web).
+            createElement('input', {
+              type: 'date',
+              min: toYMD(minDate),
+              value: deadlineDate ? toYMD(deadlineDate) : '',
+              onChange: (e: { target: { value: string } }) => {
+                const v = e.target.value;
+                if (v) patch({ deadline: new Date(`${v}T00:00:00`).toISOString() });
+                setShowPicker(false);
+              },
+              style: {
+                marginTop: 8,
+                width: '100%',
+                boxSizing: 'border-box',
+                backgroundColor: colors.card,
+                color: colors.text,
+                border: `1px solid ${colors.hair}`,
+                borderRadius: 12,
+                padding: '14px 13px',
+                fontSize: 16,
+                colorScheme: colors.dark ? 'dark' : 'light',
+              },
+            })
+          ) : (
+            <View style={{ marginTop: 8, alignItems: 'center' }}>
+              <DateTimePicker
+                value={deadlineDate ?? minDate}
+                mode="date"
+                minimumDate={minDate}
+                display={Platform.OS === 'ios' ? 'inline' : 'default'}
+                onChange={onPickDate}
+                themeVariant={colors.dark ? 'dark' : 'light'}
+              />
+            </View>
+          ))}
       </Field>
 
       <Field label="Number of spots" hint="How many creators can be accepted for this campaign.">

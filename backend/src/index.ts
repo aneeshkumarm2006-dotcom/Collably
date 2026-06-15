@@ -1,5 +1,12 @@
+import dns from 'node:dns';
 import type { Server } from 'node:http';
 import { createApp } from './app';
+
+// Some local networks (e.g. router DNS at 192.168.1.1) refuse the SRV-record
+// lookups that `mongodb+srv://` requires, which surfaces as
+// `querySrv ECONNREFUSED`. Force Node's resolver to public DNS so Atlas always
+// resolves regardless of the local network.
+dns.setServers(['8.8.8.8', '1.1.1.1']);
 import { env } from './lib/env';
 import { connectDB, disconnectDB } from './lib/db';
 

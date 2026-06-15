@@ -20,7 +20,11 @@ export default function NewCampaignScreen() {
     setSubmitting(true);
     try {
       await api.post('/campaigns', { ...payload, status });
-      router.back();
+      // Pop back to the campaigns tab when there's history (native push), else
+      // navigate there directly — guards against "GO_BACK not handled" when this
+      // screen was opened cold (e.g. a deep link or web refresh) with no stack.
+      if (router.canGoBack()) router.back();
+      else router.replace('/(business)/(tabs)/campaigns');
     } catch (err) {
       setSubmitting(false);
       Alert.alert('Could not save', isApiError(err) ? err.message : 'Could not create the campaign.');

@@ -17,7 +17,7 @@ import axios, {
   type AxiosInstance,
   type InternalAxiosRequestConfig,
 } from 'axios';
-import { API_BASE_URL, USE_MOCKS } from './env';
+import { API_BASE_URL } from './env';
 import { getAccessToken, getRefreshToken, setTokens, forceSignOut } from './auth';
 import { showToast } from './toast';
 
@@ -40,15 +40,6 @@ export const api: AxiosInstance = axios.create({
   timeout: 20000,
   headers: { 'Content-Type': 'application/json' },
 });
-
-// Demo/showcase mode: serve every request from the in-memory mock world instead
-// of a live backend. The request interceptor below still runs (so the bearer
-// token reaches the adapter), but no network call is made. Lazy `require` keeps
-// the mock data out of the bundle when `USE_MOCKS` is false.
-if (USE_MOCKS) {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  api.defaults.adapter = require('./mockApi').mockAdapter;
-}
 
 // --- Request: attach bearer token --------------------------------------------
 

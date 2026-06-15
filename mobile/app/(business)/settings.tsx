@@ -6,7 +6,7 @@
  * is business-scoped (campaigns + applications cascade server-side).
  */
 import { useRef, useState } from 'react';
-import { Alert, ScrollView, Text, TextInput, View } from 'react-native';
+import { ScrollView, Text, TextInput, View } from 'react-native';
 import { Pressable } from '@/components/ui/SafePressable';
 import { useRouter } from 'expo-router';
 import { Header, ThemeModeRow } from '@/components/shared';
@@ -45,18 +45,9 @@ export default function BusinessSettingsScreen() {
     }
   };
 
-  const logout = () => {
-    Alert.alert('Log out?', 'You can log back in any time.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Log out',
-        style: 'destructive',
-        onPress: async () => {
-          await unregisterPushToken();
-          await signOut();
-        },
-      },
-    ]);
+  const logout = async () => {
+    await unregisterPushToken();
+    await signOut();
   };
 
   return (
@@ -229,17 +220,6 @@ function DeleteAccountSheet({ sheetRef, onDeleted }: { sheetRef: React.RefObject
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const confirmDelete = () => {
-    Alert.alert(
-      'Delete account?',
-      'This permanently removes your business profile, campaigns, and applications. This cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete', style: 'destructive', onPress: () => void submit() },
-      ],
-    );
-  };
-
   const submit = async () => {
     setError(null);
     setBusy(true);
@@ -261,7 +241,7 @@ function DeleteAccountSheet({ sheetRef, onDeleted }: { sheetRef: React.RefObject
         </Text>
         <SheetInput value={password} onChangeText={setPassword} placeholder="Password" secureTextEntry colors={colors} />
         {error && <Text style={{ fontSize: 13, color: colors.danger }}>{error}</Text>}
-        <Button block variant="danger" loading={busy} icon="trash" onPress={confirmDelete}>
+        <Button block variant="danger" loading={busy} icon="trash" onPress={() => void submit()}>
           Delete my account
         </Button>
       </View>

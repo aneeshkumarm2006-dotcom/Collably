@@ -14,22 +14,22 @@ import { Icon, type IconName } from '@/components/ui';
 import { useTheme } from '@/components/ThemeProvider';
 import type { Category } from '@/constants';
 
-/** Category → emoji for the quick-browse tiles (maps the app's full category set). */
-export const CATEGORY_EMOJI: Record<Category, string> = {
-  Restaurant: '🍽️',
-  Cafe: '☕',
-  'Food & Beverage': '🍸',
-  Fashion: '👗',
-  Beauty: '💄',
-  'Salon & Spa': '💆',
-  'Health & Wellness': '🌿',
-  Fitness: '🧘',
-  Tech: '📱',
-  Gaming: '🎮',
-  Travel: '✈️',
-  'Home & Lifestyle': '🛋️',
-  Education: '📚',
-  Other: '✨',
+/** Category → outline icon for the quick-browse tiles (maps the app's full category set). */
+export const CATEGORY_ICON: Record<Category, IconName> = {
+  Restaurant: 'utensils',
+  Cafe: 'coffee',
+  'Food & Beverage': 'glass',
+  Fashion: 'shirt',
+  Beauty: 'lipstick',
+  'Salon & Spa': 'scissors',
+  'Health & Wellness': 'leaf',
+  Fitness: 'dumbbell',
+  Tech: 'phone',
+  Gaming: 'gamepad',
+  Travel: 'plane',
+  'Home & Lifestyle': 'sofa',
+  Education: 'book',
+  Other: 'sparkles',
 };
 
 /** Category → soft tile tint [light bg, dark bg, foreground]. */

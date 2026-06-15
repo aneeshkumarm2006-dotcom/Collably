@@ -1,6 +1,6 @@
 /** Barrel for the premium home building blocks. Import from `@/components/home`. */
 export {
-  CATEGORY_EMOJI,
+  CATEGORY_ICON,
   categoryTint,
   Press,
   YellowHeader,

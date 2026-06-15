@@ -86,10 +86,14 @@ export function CampaignFormScreen({
     setError(null);
     setStep((s) => Math.min(s + 1, CAMPAIGN_STEP_COUNT));
   };
+  const dismiss = () => {
+    if (router.canGoBack()) router.back();
+    else router.replace('/(business)/(tabs)/campaigns');
+  };
   const goBack = () => {
     setError(null);
     if (step > 1) setStep((s) => s - 1);
-    else router.back();
+    else dismiss();
   };
 
   const submit = (status: 'Draft' | 'Active') => onSubmit(toCampaignPayload(form), status);
@@ -99,7 +103,7 @@ export function CampaignFormScreen({
       style={{ flex: 1, backgroundColor: colors.bg }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <Header title={title} onBack={() => router.back()} variant="card" />
+      <Header title={title} onBack={dismiss} variant="card" />
 
       <View style={{ paddingHorizontal: 20, paddingTop: 14, paddingBottom: 10 }}>
         <StepperProgress current={step} total={CAMPAIGN_STEP_COUNT} stepTitle={CAMPAIGN_STEP_TITLES[step - 1]} />
