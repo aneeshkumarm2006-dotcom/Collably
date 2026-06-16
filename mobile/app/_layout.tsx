@@ -62,7 +62,7 @@ export default function RootLayout() {
   // Minimum time the branded CollabSpace splash (app/index.tsx) stays visible
   // before the auth gate routes away — otherwise it flashes for ~1 frame.
   // TEMP: 5s for review; drop back to ~1500 once confirmed.
-  const SPLASH_MIN_MS = 5000;
+  const SPLASH_MIN_MS = __DEV__ ? 500 : 5000;
   const [minElapsed, setMinElapsed] = useState(false);
 
   // Hide the native splash once fonts are ready AND auth has resolved — this
