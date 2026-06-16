@@ -168,6 +168,27 @@ auto-link and can crash standalone builds even when never imported.
 
 ---
 
+## 12. Rich demo data (images + cards) in the live backend
+**Goal:** the live app (real backend) was showing plain seed data; we wanted the
+original image-rich "CollabSpace" world (Saffron Table / Bloom Beauty / etc. with
+cover photos, logos, avatars) but only a couple of logins to remember.
+**How:** rewrote `backend/src/scripts/seed.ts` to insert the app's original mock
+dataset (recovered from git commit `6e2cd87:mobile/lib/mockData.ts`) mapped to the
+Mongoose models — 12 users, 5 businesses, 6 creators, 12 image-rich campaigns, 12
+applications (all lifecycle states), 7 notifications, 3 reports. String ids are
+wired to real ObjectIds via lookup Maps; notification deepLinks rebuilt with real
+ids. Ran `npm run build && npm run seed` against Atlas (reads `backend/.env`).
+**Key facts:**
+- **No APK rebuild needed** — the app fetches from the backend, so re-seeding the
+  DB makes the existing v0.1.2 APK show the new data on reload.
+- Advertised logins (password `Password123`): `priya@collably.app` (creator),
+  `hello@saffrontable.in` (business), `admin@collably.app`. Other accounts exist as
+  data so feeds/applicant lists look full.
+- Seed is **destructive** (wipes + reseeds); re-run any time to reset the demo.
+- Images are Unsplash URLs → load online (need internet, not offline).
+
+---
+
 ### Verifying on the iOS simulator (no tap tooling available)
 - Drive screens with deep links after a cold restart:
   `xcrun simctl terminate <UDID> host.exp.Exponent` then
