@@ -17,7 +17,7 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://api.collably.app/api"
+        "EXPO_PUBLIC_API_URL": "https://collably-0q2s.onrender.com/api"
       }
     },
     "production": {
