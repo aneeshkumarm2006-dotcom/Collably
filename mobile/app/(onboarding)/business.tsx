@@ -203,7 +203,7 @@ export default function BusinessOnboardingScreen() {
                 onChangeText={(state) => setLoc({ state })}
                 options={REGIONS}
                 icon="mappin"
-                placeholder="e.g. Karnataka"
+                placeholder="e.g. Ontario"
               />
             </Field>
             <Field label="Country">
@@ -212,7 +212,7 @@ export default function BusinessOnboardingScreen() {
                 onChangeText={(country) => setLoc({ country })}
                 options={COUNTRIES}
                 icon="mappin"
-                placeholder="e.g. India"
+                placeholder="e.g. Canada"
               />
             </Field>
             <Field label="Website (optional)">

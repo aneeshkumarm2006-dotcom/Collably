@@ -122,7 +122,7 @@ async function verifyHttpFlow(): Promise<void> {
     // Profiles (upsert via PUT, which also marks the user onboarded).
     const bizProfile = await call('PUT', '/profile/business', {
       token: bizToken,
-      body: { businessName: 'Route Cafe', category: 'Cafe', location: { city: 'Bengaluru' } },
+      body: { businessName: 'Route Cafe', category: 'Cafe', location: { city: 'Toronto' } },
     });
     assert(bizProfile.status === 201, 'business profile created (201)');
     const crtProfile = await call('PUT', '/profile/creator', {
@@ -130,7 +130,7 @@ async function verifyHttpFlow(): Promise<void> {
       body: {
         bio: 'Foodie',
         niche: ['Food', 'Lifestyle'],
-        location: { city: 'Bengaluru' },
+        location: { city: 'Toronto' },
         socialHandles: { instagram: { handle: '@routecrt', followerCount: 12000 } },
         contentTypes: ['Reel'],
       },
@@ -162,12 +162,12 @@ async function verifyHttpFlow(): Promise<void> {
         title: 'Free Brunch Reel',
         description: 'Brunch on us for a Reel.',
         category: 'Cafe',
-        reward: { type: 'Experience', description: 'Brunch for two', estimatedValue: 1500 },
+        reward: { type: 'Experience', description: 'Brunch for two', estimatedValue: 80 },
         deliverables: [{ platform: 'Instagram', contentType: 'Reel', quantity: 1 }],
         spotsTotal: 2,
         minFollowers: 1000,
         tags: ['Food', 'Lifestyle'],
-        location: { city: 'Bengaluru' },
+        location: { city: 'Toronto' },
         status: 'Draft',
       },
     });

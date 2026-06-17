@@ -43,7 +43,7 @@ export function Step3({ value, patch }: CampaignStepProps) {
               onChangeText={(state) => setLoc({ state })}
               options={REGIONS}
               icon="mappin"
-              placeholder="e.g. Karnataka"
+              placeholder="e.g. Ontario"
             />
           </Field>
           <Field label="Country">
@@ -52,7 +52,7 @@ export function Step3({ value, patch }: CampaignStepProps) {
               onChangeText={(country) => setLoc({ country })}
               options={COUNTRIES}
               icon="mappin"
-              placeholder="e.g. India"
+              placeholder="e.g. Canada"
             />
           </Field>
         </>

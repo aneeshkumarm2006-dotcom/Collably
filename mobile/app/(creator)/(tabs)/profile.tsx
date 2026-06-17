@@ -143,7 +143,7 @@ export default function CreatorProfileScreen() {
               <StatCard icon="checkcircle" value={data?.totalCollabsCompleted ?? 0} label="Collabs done" tone="success" />
             </View>
             <View style={{ flex: 1 }}>
-              <StatCard icon="gift" value={`₹${formatCompactNumber(data?.totalRewardsEarned ?? 0)}`} label="Earned" tone="money" />
+              <StatCard icon="gift" value={`$${formatCompactNumber(data?.totalRewardsEarned ?? 0)}`} label="Earned" tone="money" />
             </View>
           </View>
 

@@ -83,7 +83,7 @@ export function Step7({
         <SummaryRow label="Spots" value={String(value.spotsTotal)} colors={colors} />
         <SummaryRow
           label="Min followers"
-          value={value.minFollowers > 0 ? value.minFollowers.toLocaleString('en-IN') : 'Open to all'}
+          value={value.minFollowers > 0 ? value.minFollowers.toLocaleString('en-CA') : 'Open to all'}
           colors={colors}
           last={value.tags.length === 0}
         />

@@ -350,7 +350,7 @@ export default function CampaignDetailScreen() {
           <TextArea
             value={pitch}
             onChangeText={setPitch}
-            placeholder="e.g. I'm a Bengaluru food creator with an engaged audience that loves discovering new cafes…"
+            placeholder="e.g. I'm a Toronto food creator with an engaged audience that loves discovering new cafes…"
             maxLength={2000}
           />
           {applyError && <Text style={{ fontSize: 13, color: colors.danger }}>{applyError}</Text>}

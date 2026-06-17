@@ -32,7 +32,7 @@ export function Step4({ value, patch }: CampaignStepProps) {
         />
       </Field>
 
-      <Field label="Estimated value (₹)" hint="Optional. Shown as the reward value and used to sort by reward.">
+      <Field label="Estimated value (CAD $)" hint="Optional. Shown as the reward value and used to sort by reward.">
         <TextField
           value={value.reward.estimatedValue ? String(value.reward.estimatedValue) : ''}
           onChangeText={(t) => {

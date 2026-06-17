@@ -185,7 +185,7 @@ export default function CreatorHomeScreen() {
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={{ fontSize: 12, color: colors.text2, fontWeight: '600' }}>Rewards earned</Text>
                 <Text style={{ fontFamily: 'monospace', fontSize: 26, fontWeight: '700', color: colors.brandGreenText, letterSpacing: -0.8 }}>
-                  ₹{formatCompactNumber(earned)}
+                  ${formatCompactNumber(earned)}
                 </Text>
               </View>
               <Icon name="chevR" size={20} color={colors.text3} />

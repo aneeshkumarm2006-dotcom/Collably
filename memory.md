@@ -43,7 +43,7 @@ fixed `Button` and `home/Press` directly. **Rule:** never put
 **Problem:** Every screen needs API data; there's no server running.
 **Fix:** Demo/mock mode, ON by default (`USE_MOCKS` in `lib/env.ts`).
 `lib/api.ts` swaps `api.defaults.adapter` for `lib/mockApi.ts`, which serves
-`lib/mockData.ts` (a coherent India-locale dataset) and mutates it in place so
+`lib/mockData.ts` (a coherent Canada-locale dataset) and mutates it in place so
 writes persist for the session. Login email picks the role (admin / business /
 creator). Set `EXPO_PUBLIC_USE_MOCKS=false` to hit a real backend.
 
@@ -55,7 +55,7 @@ button (Submit/Apply) off the card edge.
 **Fix:** In `app/(creator)/(tabs)/home.tsx`, the reward `Text` now gets
 `flex:1`/`flexShrink:1` + `numberOfLines={1}` (truncates with …) and the button
 gets `flexShrink:0` so it's always fully visible. Also de-duplicated reward
-wording in mock data (was "₹1,500 café voucher worth ₹1,500").
+wording in mock data (was "$80 café voucher worth $80").
 
 ---
 
@@ -111,15 +111,15 @@ the splash (`app/index.tsx`).
 
 ---
 
-## 10. Location pickers were India-only
-**Problem:** City/State/Country autocomplete only suggested Indian locations.
-**Fix:** `lib/locations.ts` is now global — `CITIES` carries `{city, state,
-country}` for India **plus** major international cities (US, UK, Canada, Australia,
+## 10. Location pickers (Canada-first, global)
+**Problem:** City/Province/Country autocomplete needed Canadian locations.
+**Fix:** `lib/locations.ts` is Canada-first but global — `CITIES` carries `{city,
+state, country}` for Canada **plus** major international cities (US, UK, Australia,
 UAE/Gulf, Asia-Pacific, Europe). Picking a city auto-fills its **region and
-country** (`locationForCity`). `REGIONS` (India states + international regions) and
-a broad `COUNTRIES` list feed the State and Country fields. The autocomplete still
-allows free text, so anything not listed can be typed. Wired into creator/business
-onboarding and the campaign-creation Step 3.
+country** (`locationForCity`). `REGIONS` (Canadian provinces/territories +
+international regions) and a broad `COUNTRIES` list feed the Province/State and
+Country fields. The autocomplete still allows free text, so anything not listed can
+be typed. Wired into creator/business onboarding and the campaign-creation Step 3.
 
 ---
 

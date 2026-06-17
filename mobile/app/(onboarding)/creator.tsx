@@ -193,7 +193,7 @@ export default function CreatorOnboardingScreen() {
               <TextArea
                 value={form.bio}
                 onChangeText={(bio) => patch({ bio })}
-                placeholder="e.g. Bengaluru food + lifestyle creator sharing honest reviews…"
+                placeholder="e.g. Toronto food + lifestyle creator sharing honest reviews…"
                 maxLength={2000}
               />
             </Field>
@@ -230,7 +230,7 @@ export default function CreatorOnboardingScreen() {
                 onChangeText={(state) => setLoc({ state })}
                 options={REGIONS}
                 icon="mappin"
-                placeholder="e.g. Karnataka"
+                placeholder="e.g. Ontario"
               />
             </Field>
             <Field label="Country">
@@ -239,7 +239,7 @@ export default function CreatorOnboardingScreen() {
                 onChangeText={(country) => setLoc({ country })}
                 options={COUNTRIES}
                 icon="mappin"
-                placeholder="e.g. India"
+                placeholder="e.g. Canada"
               />
             </Field>
           </>

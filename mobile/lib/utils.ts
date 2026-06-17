@@ -92,11 +92,11 @@ export function formatRelativeTime(value: string | Date): string {
 
 // --- Domain helpers -----------------------------------------------------------
 
-/** One-line reward summary, e.g. "Free product worth ₹2,000" / "Experience". */
+/** One-line reward summary, e.g. "Free product worth $2,000" / "Experience". */
 export function formatReward(reward: CampaignReward): string {
   const label = reward.description || reward.type;
   if (typeof reward.estimatedValue === 'number' && reward.estimatedValue > 0) {
-    return `${label} worth ₹${reward.estimatedValue.toLocaleString('en-IN')}`;
+    return `${label} worth $${reward.estimatedValue.toLocaleString('en-CA')}`;
   }
   return label;
 }

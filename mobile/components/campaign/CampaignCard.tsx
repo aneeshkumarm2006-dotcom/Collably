@@ -39,7 +39,7 @@ const PLATFORM_ICON: Record<string, IconName> = {
 function rewardLabel(campaign: Campaign): string {
   const { reward } = campaign;
   if (typeof reward.estimatedValue === 'number' && reward.estimatedValue > 0) {
-    return `₹${reward.estimatedValue.toLocaleString('en-IN')}`;
+    return `$${reward.estimatedValue.toLocaleString('en-CA')}`;
   }
   return 'Perk';
 }

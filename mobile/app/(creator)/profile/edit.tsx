@@ -195,13 +195,13 @@ function EditForm({ initial }: { initial: Form }) {
 
         <SectionLabel colors={colors}>Location</SectionLabel>
         <Field label="City">
-          <TextField value={form.location.city ?? ''} onChangeText={(city) => setLoc({ city })} placeholder="e.g. Bengaluru" autoCapitalize="words" />
+          <TextField value={form.location.city ?? ''} onChangeText={(city) => setLoc({ city })} placeholder="e.g. Toronto" autoCapitalize="words" />
         </Field>
         <Field label="State / Region">
-          <TextField value={form.location.state ?? ''} onChangeText={(state) => setLoc({ state })} placeholder="e.g. Karnataka" autoCapitalize="words" />
+          <TextField value={form.location.state ?? ''} onChangeText={(state) => setLoc({ state })} placeholder="e.g. Ontario" autoCapitalize="words" />
         </Field>
         <Field label="Country">
-          <TextField value={form.location.country ?? ''} onChangeText={(country) => setLoc({ country })} placeholder="e.g. India" autoCapitalize="words" />
+          <TextField value={form.location.country ?? ''} onChangeText={(country) => setLoc({ country })} placeholder="e.g. Canada" autoCapitalize="words" />
         </Field>
 
         <SectionLabel colors={colors}>Instagram</SectionLabel>
