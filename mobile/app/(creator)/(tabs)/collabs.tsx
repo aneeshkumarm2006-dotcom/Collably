@@ -5,7 +5,7 @@
  */
 import { useCallback } from 'react';
 import { FlatList, RefreshControl, View } from 'react-native';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Header, NotificationBell } from '@/components/shared';
 import { ApplicationCard } from '@/components/creator';
@@ -70,19 +70,32 @@ export default function CollabsScreen() {
                   router.push({ pathname: '/(creator)/collabs/[applicationId]', params: { applicationId: item._id } })
                 }
                 footer={
-                  <Button
-                    block
-                    variant={submitted ? 'outline' : 'solid'}
-                    icon={submitted ? 'edit' : 'upload'}
-                    onPress={() =>
-                      router.push({
-                        pathname: '/(creator)/collabs/[applicationId]/submit',
-                        params: { applicationId: item._id },
-                      })
-                    }
-                  >
-                    {submitted ? 'Update submission' : 'Submit content'}
-                  </Button>
+                  <View style={{ flexDirection: 'row', gap: 10 }}>
+                    <View style={{ flex: 1 }}>
+                      <Button
+                        block
+                        variant={submitted ? 'outline' : 'solid'}
+                        icon={submitted ? 'edit' : 'upload'}
+                        onPress={() =>
+                          router.push({
+                            pathname: '/(creator)/collabs/[applicationId]/submit',
+                            params: { applicationId: item._id },
+                          })
+                        }
+                      >
+                        {submitted ? 'Update submission' : 'Submit content'}
+                      </Button>
+                    </View>
+                    {item.conversationId && (
+                      <Button
+                        variant="tonal"
+                        icon="message"
+                        onPress={() => router.push(`/(creator)/chat/${item.conversationId}` as Href)}
+                      >
+                        Message
+                      </Button>
+                    )}
+                  </View>
                 }
               />
             );

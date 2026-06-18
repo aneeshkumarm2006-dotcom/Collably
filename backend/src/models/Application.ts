@@ -20,6 +20,8 @@ export interface ApplicationDoc extends Document<Types.ObjectId> {
   verifiedAt?: Date;
   verifiedBy?: Types.ObjectId;
   businessNote?: string;
+  /** Chat thread for this collab — set when the application is accepted. */
+  conversationId?: Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -47,6 +49,9 @@ const applicationSchema = new Schema<ApplicationDoc>(
     verifiedAt: { type: Date },
     verifiedBy: { type: Schema.Types.ObjectId, ref: 'User' },
     businessNote: { type: String, trim: true },
+
+    // Chat: the conversation opened when this application is accepted.
+    conversationId: { type: Schema.Types.ObjectId, ref: 'Conversation' },
   },
   { timestamps: true },
 );

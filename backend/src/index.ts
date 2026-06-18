@@ -9,6 +9,7 @@ import { createApp } from './app';
 dns.setServers(['8.8.8.8', '1.1.1.1']);
 import { env } from './lib/env';
 import { connectDB, disconnectDB } from './lib/db';
+import { initRealtime, shutdownRealtime } from './lib/realtime';
 
 /** Entry point: connect the DB (non-fatal), then start the HTTP server. */
 async function main(): Promise<void> {
@@ -22,6 +23,9 @@ async function main(): Promise<void> {
     console.log(`[server] health check: http://localhost:${env.port}/api/health`);
   });
 
+  // Attach the Socket.io chat transport to the same HTTP server.
+  initRealtime(server);
+
   registerShutdown(server);
 }
 
@@ -32,8 +36,10 @@ function registerShutdown(server: Server): void {
     if (shuttingDown) return;
     shuttingDown = true;
     console.log(`\n[server] ${signal} received — shutting down gracefully`);
-    server.close(() => {
-      void disconnectDB().finally(() => process.exit(0));
+    void shutdownRealtime().finally(() => {
+      server.close(() => {
+        void disconnectDB().finally(() => process.exit(0));
+      });
     });
     // Force-exit if cleanup hangs.
     setTimeout(() => process.exit(1), 10_000).unref();

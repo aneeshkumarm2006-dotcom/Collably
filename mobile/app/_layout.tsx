@@ -38,6 +38,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
 import { configureNotificationHandler } from '@/lib/notifications';
 import { usePushNotifications } from '@/lib/usePushNotifications';
+import { useChatSocket } from '@/lib/useChatSocket';
 
 // Keep the native splash visible until fonts + session are ready.
 void SplashScreen.preventAutoHideAsync();
@@ -82,6 +83,7 @@ export default function RootLayout() {
   const ready = booted && minElapsed;
   useAuthGate(ready);
   usePushNotifications(ready);
+  useChatSocket(ready);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

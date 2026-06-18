@@ -255,16 +255,16 @@ attached alongside the id when the ref is populated.
 | GET    | `/api/campaigns`            | Bearer¹  | Discovery feed (filters/sort/ranking/pagination — see below)       |
 | POST   | `/api/campaigns`            | business | Create; `status` `Draft` (default) or `Active`                     |
 | GET    | `/api/campaigns/:id`        | Bearer¹  | Single campaign + its business                                     |
-| PUT    | `/api/campaigns/:id`        | business | Owner only; can't shrink `spotsTotal` below accepted count (`409`) |
+| PUT    | `/api/campaigns/:id`        | business | Owner only                                                         |
 | DELETE | `/api/campaigns/:id`        | business | Owner or admin; cascades the campaign's applications               |
 | PATCH  | `/api/campaigns/:id/status` | business | Enforces the PRD §12 transition machine (`409` on illegal)         |
-| POST   | `/api/campaigns/:id/apply`  | creator  | One-apply-per-campaign; requires `Active` + spots left (PRD §11)   |
+| POST   | `/api/campaigns/:id/apply`  | creator  | One-apply-per-campaign; requires `Active` (auto-closes on 1st approval) |
 
 **Discovery query params** (PRD §13, all optional): `category`, `rewardType`,
 `tags` (comma-separated `$in`); `platform` (matches that platform or `Any`);
 `location` (`"Remote"` → remote campaigns, else city match); `followersBucket`
 (`under1k`\|`1k-10k`\|`10k-50k`\|`50k+`); `q` (title/description search);
-`sort` (`relevance`\|`newest`\|`deadline`\|`most_applied`\|`fewest_spots`);
+`sort` (`relevance`\|`newest`\|`deadline`\|`most_applied`);
 `businessId` (one business's public campaigns); `mine=true` (a business's own
 campaigns across all statuses, `+status`). Public callers only ever see non-spam
 `Active` campaigns. For a signed-in **creator** on the default sort, results are

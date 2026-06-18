@@ -85,7 +85,6 @@ const campaignCreateSchema = z.object({
   reward: rewardSchema,
   deliverables: z.array(deliverableSchema).max(20).default([]),
   deadline: z.coerce.date().optional(),
-  spotsTotal: z.coerce.number().int().min(1, 'at least one spot is required').max(10000),
   minFollowers: z.coerce.number().int().min(0).default(0),
   tags: z.array(z.string().trim().max(40)).max(30).default([]),
   coverImage: z.string().trim().max(2048).nullable().optional(),
@@ -138,9 +137,7 @@ const listQuerySchema = z.object({
     .string()
     .optional()
     .transform((v) => v === 'true'),
-  sort: z
-    .enum(['relevance', 'newest', 'deadline', 'reward', 'most_applied', 'fewest_spots'])
-    .optional(),
+  sort: z.enum(['relevance', 'newest', 'deadline', 'reward', 'most_applied']).optional(),
 });
 
 /** Split a `a,b,c` query value into a trimmed, non-empty list. */
@@ -270,8 +267,6 @@ function sortSpec(sort?: string): Record<string, 1 | -1> {
       return { isFeatured: -1, 'reward.estimatedValue': -1 };
     case 'most_applied':
       return { isFeatured: -1, applicationsCount: -1 };
-    case 'fewest_spots':
-      return { isFeatured: -1, spotsRemaining: 1 };
     case 'newest':
     default:
       return { isFeatured: -1, createdAt: -1 };
@@ -407,7 +402,6 @@ router.post(
     const campaign = await Campaign.create({
       ...data,
       businessId: profile._id,
-      spotsRemaining: data.spotsTotal,
     });
 
     await BusinessProfile.updateOne({ _id: profile._id }, { $inc: { totalCampaigns: 1 } });
@@ -452,19 +446,6 @@ router.put(
     const data = campaignUpdateSchema.parse(req.body);
     const campaign = await findCampaignOr404(id);
     await assertOwnerOrAdmin(campaign, req);
-
-    // Keep spotsRemaining consistent if spotsTotal changes: never drop below the
-    // number already accepted (PRD §11 — a business can't un-accept by shrinking).
-    if (data.spotsTotal !== undefined && data.spotsTotal !== campaign.spotsTotal) {
-      const accepted = await Application.countDocuments({
-        campaignId: campaign._id,
-        status: { $in: ['Accepted', 'Completed'] },
-      });
-      if (data.spotsTotal < accepted) {
-        throw new AppError(409, `Cannot set spots below the ${accepted} already accepted`);
-      }
-      campaign.spotsRemaining = data.spotsTotal - accepted;
-    }
 
     // Fill address ⇄ coordinates server-side when geocoding is configured, and
     // drop a stale carried-over address if the pin moved. Capture the prior pin
@@ -553,12 +534,10 @@ router.post(
     const { pitch } = applySchema.parse(req.body);
     const campaign = await findCampaignOr404(id);
 
-    // PRD §11: only Active campaigns with spots remaining accept applications.
+    // Only Active campaigns accept applications. A campaign auto-closes on the
+    // business's first approval, so a Closed campaign is no longer open to apply.
     if (campaign.status !== 'Active') {
       throw new AppError(409, `This campaign is ${campaign.status} and not accepting applications`);
-    }
-    if (campaign.spotsRemaining <= 0) {
-      throw new AppError(409, 'This campaign has no spots remaining');
     }
 
     const creator = await CreatorProfile.findOne({ userId: req.user!._id });

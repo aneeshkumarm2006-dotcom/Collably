@@ -273,14 +273,13 @@ export function revisionRequestedEmail(p: {
 export function campaignExpiringEmail(p: {
   businessName: string;
   campaignTitle: string;
-  spotsRemaining: number;
 }): EmailContent {
   return layout({
     heading: 'Your campaign is expiring soon',
     bodyHtml: `<strong>${esc(
       p.campaignTitle,
-    )}</strong> ends in about 48 hours with <strong>${p.spotsRemaining}</strong> spot(s) still open. Review pending applications before it closes.`,
-    bodyText: `"${p.campaignTitle}" ends in ~48 hours with ${p.spotsRemaining} spot(s) open. Review pending applications before it closes.`,
+    )}</strong> ends in about 48 hours. Review pending applications before it closes.`,
+    bodyText: `"${p.campaignTitle}" ends in ~48 hours. Review pending applications before it closes.`,
     cta: { label: 'Review applications', url: BRAND.scheme },
   });
 }

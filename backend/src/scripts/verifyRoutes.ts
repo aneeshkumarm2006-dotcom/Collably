@@ -149,7 +149,6 @@ async function verifyHttpFlow(): Promise<void> {
         description: 'y',
         category: 'Cafe',
         reward: { type: 'Product', description: 'z' },
-        spotsTotal: 1,
       },
     });
     assert(forbidden.status === 403, 'creator blocked from POST /campaigns');
@@ -164,7 +163,6 @@ async function verifyHttpFlow(): Promise<void> {
         category: 'Cafe',
         reward: { type: 'Experience', description: 'Brunch for two', estimatedValue: 80 },
         deliverables: [{ platform: 'Instagram', contentType: 'Reel', quantity: 1 }],
-        spotsTotal: 2,
         minFollowers: 1000,
         tags: ['Food', 'Lifestyle'],
         location: { city: 'Toronto' },
@@ -211,7 +209,7 @@ async function verifyHttpFlow(): Promise<void> {
     assert(dupApply.status === 409, 'double-apply blocked (409)');
     ok('apply: 201 then double-apply 409');
 
-    // Business lists applications, then accepts (consumes a spot).
+    // Business lists applications, then accepts (auto-closes the campaign).
     const bizApps = await call('GET', '/applications', { token: bizToken });
     assert((bizApps.body.data as Json[]).length === 1, 'business sees the application');
     const accept = await call('PATCH', `/applications/${applicationId}`, {
@@ -221,10 +219,10 @@ async function verifyHttpFlow(): Promise<void> {
     assert(accept.status === 200, 'application accepted');
     const afterAccept = await call('GET', `/campaigns/${campaignId}`);
     assert(
-      (afterAccept.body.campaign as Json).spotsRemaining === 1,
-      'a spot was consumed on accept',
+      (afterAccept.body.campaign as Json).status === 'Closed',
+      'campaign auto-closed on first approval',
     );
-    ok('accept: 200 + spotsRemaining decremented');
+    ok('accept: 200 + campaign auto-closed (Active→Closed)');
 
     // Creator submits, business verifies → Completed + counters bump.
     const submit = await call('POST', `/applications/${applicationId}/submit`, {

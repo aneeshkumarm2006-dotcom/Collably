@@ -5,5 +5,7 @@ export * from './BusinessProfile';
 export * from './CreatorProfile';
 export * from './Campaign';
 export * from './Application';
+export * from './Conversation';
+export * from './Message';
 export * from './Notification';
 export * from './Report';

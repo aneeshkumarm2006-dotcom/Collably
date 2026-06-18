@@ -18,8 +18,10 @@ export type CampaignStatus = (typeof CAMPAIGN_STATUSES)[number];
 export const CAMPAIGN_STATUS_TRANSITIONS: Record<CampaignStatus, readonly CampaignStatus[]> = {
   Draft: ['Active'],
   Active: ['Paused', 'Closed', 'Completed'],
-  Paused: ['Active', 'Completed'],
-  Closed: [],
+  Paused: ['Active', 'Closed', 'Completed'],
+  // A campaign auto-closes on first approval; it can still be wrapped up to
+  // Completed once all approved collabs are verified.
+  Closed: ['Completed'],
   Completed: [],
 };
 

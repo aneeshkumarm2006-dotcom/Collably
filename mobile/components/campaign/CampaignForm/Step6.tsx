@@ -1,7 +1,8 @@
 /**
  * Step 6 — Settings (PRD §7.4): application deadline (native DateTimePicker),
- * number of spots, minimum follower requirement, and freeform tags. These feed the
- * campaign's `deadline`, `spotsTotal`, `minFollowers`, and `tags`.
+ * minimum follower requirement, and freeform tags. These feed the campaign's
+ * `deadline`, `minFollowers`, and `tags`. (There's no capacity to set — a business
+ * approves as many applicants as it wants.)
  */
 import { createElement, useState } from 'react';
 import { Platform, ScrollView, Text, View } from 'react-native';
@@ -10,7 +11,7 @@ import DateTimePicker, { type DateTimePickerEvent } from '@react-native-communit
 import { useTheme } from '@/components/ThemeProvider';
 import { formatDate } from '@/lib/utils';
 import { Icon, TagChip } from '@/components/ui';
-import { Field, TextField, NumberStepper } from './fields';
+import { Field, TextField } from './fields';
 import type { CampaignStepProps } from './Step1';
 
 export function Step6({ value, patch }: CampaignStepProps) {
@@ -97,10 +98,6 @@ export function Step6({ value, patch }: CampaignStepProps) {
               />
             </View>
           ))}
-      </Field>
-
-      <Field label="Number of spots" hint="How many creators can be accepted for this campaign.">
-        <NumberStepper value={value.spotsTotal} onChange={(spotsTotal) => patch({ spotsTotal })} min={1} max={500} />
       </Field>
 
       <Field label="Minimum followers" hint="0 = open to everyone (great for UGC creators).">

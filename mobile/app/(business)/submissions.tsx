@@ -158,7 +158,7 @@ export default function SubmissionsScreen() {
         <View style={{ paddingHorizontal: 20, paddingTop: 8, gap: 14 }}>
           <Text style={{ fontSize: 14, color: colors.text2, lineHeight: 20 }}>
             {pending?.action === 'fail'
-              ? "Let the creator know why this collab didn't work out (optional). The spot is returned to the campaign."
+              ? "Let the creator know why this collab didn't work out (optional)."
               : 'Tell the creator what to change. They can resubmit after revising (optional).'}
           </Text>
           <TextArea value={note} onChangeText={setNote} placeholder="Add a note…" maxLength={1000} />

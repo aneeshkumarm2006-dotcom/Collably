@@ -125,7 +125,6 @@ function checkEmailTemplates(): void {
     campaign_expiring: campaignExpiringEmail({
       businessName: 'Bean Scene',
       campaignTitle: 'Free brunch',
-      spotsRemaining: 2,
     }),
     new_matching_campaign: newMatchingCampaignEmail({
       creatorName: 'Ada',

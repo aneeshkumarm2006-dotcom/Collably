@@ -26,4 +26,7 @@ export interface Application extends Timestamped {
   verifiedAt?: ISODateString;
   verifiedBy?: ID; // userId of the verifying business user
   businessNote?: string;
+
+  /** Set when the application is accepted — the chat thread for this collab. */
+  conversationId?: ID; // ref: Conversation
 }

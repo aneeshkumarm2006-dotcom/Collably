@@ -61,8 +61,6 @@ export interface Campaign extends Timestamped {
   reward: CampaignReward;
   deliverables: CampaignDeliverable[];
   deadline: ISODateString;
-  spotsTotal: number;
-  spotsRemaining: number;
   minFollowers: number;
   status: CampaignStatus;
   tags: string[];

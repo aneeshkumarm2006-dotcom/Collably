@@ -1,13 +1,14 @@
 /**
  * Campaign applicants (PRD §7.4, §11). Every application to one campaign, filterable
  * by status. Each applicant is a `CreatorCard`; a pending one carries Accept / Reject
- * buttons (also reachable by swipe). Accepting consumes a spot — the header tracks
- * accepted-vs-total so the business sees when the campaign is full. Tapping a card
+ * buttons (also reachable by swipe). The business approves as many applicants as it
+ * wants; the first approval auto-closes the campaign (no new applications) — the
+ * header shows how many are approved and whether it's still open. Tapping a card
  * opens the applicant's profile.
  */
 import { useCallback, useMemo, useState } from 'react';
 import { Alert, FlatList, RefreshControl, ScrollView, Text, View } from 'react-native';
-import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Header, SwipeableRow, type SwipeAction } from '@/components/shared';
 import { CreatorCard } from '@/components/creator';
@@ -56,30 +57,31 @@ export default function CampaignApplicantsScreen() {
 
   const decide = async (app: AppWithCreator, status: 'Accepted' | 'Rejected') => {
     const prev = app.status;
+    const prevCampaign = data?.campaign;
     setBusyId(app._id);
-    // Optimistic: flip the status (the spots-filled header + tabs react instantly).
-    // Accepting consumes a spot, so decrement spotsRemaining too.
-    const spotDelta = status === 'Accepted' ? -1 : 0;
+    // Optimistic: flip the status (tabs + counts react instantly). The first
+    // approval auto-closes the campaign, so reflect that in the header too.
     setData((cur) =>
       cur
         ? {
-            campaign: spotDelta
-              ? { ...cur.campaign, spotsRemaining: Math.max(0, cur.campaign.spotsRemaining + spotDelta) }
-              : cur.campaign,
+            campaign:
+              status === 'Accepted' && cur.campaign.status === 'Active'
+                ? { ...cur.campaign, status: 'Closed' }
+                : cur.campaign,
             apps: cur.apps.map((a) => (a._id === app._id ? { ...a, status } : a)),
           }
         : cur,
     );
     try {
       await api.patch(`/applications/${app._id}`, { status });
+      // Re-sync so the campaign's (server-authoritative) status is accurate.
+      void reload();
     } catch (err) {
-      // Revert both the status and the spot count on failure.
+      // Revert both the application status and the campaign status on failure.
       setData((cur) =>
         cur
           ? {
-              campaign: spotDelta
-                ? { ...cur.campaign, spotsRemaining: cur.campaign.spotsRemaining - spotDelta }
-                : cur.campaign,
+              campaign: prevCampaign ?? cur.campaign,
               apps: cur.apps.map((a) => (a._id === app._id ? { ...a, status: prev } : a)),
             }
           : cur,
@@ -118,7 +120,7 @@ export default function CampaignApplicantsScreen() {
         variant="card"
       />
 
-      {/* Spots counter */}
+      {/* Approval status */}
       {campaign && (
         <View
           style={{
@@ -133,11 +135,16 @@ export default function CampaignApplicantsScreen() {
           }}
         >
           <Text style={{ fontSize: 13.5, color: colors.text2 }}>
-            <Text style={{ fontWeight: '800', color: colors.text }}>{acceptedCount}</Text> of{' '}
-            <Text style={{ fontWeight: '800', color: colors.text }}>{campaign.spotsTotal}</Text> spots filled
+            <Text style={{ fontWeight: '800', color: colors.text }}>{acceptedCount}</Text> approved
           </Text>
-          <Text style={{ fontSize: 13, fontWeight: '600', color: campaign.spotsRemaining > 0 ? colors.accent : colors.danger }}>
-            {campaign.spotsRemaining > 0 ? `${campaign.spotsRemaining} left` : 'Full'}
+          <Text
+            style={{
+              fontSize: 13,
+              fontWeight: '600',
+              color: campaign.status === 'Active' ? colors.accent : colors.text2,
+            }}
+          >
+            {campaign.status === 'Active' ? 'Open to applications' : 'Closed to new applicants'}
           </Text>
         </View>
       )}
@@ -201,6 +208,16 @@ export default function CampaignApplicantsScreen() {
                         </Button>
                       </View>
                     </View>
+                  ) : item.conversationId ? (
+                    <Button
+                      block
+                      variant="tonal"
+                      size="sm"
+                      icon="message"
+                      onPress={() => router.push(`/(business)/chat/${item.conversationId}` as Href)}
+                    >
+                      Message
+                    </Button>
                   ) : undefined
                 }
               />

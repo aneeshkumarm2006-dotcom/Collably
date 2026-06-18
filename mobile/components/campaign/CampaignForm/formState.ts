@@ -21,7 +21,6 @@ export type CampaignFormState = {
   reward: { type: RewardType | null; description: string; estimatedValue?: number };
   deliverables: CampaignDeliverable[];
   deadline: string | null; // ISO string
-  spotsTotal: number;
   minFollowers: number;
   tags: string[];
 };
@@ -38,7 +37,6 @@ export function emptyCampaignForm(): CampaignFormState {
     reward: { type: null, description: '', estimatedValue: undefined },
     deliverables: [{ platform: 'Instagram', contentType: 'Reel', quantity: 1 }],
     deadline: null,
-    spotsTotal: 5,
     minFollowers: 0,
     tags: [],
   };
@@ -62,7 +60,6 @@ export function fromCampaign(c: Campaign): CampaignFormState {
       ? c.deliverables.map((d) => ({ ...d }))
       : [{ platform: 'Instagram', contentType: 'Reel', quantity: 1 }],
     deadline: c.deadline ?? null,
-    spotsTotal: c.spotsTotal,
     minFollowers: c.minFollowers,
     tags: [...c.tags],
   };
@@ -99,7 +96,7 @@ export function validateStep(step: number, f: CampaignFormState): boolean {
     case 5:
       return f.deliverables.length > 0 && f.deliverables.every((d) => d.quantity >= 1);
     case 6:
-      return !!f.deadline && f.spotsTotal >= 1;
+      return !!f.deadline;
     case 7:
       return true;
     default:
@@ -141,7 +138,6 @@ export function toCampaignPayload(f: CampaignFormState) {
     reward,
     deliverables: f.deliverables,
     deadline: f.deadline,
-    spotsTotal: f.spotsTotal,
     minFollowers: f.minFollowers,
     tags: f.tags,
   };

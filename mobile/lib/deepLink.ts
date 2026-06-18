@@ -20,6 +20,7 @@ export function resolveCreatorDeepLink(path: string): Href {
   if (
     base.startsWith('/campaign/') ||
     base.startsWith('/collabs/') ||
+    base.startsWith('/chat/') ||
     base.startsWith('/business/') ||
     base.startsWith('/creator/') ||
     base === '/applications' ||
@@ -53,6 +54,7 @@ export function resolveBusinessDeepLink(path: string): Href {
 
   if (
     base.startsWith('/campaign/') ||
+    base.startsWith('/chat/') ||
     base.startsWith('/creator/') ||
     base === '/notifications'
   ) {

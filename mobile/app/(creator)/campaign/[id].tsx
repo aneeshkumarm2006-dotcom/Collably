@@ -1,6 +1,6 @@
 /**
  * Campaign detail (PRD §7.3). Hero cover, the posting business, reward, deliverables,
- * deadline/spots, tags, and other campaigns from the same business — under a sticky
+ * deadline/applicants, tags, and other campaigns from the same business — under a sticky
  * bottom Apply bar. The bar adapts to the viewer: a guest sees "Log in to apply"
  * (PRD §8.6), a creator who already applied sees their status, and an eligible
  * creator opens a pitch sheet → `POST /api/campaigns/:id/apply`.
@@ -138,8 +138,9 @@ export default function CampaignDetailScreen() {
 
   const c = data;
   const biz = c.business;
-  const spotsLeft = c.spotsRemaining;
-  const canApply = c.status === 'Active' && spotsLeft > 0;
+  // No capacity limit — a campaign accepts applications while it's Active and
+  // auto-closes once the business approves its first creator.
+  const canApply = c.status === 'Active';
   const overdue = isOverdue(c.deadline);
 
   return (
@@ -238,8 +239,8 @@ export default function CampaignDetailScreen() {
             />
             <FactRow
               icon="users"
-              label="Spots"
-              value={`${spotsLeft} of ${c.spotsTotal} left · ${formatCompactNumber(c.applicationsCount)} applied`}
+              label="Applicants"
+              value={`${formatCompactNumber(c.applicationsCount)} applied${c.status === 'Active' ? '' : ' · closed'}`}
               tone={colors.text}
               colors={colors}
             />
@@ -389,7 +390,6 @@ export default function CampaignDetailScreen() {
           myStatus={myStatus}
           canApply={canApply}
           campaignStatus={c.status}
-          spotsLeft={spotsLeft}
           onLogin={() => router.push('/(auth)/login')}
           onApply={() => pitchRef.current?.present()}
         />
@@ -424,7 +424,6 @@ function ApplyControl({
   myStatus,
   canApply,
   campaignStatus,
-  spotsLeft,
   onLogin,
   onApply,
 }: {
@@ -433,7 +432,6 @@ function ApplyControl({
   myStatus: ApplicationStatus | null;
   canApply: boolean;
   campaignStatus: Campaign['status'];
-  spotsLeft: number;
   onLogin: () => void;
   onApply: () => void;
 }) {
@@ -450,7 +448,8 @@ function ApplyControl({
     return <Badge status={myStatus} />;
   }
   if (!canApply) {
-    const label = campaignStatus !== 'Active' ? campaignStatus : spotsLeft <= 0 ? 'Full' : 'Closed';
+    // canApply is false only when the campaign isn't Active (e.g. auto-closed).
+    const label = campaignStatus === 'Closed' ? 'Closed' : campaignStatus;
     return (
       <View style={{ opacity: 0.6 }}>
         <Button disabled onPress={() => {}}>

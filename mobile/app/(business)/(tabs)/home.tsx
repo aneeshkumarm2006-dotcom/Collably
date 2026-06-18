@@ -26,6 +26,7 @@ import { api } from '@/lib/api';
 import { useFetch } from '@/lib/useFetch';
 import { formatRelativeTime, formatReward } from '@/lib/utils';
 import { useAuthStore } from '@/store/authStore';
+import { useNotificationStore } from '@/store/notificationStore';
 import type { Application, Campaign, BusinessProfile, CreatorProfile, Notification, UserSummary } from '@/types';
 
 type AppFull = Application & { creator?: CreatorProfile; creatorUser?: UserSummary | null; campaign?: Campaign };
@@ -41,6 +42,7 @@ export default function BusinessHomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user);
+  const hasUnread = useNotificationStore((s) => s.unreadCount > 0);
 
   const { data, loading, error, reload } = useFetch<HomeData>(async () => {
     const [campaignsRes, appsRes, notifRes] = await Promise.all([
@@ -135,7 +137,7 @@ export default function BusinessHomeScreen() {
                 </View>
               </View>
             </Press>
-            <YellowIconBtn name="bell" badge onPress={() => router.push('/(business)/notifications')} />
+            <YellowIconBtn name="bell" badge={hasUnread} onPress={() => router.push('/(business)/notifications')} />
           </View>
 
           <View style={{ marginTop: 18 }}>
@@ -283,8 +285,7 @@ export default function BusinessHomeScreen() {
 /** Premium business campaign card — green progress + applicants + Manage. */
 function BlinkBizCard({ campaign, onPress }: { campaign: Campaign; onPress: () => void }) {
   const { colors, shadows } = useTheme();
-  const filled = Math.max(0, campaign.spotsTotal - campaign.spotsRemaining);
-  const pct = campaign.spotsTotal > 0 ? Math.round((filled / campaign.spotsTotal) * 100) : 0;
+  const isOpen = campaign.status === 'Active';
   return (
     <Press
       onPress={onPress}
@@ -320,21 +321,19 @@ function BlinkBizCard({ campaign, onPress }: { campaign: Campaign; onPress: () =
           </View>
         </View>
         <View style={{ backgroundColor: colors.brandGreenSoft, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 }}>
-          <Text style={{ fontSize: 11.5, fontWeight: '800', color: colors.brandGreenText }}>Live</Text>
+          <Text style={{ fontSize: 11.5, fontWeight: '800', color: colors.brandGreenText }}>
+            {isOpen ? 'Live' : campaign.status}
+          </Text>
         </View>
       </View>
 
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 15, marginBottom: 7 }}>
         <Text style={{ fontSize: 12, color: colors.text2 }}>
-          <Text style={{ color: colors.text, fontFamily: 'monospace', fontWeight: '700' }}>{filled}</Text> of {campaign.spotsTotal} spots filled
+          {isOpen ? 'Open to applications' : 'Closed — review your approved creators'}
         </Text>
-        <Text style={{ fontFamily: 'monospace', fontSize: 12, fontWeight: '700', color: colors.brandGreenText }}>{pct}%</Text>
-      </View>
-      <View style={{ backgroundColor: colors.cardSunk, borderRadius: 6, height: 7, overflow: 'hidden' }}>
-        <View style={{ width: `${pct}%`, height: '100%', backgroundColor: colors.brandGreen, borderRadius: 6 }} />
       </View>
 
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 14, paddingTop: 13, borderTopWidth: 1, borderTopColor: colors.hair }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4, paddingTop: 13, borderTopWidth: 1, borderTopColor: colors.hair }}>
         <Icon name="users" size={15} color={colors.text2} />
         <Text style={{ fontSize: 13, color: colors.text2, fontWeight: '600' }}>{campaign.applicationsCount} applicants</Text>
         <View style={{ marginLeft: 'auto', flexDirection: 'row', alignItems: 'center', gap: 4 }}>

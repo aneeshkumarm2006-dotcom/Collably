@@ -3,7 +3,7 @@
  * (PRD §7.3, §13). Ported from the design reference's `TicketCard`: a category-
  * tinted cover with a category chip + optional status corner, the business name +
  * city, the campaign title, a meta row (platform · deliverables · deadline), and a
- * reward/spots stub.
+ * reward/applicants stub.
  *
  * `compact` renders the slim row variant used in dense lists (home feed, pickers).
  * Pass `applicationStatus` to show the viewer's own application state in the corner.
@@ -56,8 +56,6 @@ export function CampaignCard({ campaign, businessName, applicationStatus, compac
   const { colors, shadows } = useTheme();
   const biz = businessName ?? 'Business';
   const city = campaign.location?.city ?? (campaign.isRemote ? 'Remote' : '');
-  const spotsLeft = campaign.spotsRemaining;
-  const low = spotsLeft <= 1;
   const platform = campaign.deliverables[0]?.platform ?? 'Any';
 
   if (compact) {
@@ -183,7 +181,7 @@ export function CampaignCard({ campaign, businessName, applicationStatus, compac
       {/* divider */}
       <View style={{ height: 1, backgroundColor: colors.hair, marginHorizontal: 12 }} />
 
-      {/* stub: reward + spots */}
+      {/* stub: reward + applicants */}
       <View
         style={{
           flexDirection: 'row',
@@ -205,11 +203,11 @@ export function CampaignCard({ campaign, businessName, applicationStatus, compac
           </Text>
         </View>
         <View style={{ alignItems: 'flex-end' }}>
-          <Text style={{ fontSize: 12.5, fontWeight: '600', color: low ? colors.danger : colors.accent }}>
-            {spotsLeft} left
+          <Text style={{ fontSize: 12.5, fontWeight: '600', color: colors.accent }}>
+            {formatCompactNumber(campaign.applicationsCount)} applied
           </Text>
           <Text style={{ fontSize: 10.5, color: colors.text3, marginTop: 1 }}>
-            {formatCompactNumber(campaign.applicationsCount)} applied
+            {campaign.status === 'Active' ? 'Open' : campaign.status}
           </Text>
         </View>
       </View>

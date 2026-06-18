@@ -36,8 +36,6 @@ function toPreview(f: CampaignFormState): Campaign {
     reward: { type: f.reward.type ?? 'Product', description: f.reward.description, estimatedValue: f.reward.estimatedValue },
     deliverables: f.deliverables,
     deadline: f.deadline ?? new Date().toISOString(),
-    spotsTotal: f.spotsTotal,
-    spotsRemaining: f.spotsTotal,
     minFollowers: f.minFollowers,
     status: 'Draft',
     tags: f.tags,
@@ -80,7 +78,6 @@ export function Step7({
           colors={colors}
         />
         <SummaryRow label="Deadline" value={value.deadline ? formatDate(value.deadline) : '—'} colors={colors} />
-        <SummaryRow label="Spots" value={String(value.spotsTotal)} colors={colors} />
         <SummaryRow
           label="Min followers"
           value={value.minFollowers > 0 ? value.minFollowers.toLocaleString('en-CA') : 'Open to all'}

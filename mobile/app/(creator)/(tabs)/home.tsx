@@ -36,6 +36,7 @@ import { api } from '@/lib/api';
 import { useFetch } from '@/lib/useFetch';
 import { daysUntil, formatCompactNumber, formatReward } from '@/lib/utils';
 import { useAuthStore } from '@/store/authStore';
+import { useNotificationStore } from '@/store/notificationStore';
 import type { Application, Campaign, BusinessProfile, CreatorProfile, Notification } from '@/types';
 import type { Category } from '@/constants';
 
@@ -53,6 +54,7 @@ export default function CreatorHomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user);
+  const hasUnread = useNotificationStore((s) => s.unreadCount > 0);
 
   const { data, loading, error, reload } = useFetch<HomeData>(async () => {
     const [appsRes, notifRes, campRes] = await Promise.all([
@@ -138,7 +140,7 @@ export default function CreatorHomeScreen() {
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <LocationPill city={city} onPress={goExplore} />
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9 }}>
-              <YellowIconBtn name="bell" badge onPress={() => router.push('/(creator)/notifications')} />
+              <YellowIconBtn name="bell" badge={hasUnread} onPress={() => router.push('/(creator)/notifications')} />
               <Press onPress={() => router.push('/(creator)/(tabs)/profile')}>
                 <Avatar name={user?.name} size={40} />
               </Press>
@@ -445,8 +447,6 @@ export default function CreatorHomeScreen() {
 /** Clean Blinkit-style horizontal collab card for the creator feed. */
 function BlinkCollabCard({ campaign, onPress }: { campaign: CampaignWithBiz; onPress: () => void }) {
   const { colors, shadows } = useTheme();
-  const left = campaign.spotsRemaining;
-  const low = left <= 1;
   const platform = campaign.deliverables[0]?.platform;
   return (
     <Press
@@ -498,8 +498,8 @@ function BlinkCollabCard({ campaign, onPress }: { campaign: CampaignWithBiz; onP
               <Text style={{ fontSize: 12, color: colors.text2, fontFamily: 'monospace' }}>{platform}</Text>
             </View>
           ) : null}
-          <Text style={{ fontSize: 11.5, fontWeight: '800', color: low ? colors.danger : colors.text2, fontFamily: 'monospace' }}>
-            {left} left
+          <Text style={{ fontSize: 11.5, fontWeight: '800', color: colors.text2, fontFamily: 'monospace' }}>
+            {campaign.applicationsCount} applied
           </Text>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 9 }}>

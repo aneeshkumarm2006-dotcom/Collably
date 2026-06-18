@@ -1,8 +1,9 @@
 /**
  * Application routes (PRD §11, §18) — the collab lifecycle after "apply":
  * list/read (scoped by role), accept/reject by the business, submit by the
- * creator, and verify/revision/fail by the business. Acceptance is the only
- * action that consumes a campaign spot, and it does so atomically.
+ * creator, and verify/revision/fail by the business. The first acceptance
+ * auto-closes the campaign (hidden from discovery, no new applications) while the
+ * business keeps approving from the people who already applied.
  *
  *   GET   /api/applications          role-scoped list (creator=own, business=theirs)
  *   GET   /api/applications/:id       single (participants + admin only)
@@ -25,6 +26,8 @@ import { asyncHandler } from '../lib/utils';
 import { AppError } from '../middleware/errorHandler';
 import { objectIdParam, parsePagination, paginated } from '../lib/http';
 import { toPublicApplication } from '../lib/serialize';
+import { getOrCreateConversationForApplication } from '../lib/conversations';
+import { emitToUser } from '../lib/realtime';
 import { notify } from '../services';
 import {
   notifyApplicationAccepted,
@@ -180,8 +183,9 @@ router.get(
 
 /**
  * PATCH /api/applications/:id — business accepts or rejects a pending application
- * (PRD §11). Accepting consumes a spot atomically so two near-simultaneous
- * accepts can't oversell `spotsTotal`.
+ * (PRD §11). The first acceptance auto-closes the campaign (Active→Closed) so it
+ * leaves discovery and stops new applications, while the business keeps approving
+ * the people who already applied.
  */
 router.patch(
   '/:id',
@@ -198,18 +202,39 @@ router.patch(
     }
 
     if (status === 'Accepted') {
-      // Atomically claim a spot; null means the campaign is full/closed.
-      const campaign = await Campaign.findOneAndUpdate(
-        { _id: app.campaignId, status: 'Active', spotsRemaining: { $gt: 0 } },
-        { $inc: { spotsRemaining: -1 } },
-        { new: true },
-      );
-      if (!campaign) {
-        throw new AppError(409, 'No spots remaining (or the campaign is no longer active)');
+      // No fixed capacity: a business approves as many applicants as it wants.
+      // The first approval auto-closes the campaign — hidden from discovery and no
+      // new applications — while the business keeps approving people who already
+      // applied. Approvals are allowed while the campaign is Active or Closed.
+      const campaign = await Campaign.findById(app.campaignId);
+      if (!campaign || (campaign.status !== 'Active' && campaign.status !== 'Closed')) {
+        throw new AppError(409, 'This campaign is no longer accepting approvals');
       }
+      if (campaign.status === 'Active') {
+        campaign.status = 'Closed';
+        await campaign.save();
+      }
+
       app.status = 'Accepted';
       if (businessNote) app.businessNote = businessNote;
       await app.save();
+
+      // The accepted application is the business⇄creator connection — open a chat
+      // conversation for it (idempotent), stamp its id back onto the app, and ping
+      // both participants so their conversation lists update live.
+      const conversation = await getOrCreateConversationForApplication(app);
+      if (conversation) {
+        if (!app.conversationId) {
+          app.conversationId = conversation._id;
+          await app.save();
+        }
+        emitToUser(String(conversation.businessUserId), 'conversation:new', {
+          conversationId: conversation.id,
+        });
+        emitToUser(String(conversation.creatorUserId), 'conversation:new', {
+          conversationId: conversation.id,
+        });
+      }
 
       const creatorUser = await creatorUserFor(app.creatorId);
       const business = await BusinessProfile.findById(app.businessId).select('businessName');
@@ -435,13 +460,9 @@ router.patch(
       return;
     }
 
-    // fail → Cancelled, return the spot to the campaign (PRD §11).
+    // fail → Cancelled. There's no capacity to free up (no spots model).
     app.status = 'Cancelled';
     await app.save();
-    await Campaign.updateOne(
-      { _id: app.campaignId, $expr: { $lt: ['$spotsRemaining', '$spotsTotal'] } },
-      { $inc: { spotsRemaining: 1 } },
-    );
     if (creatorUser) {
       // In-app + push only — there's no §9.2 email template for a failed collab.
       await safeFailNotify(creatorUser.id, app.id, campaign?.title ?? 'a campaign');

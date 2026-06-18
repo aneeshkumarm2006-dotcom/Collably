@@ -7,9 +7,11 @@ import { CAMPAIGN_STATUSES, type CampaignStatus } from '../../../shared/constant
 import { campaignLocationSchema } from './common';
 
 /**
- * A collab opportunity posted by a business (PRD §5.4). `spotsRemaining` is
- * decremented as creators are accepted; `status` follows the lifecycle in
- * PRD §12 (enforced server-side in Phase 6).
+ * A collab opportunity posted by a business (PRD §5.4). There's no fixed
+ * capacity: a business approves as many applicants as it wants. The campaign
+ * auto-closes (`status` → `Closed`) on the first acceptance, which hides it from
+ * discovery and stops new applications while the business keeps approving from
+ * the people who already applied (enforced server-side in the accept handler).
  */
 export interface CampaignDoc extends Document<Types.ObjectId> {
   businessId: Types.ObjectId;
@@ -38,8 +40,6 @@ export interface CampaignDoc extends Document<Types.ObjectId> {
     requirements?: string;
   }[];
   deadline?: Date;
-  spotsTotal: number;
-  spotsRemaining: number;
   minFollowers: number;
   status: CampaignStatus;
   tags: string[];
@@ -88,8 +88,6 @@ const campaignSchema = new Schema<CampaignDoc>(
     reward: { type: rewardSchema, required: true },
     deliverables: { type: [deliverableSchema], default: [] },
     deadline: { type: Date },
-    spotsTotal: { type: Number, required: true, min: 1 },
-    spotsRemaining: { type: Number, required: true, min: 0 },
     minFollowers: { type: Number, default: 0, min: 0 },
     status: { type: String, enum: [...CAMPAIGN_STATUSES], default: 'Draft', index: true },
     tags: { type: [String], default: [] },

@@ -17,6 +17,8 @@ import type { BusinessProfileDoc } from '../models/BusinessProfile';
 import type { CreatorProfileDoc } from '../models/CreatorProfile';
 import type { CampaignDoc } from '../models/Campaign';
 import type { ApplicationDoc } from '../models/Application';
+import type { ConversationDoc } from '../models/Conversation';
+import type { MessageDoc } from '../models/Message';
 import type { NotificationDoc } from '../models/Notification';
 import type { ReportDoc } from '../models/Report';
 import type { PublicUser, UserSummary } from '../../../shared/types/User';
@@ -25,6 +27,8 @@ import type { CreatorProfile } from '../../../shared/types/CreatorProfile';
 import type { Campaign, CampaignLocation } from '../../../shared/types/Campaign';
 import type { GeoPoint } from '../../../shared/types/common';
 import type { Application } from '../../../shared/types/Application';
+import type { Conversation } from '../../../shared/types/Conversation';
+import type { Message } from '../../../shared/types/Message';
 import type { Notification } from '../../../shared/types/Notification';
 import type { Report } from '../../../shared/types/Report';
 
@@ -237,8 +241,6 @@ export function toPublicCampaign(
     reward: c.reward,
     deliverables: c.deliverables,
     deadline: iso(c.deadline) ?? '',
-    spotsTotal: c.spotsTotal,
-    spotsRemaining: c.spotsRemaining,
     minFollowers: c.minFollowers,
     status: c.status,
     tags: c.tags,
@@ -286,6 +288,8 @@ export function toPublicApplication(a: ApplicationDoc): PublicApplication {
     verifiedAt: iso(a.verifiedAt),
     verifiedBy: a.verifiedBy ? refId(a.verifiedBy as Ref<unknown>) : undefined,
     businessNote: a.businessNote,
+    // Set once the collab is accepted — the chat thread for this connection.
+    conversationId: a.conversationId ? refId(a.conversationId as Ref<unknown>) : undefined,
     createdAt: a.createdAt.toISOString(),
     updatedAt: a.updatedAt.toISOString(),
   };
@@ -305,6 +309,51 @@ export function toPublicApplication(a: ApplicationDoc): PublicApplication {
     out.business = toPublicBusinessProfile(a.businessId as unknown as BusinessProfileDoc);
   }
   return out;
+}
+
+// --- Chat --------------------------------------------------------------------
+
+/**
+ * Serialize a conversation for one viewer. `unreadCount` and `otherParticipant`
+ * are viewer-relative: the caller resolves the other participant's summary (a
+ * business shows as its `businessName`/`logo`, a creator as their `name`/`avatar`)
+ * and passes it in, since serializers stay DB-free.
+ */
+export function toPublicConversation(
+  c: ConversationDoc,
+  viewerUserId: string,
+  otherParticipant?: UserSummary,
+): Conversation {
+  const businessUserId = refId(c.businessUserId as Ref<unknown>);
+  const creatorUserId = refId(c.creatorUserId as Ref<unknown>);
+  const viewerIsBusiness = businessUserId === viewerUserId;
+  return {
+    _id: c.id,
+    applicationId: refId(c.applicationId as Ref<unknown>),
+    campaignId: refId(c.campaignId as Ref<unknown>),
+    campaignTitle: c.campaignTitle,
+    businessUserId,
+    creatorUserId,
+    otherParticipant,
+    lastMessage: c.lastMessage,
+    lastMessageAt: iso(c.lastMessageAt),
+    lastSenderUserId: c.lastSenderUserId ? refId(c.lastSenderUserId as Ref<unknown>) : undefined,
+    unreadCount: viewerIsBusiness ? c.unreadByBusiness : c.unreadByCreator,
+    createdAt: c.createdAt.toISOString(),
+    updatedAt: c.updatedAt.toISOString(),
+  };
+}
+
+export function toPublicMessage(m: MessageDoc): Message {
+  return {
+    _id: m.id,
+    conversationId: refId(m.conversationId as Ref<unknown>),
+    senderUserId: refId(m.senderUserId as Ref<unknown>),
+    senderRole: m.senderRole,
+    body: m.body,
+    readAt: iso(m.readAt),
+    createdAt: m.createdAt.toISOString(),
+  };
 }
 
 // --- Notification ------------------------------------------------------------

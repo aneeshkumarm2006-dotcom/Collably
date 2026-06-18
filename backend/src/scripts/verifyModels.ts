@@ -75,8 +75,6 @@ function validateAll(): void {
     description: 'Make a 60s Reel at our cafe.',
     category: 'Cafe',
     reward: { type: 'Experience', description: 'Brunch for two' },
-    spotsTotal: 5,
-    spotsRemaining: 5,
   });
   checkSchema('Application', Application, {
     campaignId,
@@ -139,8 +137,6 @@ async function createReadRoundTrip(): Promise<void> {
       { platform: 'Instagram', contentType: 'Reel', quantity: 1, requirements: 'Tag @beanscene' },
     ],
     deadline: new Date(stamp + 14 * 24 * 60 * 60 * 1000),
-    spotsTotal: 5,
-    spotsRemaining: 5,
     status: 'Active',
     tags: ['food', 'austin'],
   });
