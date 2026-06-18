@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "a7e78633-34dd-4079-83e7-85cfd6b2a421"
+      }
+    },
+    "android": {
+      "package": "com.aneeshkumarm.collably"
+    }
+  }
+}
