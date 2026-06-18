@@ -121,7 +121,7 @@ export function CampaignCard({ campaign, businessName, applicationStatus, compac
             borderRadius: 20,
           }}
         >
-          <Text style={{ fontSize: 11, fontWeight: '600', color: '#131A2E' }}>{campaign.category}</Text>
+          <Text style={{ fontSize: 11, fontWeight: '600', color: '#1C1E21' }}>{campaign.category}</Text>
         </View>
         {/* viewer's application status corner, else platform badge */}
         {applicationStatus ? (
@@ -157,7 +157,7 @@ export function CampaignCard({ campaign, businessName, applicationStatus, compac
               justifyContent: 'center',
             }}
           >
-            <Icon name={PLATFORM_ICON[platform] ?? 'sparkles'} size={17} color="#131A2E" />
+            <Icon name={PLATFORM_ICON[platform] ?? 'sparkles'} size={17} color="#1C1E21" />
           </View>
         )}
       </CoverImage>

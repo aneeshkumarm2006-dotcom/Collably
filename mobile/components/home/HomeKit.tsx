@@ -112,8 +112,8 @@ export function YellowHeader({ children, pb = 22 }: { children: ReactNode; pb?: 
   );
 }
 
-const INK = '#1A1B10';
-const INK_SOFT = 'rgba(26,27,16,0.66)';
+const INK = '#FFFFFF';
+const INK_SOFT = 'rgba(255,255,255,0.66)';
 
 export function LocationPill({ city, onPress }: { city: string; onPress?: () => void }) {
   return (
@@ -135,7 +135,7 @@ export function YellowIconBtn({ name, badge, onPress }: { name: IconName; badge?
         width: 40,
         height: 40,
         borderRadius: 13,
-        backgroundColor: 'rgba(26,27,16,0.10)',
+        backgroundColor: 'rgba(255,255,255,0.18)',
         alignItems: 'center',
         justifyContent: 'center',
       }}
@@ -169,7 +169,7 @@ export function UrgencyBadge({ icon, label }: { icon: IconName; label: string })
         alignItems: 'center',
         gap: 5,
         alignSelf: 'flex-start',
-        backgroundColor: '#0C831F',
+        backgroundColor: '#1877F2',
         paddingHorizontal: 10,
         paddingVertical: 5,
         borderRadius: 20,

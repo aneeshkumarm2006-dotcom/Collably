@@ -10,6 +10,7 @@
  * under a friendly key (e.g. a campaign's `business`) *in addition to* the id,
  * so list/detail screens get joined data without an extra round-trip.
  */
+import { createHash } from 'node:crypto';
 import { Types } from 'mongoose';
 import type { UserDoc } from '../models/User';
 import type { BusinessProfileDoc } from '../models/BusinessProfile';
@@ -21,7 +22,8 @@ import type { ReportDoc } from '../models/Report';
 import type { PublicUser, UserSummary } from '../../../shared/types/User';
 import type { BusinessProfile } from '../../../shared/types/BusinessProfile';
 import type { CreatorProfile } from '../../../shared/types/CreatorProfile';
-import type { Campaign } from '../../../shared/types/Campaign';
+import type { Campaign, CampaignLocation } from '../../../shared/types/Campaign';
+import type { GeoPoint } from '../../../shared/types/common';
 import type { Application } from '../../../shared/types/Application';
 import type { Notification } from '../../../shared/types/Notification';
 import type { Report } from '../../../shared/types/Report';
@@ -124,14 +126,113 @@ export function toPublicCreatorProfile(p: CreatorProfileDoc): CreatorProfile {
 /** A campaign with optionally-joined business profile (when `businessId` is populated). */
 export type PublicCampaign = Campaign & { business?: BusinessProfile };
 
-export function toPublicCampaign(c: CampaignDoc): PublicCampaign {
+/**
+ * The viewer's relationship to a campaign, used to decide whether the **exact**
+ * location is revealed (On-Site Location feature). Anyone not authorized only
+ * ever receives a fuzzed approximate point — the precise coordinates/address are
+ * stripped before the JSON leaves the server. Defaults (no context) are the
+ * safe, unauthorized case.
+ */
+export interface CampaignViewerContext {
+  role?: 'creator' | 'business' | 'admin' | 'guest';
+  /** The viewing business owns this campaign. */
+  isOwner?: boolean;
+  /** The viewing creator has an Accepted/Completed application for this campaign. */
+  isAcceptedCreator?: boolean;
+}
+
+/** Default radius (metres) of the approximate circle shown to unauthorized viewers. */
+export const DEFAULT_FUZZ_RADIUS_METERS = 750;
+
+/** Metres per degree of latitude (≈constant). Longitude scales by cos(lat). */
+const METERS_PER_DEG_LAT = 111_320;
+
+/** Round to ~5 decimals (~1 m) so the fuzzed point can't be reversed to source precision. */
+function round5(n: number): number {
+  return Math.round(n * 1e5) / 1e5;
+}
+
+/**
+ * Deterministically fuzz an exact point into an approximate one, seeded by the
+ * campaign id so the circle never jitters between requests for the same viewer.
+ * The offset is pushed out to 40–100% of the radius (never centered on the real
+ * pin) at a hash-derived angle, then rounded. Computed **server-side** — exact
+ * coords never leave the server for an unauthorized viewer.
+ */
+export function fuzzPoint(
+  point: GeoPoint,
+  seed: string,
+  radiusMeters: number = DEFAULT_FUZZ_RADIUS_METERS,
+): GeoPoint {
+  const h = createHash('sha256').update(seed).digest();
+  const angle = (h.readUInt32BE(0) / 0xffffffff) * 2 * Math.PI;
+  const distance = radiusMeters * (0.4 + 0.6 * (h.readUInt32BE(4) / 0xffffffff));
+  const dLat = (distance * Math.cos(angle)) / METERS_PER_DEG_LAT;
+  const cosLat = Math.cos((point.lat * Math.PI) / 180) || 1e-6;
+  const dLng = (distance * Math.sin(angle)) / (METERS_PER_DEG_LAT * cosLat);
+  return { lat: round5(point.lat + dLat), lng: round5(point.lng + dLng) };
+}
+
+/**
+ * Build the client-facing `location`, enforcing the precision policy:
+ *  - no pin stored → coarse city/state/country only (`locationPrecise: false`).
+ *  - authorized viewer → exact `coordinates` + `address` + `placeId`.
+ *  - everyone else → only the fuzzed `approxCoordinates` + `radiusMeters`; the
+ *    exact fields are omitted entirely (never serialized).
+ */
+function serializeCampaignLocation(
+  c: CampaignDoc,
+  canSeeExact: boolean,
+): CampaignLocation | undefined {
+  const loc = c.location;
+  if (!loc) return undefined;
+
+  const base: CampaignLocation = {
+    ...(loc.city ? { city: loc.city } : {}),
+    ...(loc.state ? { state: loc.state } : {}),
+    ...(loc.country ? { country: loc.country } : {}),
+  };
+
+  const coords = loc.coordinates;
+  const hasPin = !!coords && typeof coords.lat === 'number' && typeof coords.lng === 'number';
+  if (!hasPin) {
+    // Coarse-only campaign (remote, not yet pinned, or maps "coming soon").
+    return Object.keys(base).length ? { ...base, locationPrecise: false } : undefined;
+  }
+
+  if (canSeeExact) {
+    return {
+      ...base,
+      coordinates: { lat: coords!.lat, lng: coords!.lng },
+      ...(loc.address ? { address: loc.address } : {}),
+      ...(loc.placeId ? { placeId: loc.placeId } : {}),
+      locationPrecise: true,
+    };
+  }
+
+  // Unauthorized: fuzz server-side; never include the real coords/address/placeId.
+  return {
+    ...base,
+    approxCoordinates: fuzzPoint({ lat: coords!.lat, lng: coords!.lng }, c.id),
+    radiusMeters: DEFAULT_FUZZ_RADIUS_METERS,
+    locationPrecise: false,
+  };
+}
+
+export function toPublicCampaign(
+  c: CampaignDoc,
+  viewer: CampaignViewerContext = {},
+): PublicCampaign {
+  const canSeeExact = Boolean(
+    viewer.role === 'admin' || viewer.isOwner || viewer.isAcceptedCreator,
+  );
   const out: PublicCampaign = {
     _id: c.id,
     businessId: refId(c.businessId as Ref<unknown>),
     title: c.title,
     description: c.description,
     category: c.category,
-    location: c.location,
+    location: serializeCampaignLocation(c, canSeeExact),
     isRemote: c.isRemote,
     reward: c.reward,
     deliverables: c.deliverables,

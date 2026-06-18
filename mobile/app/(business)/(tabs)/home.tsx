@@ -127,7 +127,7 @@ export default function BusinessHomeScreen() {
               <View>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <Text style={{ fontSize: 16.5, fontWeight: '800', color: INK, letterSpacing: -0.3 }}>{name}</Text>
-                  {profile?.isVerified ? <Icon name="badge" size={16} color="#0C831F" /> : null}
+                  {profile?.isVerified ? <Icon name="badge" size={16} color="#FFFFFF" /> : null}
                 </View>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                   <Icon name="mappin" size={12} color={INK_SOFT} />
@@ -158,7 +158,7 @@ export default function BusinessHomeScreen() {
               backgroundColor: colors.brandGreen,
               borderRadius: 15,
               paddingVertical: 15,
-              shadowColor: '#0C831F',
+              shadowColor: '#1877F2',
               shadowOpacity: 0.34,
               shadowRadius: 18,
               shadowOffset: { width: 0, height: 10 },

@@ -45,3 +45,10 @@ export {
   type NotifyResult,
   type NotificationPrefs,
 } from './expoPush';
+
+export {
+  isGeocodingConfigured,
+  forwardGeocode,
+  reverseGeocode,
+  type GeocodeResult,
+} from './geocoding';

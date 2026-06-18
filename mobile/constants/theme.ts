@@ -1,10 +1,10 @@
 /**
- * Design tokens for Collably, ported from the design reference
- * `_ai_context/Food Collaboration App/app/tokens.jsx` (CollabSpace theme).
+ * Design tokens for Collably, themed after Meta Ads / Facebook.
  *
- * Brand: Blinkit-green `#0C831F` primary accent, green reserved for money/rewards,
- * cool blue-gray "paper" backgrounds, coral/danger reds. Two palettes (light/dark)
- * plus shared radii / spacing / type scales. Consumed two ways:
+ * Brand: Meta-blue `#1877F2` primary accent (blue gradient headers), Facebook-green
+ * `#31A24C` reserved for money/rewards, cool gray `#F0F2F5` "paper" backgrounds,
+ * Facebook-red `#FA383E` for danger. Two palettes (light/dark) plus shared radii /
+ * spacing / type scales. Consumed two ways:
  *   1. At runtime via the `useTheme()` hook (`components/ThemeProvider.tsx`) for
  *      values that must react to color scheme (colors, shadows).
  *   2. At build time by Tailwind/NativeWind (`tailwind.config.js` imports this file)
@@ -53,76 +53,76 @@ export type ThemeColors = {
 
 export const LIGHT: ThemeColors = {
   dark: false,
-  bg: '#E9ECF3', // grouped background (brand "paper", cool gray)
-  bgElev: '#F3F5F9',
+  bg: '#F0F2F5', // grouped background (Facebook "paper" gray)
+  bgElev: '#F7F8FA',
   card: '#FFFFFF',
-  cardSunk: '#F1F3F8',
-  text: '#131A2E', // ink
-  text2: '#5A6480', // muted
-  text3: '#9098AC',
-  hair: '#DEE2EC',
-  hairStrong: '#CDD3E0',
-  accent: '#0C831F', // Blinkit green — primary actions
-  accentSoft: '#E3F3E7',
+  cardSunk: '#EBEDF0',
+  text: '#1C1E21', // ink (FB primary text)
+  text2: '#65676B', // muted (FB secondary text)
+  text3: '#8A8D91',
+  hair: '#DADDE1', // FB divider
+  hairStrong: '#CED0D4',
+  accent: '#1877F2', // Meta blue — primary actions
+  accentSoft: '#E7F0FF',
   accentText: '#FFFFFF',
-  money: '#0C831F', // rewards / $ values — green (savings)
-  moneySoft: '#E3F3E7',
-  success: '#1C8A56',
-  successSoft: '#E2F2EA',
-  warn: '#C77A12',
-  warnSoft: '#FBEFD9',
-  danger: '#D2382C',
-  brandYellow: '#F8CB46',
-  brandYellowDeep: '#F1BE26',
-  brandInk: '#1A1B10',
-  brandInk2: 'rgba(26,27,16,0.62)',
-  brandGreen: '#0C831F',
-  brandGreenDeep: '#0A6E1A',
-  brandGreenText: '#0C831F',
-  brandGreenSoft: '#E3F3E7',
-  tabBar: 'rgba(247,249,252,0.82)',
-  navBar: 'rgba(233,236,243,0.8)',
-  sheet: '#F3F5F9',
-  scrim: 'rgba(19,26,46,0.42)',
-  skeleton: '#E2E6EF',
-  skeleton2: '#EDEFF5',
+  money: '#31A24C', // rewards / $ values — Facebook green
+  moneySoft: '#E3F1E6',
+  success: '#31A24C',
+  successSoft: '#E3F1E6',
+  warn: '#F3A608',
+  warnSoft: '#FCF1DA',
+  danger: '#FA383E', // Facebook red
+  brandYellow: '#1877F2', // brand header gradient start (Meta blue)
+  brandYellowDeep: '#0866FF', // brand header gradient end (deep Meta blue)
+  brandInk: '#FFFFFF', // text on blue header
+  brandInk2: 'rgba(255,255,255,0.66)',
+  brandGreen: '#1877F2', // primary brand accent (Meta blue)
+  brandGreenDeep: '#0A5DC9',
+  brandGreenText: '#1877F2',
+  brandGreenSoft: '#E7F0FF',
+  tabBar: 'rgba(247,248,250,0.82)',
+  navBar: 'rgba(240,242,245,0.8)',
+  sheet: '#F7F8FA',
+  scrim: 'rgba(8,11,18,0.42)',
+  skeleton: '#E4E6EB',
+  skeleton2: '#EDEFF2',
 };
 
 export const DARK: ThemeColors = {
   dark: true,
-  bg: '#080B12',
-  bgElev: '#12161F',
-  card: '#161A24',
-  cardSunk: '#0E121A',
-  text: '#F2F4F8',
-  text2: '#9AA3B8',
-  text3: '#646D82',
-  hair: '#262C39',
-  hairStrong: '#323A4A',
-  accent: '#1FA23C',
-  accentSoft: 'rgba(31,162,60,0.16)',
+  bg: '#18191A', // Facebook dark background
+  bgElev: '#242526',
+  card: '#242526', // FB dark card
+  cardSunk: '#18191A',
+  text: '#E4E6EB', // FB dark primary text
+  text2: '#B0B3B8', // FB dark secondary text
+  text3: '#8A8D91',
+  hair: '#3A3B3C', // FB dark divider
+  hairStrong: '#4E4F50',
+  accent: '#2D88FF', // Meta blue (dark)
+  accentSoft: 'rgba(45,136,255,0.16)',
   accentText: '#FFFFFF',
-  money: '#43C463',
-  moneySoft: 'rgba(31,162,60,0.16)',
-  success: '#3DD08A',
-  successSoft: '#11271D',
+  money: '#45BD62', // FB dark green
+  moneySoft: 'rgba(69,189,98,0.16)',
+  success: '#45BD62',
+  successSoft: '#102A19',
   warn: '#E7A53C',
   warnSoft: '#2E2310',
-  danger: '#FF6257',
-  brandYellow: '#F8CB46',
-  brandYellowDeep: '#EBB827',
-  brandInk: '#1A1B10',
-  brandInk2: 'rgba(26,27,16,0.64)',
-  brandGreen: '#1FA23C',
-  brandGreenDeep: '#18852F',
-  brandGreenText: '#43C463',
-  brandGreenSoft: 'rgba(31,162,60,0.16)',
-  tabBar: 'rgba(18,22,31,0.72)',
-  navBar: 'rgba(8,11,18,0.72)',
-  sheet: '#1A1F2B',
-  scrim: 'rgba(0,0,0,0.55)',
-  skeleton: '#1E2430',
-  skeleton2: '#262D3B',
+  danger: '#FF5C5C',
+  brandYellow: '#2D88FF', // brand header gradient start (Meta blue, dark)
+  brandYellowDeep: '#1877F2', // brand header gradient end
+  brandInk: '#FFFFFF',
+  brandInk2: 'rgba(255,255,255,0.7)',
+  brandGreen: '#2D88FF', // primary brand accent (Meta blue, dark)
+  brandGreenDeep: '#1877F2',
+  brandGreenText: '#5AA0FF',
+  brandGreenSoft: 'rgba(45,136,255,0.16)',
+  tabBar: 'rgba(36,37,38,0.72)',
+  navBar: 'rgba(24,25,26,0.72)',
+  sheet: '#242526',
+  scrim: 'rgba(0,0,0,0.6)',
+  skeleton: '#2A2B2D',
+  skeleton2: '#323436',
 };
 
 /** Native drop-shadow presets (RN style objects, not CSS strings). */

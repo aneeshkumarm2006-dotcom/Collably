@@ -18,7 +18,7 @@
     "android": {
       "package": "com.collably.app",
       "adaptiveIcon": {
-        "backgroundColor": "#0C831F",
+        "backgroundColor": "#1877F2",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
@@ -59,11 +59,11 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#F8CB46",
+          "backgroundColor": "#1877F2",
           "image": "./assets/images/splash-icon-ink.png",
           "imageWidth": 96,
           "dark": {
-            "backgroundColor": "#F1BE26",
+            "backgroundColor": "#0866FF",
             "image": "./assets/images/splash-icon-ink.png",
             "imageWidth": 96
           }
@@ -81,7 +81,7 @@
       [
         "expo-notifications",
         {
-          "color": "#0C831F"
+          "color": "#1877F2"
         }
       ]
     ],

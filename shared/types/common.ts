@@ -19,6 +19,12 @@ export interface GeoLocation {
   country?: string;
 }
 
+/** A latitude/longitude pair (decimal degrees, WGS-84). */
+export interface GeoPoint {
+  lat: number;
+  lng: number;
+}
+
 /** Fields present on every persisted document once returned by the API. */
 export interface Timestamped {
   createdAt: ISODateString;

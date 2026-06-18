@@ -4,7 +4,7 @@ import { PLATFORMS, type Platform } from '../../../shared/constants/platforms';
 import { CONTENT_TYPES, type ContentType } from '../../../shared/constants/contentTypes';
 import { REWARD_TYPES, type RewardType } from '../../../shared/constants/rewards';
 import { CAMPAIGN_STATUSES, type CampaignStatus } from '../../../shared/constants/statuses';
-import { geoLocationSchema } from './common';
+import { campaignLocationSchema } from './common';
 
 /**
  * A collab opportunity posted by a business (PRD §5.4). `spotsRemaining` is
@@ -16,7 +16,19 @@ export interface CampaignDoc extends Document<Types.ObjectId> {
   title: string;
   description: string;
   category: Category;
-  location?: { city?: string; state?: string; country?: string };
+  location?: {
+    city?: string;
+    state?: string;
+    country?: string;
+    /** Exact pin dropped by the business (On-Site Location feature). */
+    coordinates?: { lat: number; lng: number };
+    /** Human-readable street address for the pin. */
+    address?: string;
+    /** Google Place id for the pin (optional). */
+    placeId?: string;
+    /** GeoJSON mirror of `coordinates` (`[lng, lat]`) — derived on save, 2dsphere-indexed. */
+    geo?: { type: 'Point'; coordinates: [number, number] };
+  };
   isRemote: boolean;
   reward: { type: RewardType; description: string; estimatedValue?: number };
   deliverables: {
@@ -71,7 +83,7 @@ const campaignSchema = new Schema<CampaignDoc>(
     title: { type: String, required: true, trim: true },
     description: { type: String, required: true, trim: true },
     category: { type: String, enum: [...CATEGORIES], required: true },
-    location: { type: geoLocationSchema, default: undefined },
+    location: { type: campaignLocationSchema, default: undefined },
     isRemote: { type: Boolean, default: false },
     reward: { type: rewardSchema, required: true },
     deliverables: { type: [deliverableSchema], default: [] },
@@ -93,6 +105,30 @@ const campaignSchema = new Schema<CampaignDoc>(
 campaignSchema.index({ status: 1, category: 1, 'location.city': 1 });
 // Tag-based ranking for logged-in creators (PRD §13) + tag filters.
 campaignSchema.index({ tags: 1 });
+// GeoJSON point for efficient radius / "near me" map queries (On-Site Location).
+// 2dsphere indexes skip documents missing the field, so remote/unpinned campaigns
+// are simply not indexed — no need for it to be set on every doc.
+campaignSchema.index({ 'location.geo': '2dsphere' });
+
+/**
+ * Keep the GeoJSON `location.geo` mirror in sync with the exact `coordinates`
+ * pin before every save (create + the PUT update path, which `.save()`s). GeoJSON
+ * stores `[lng, lat]`; we read it back as `{ lat, lng }`. When the pin is cleared
+ * (or never set) the mirror is removed so the 2dsphere index drops the document.
+ */
+campaignSchema.pre('save', function syncGeoPoint(next) {
+  const loc = this.location;
+  const coords = loc?.coordinates;
+  // `Number.isFinite` (not `typeof === 'number'`, which is true for NaN/Infinity)
+  // so a non-finite pin clears `geo` rather than writing an index-invalid point
+  // that MongoDB would reject — a best-effort mirror must never block the save.
+  if (loc && coords && Number.isFinite(coords.lat) && Number.isFinite(coords.lng)) {
+    loc.geo = { type: 'Point', coordinates: [coords.lng, coords.lat] };
+  } else if (loc) {
+    loc.geo = undefined;
+  }
+  next();
+});
 
 export const Campaign: Model<CampaignDoc> =
   (models.Campaign as Model<CampaignDoc>) || model<CampaignDoc>('Campaign', campaignSchema);

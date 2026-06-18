@@ -58,6 +58,14 @@ export const env = {
 
   expoAccessToken: str('EXPO_ACCESS_TOKEN'),
   googleClientId: str('GOOGLE_CLIENT_ID'),
+
+  /**
+   * Server-side Google Geocoding API key (On-Site Location feature). Used only
+   * by `services/geocoding` to turn typed addresses ⇄ coordinates on save. Never
+   * shipped to the client. Leave unset → geocoding self-disables ("coming soon")
+   * and the rest of the location feature still works via manual pin coordinates.
+   */
+  googleGeocodingApiKey: str('GOOGLE_GEOCODING_API_KEY'),
 } as const;
 
 /** Origins for the CORS middleware: `true` (reflect any) or an array. */

@@ -238,7 +238,13 @@ router.get(
       .limit(pagination.limit)
       .populate('businessId');
 
-    res.status(200).json(paginated(docs.map(toPublicCampaign), total, pagination));
+    res.status(200).json(
+      paginated(
+        docs.map((c) => toPublicCampaign(c, { role: 'admin' })),
+        total,
+        pagination,
+      ),
+    );
   }),
 );
 
@@ -268,7 +274,7 @@ router.patch(
     if (data.isSpam !== undefined) campaign.isSpam = data.isSpam;
     await campaign.save();
 
-    res.status(200).json({ campaign: toPublicCampaign(campaign) });
+    res.status(200).json({ campaign: toPublicCampaign(campaign, { role: 'admin' }) });
   }),
 );
 

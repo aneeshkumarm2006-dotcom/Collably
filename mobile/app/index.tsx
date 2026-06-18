@@ -13,7 +13,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/components/ThemeProvider';
 import { BrandMark } from '@/components/shared/BrandMark';
 
-const INK = '#1A1B10';
+const INK = '#FFFFFF';
 
 export default function BootScreen() {
   const { colors } = useTheme();
@@ -28,8 +28,8 @@ export default function BootScreen() {
       <BrandMark size={56} wordmark color={INK} wordmarkColor={INK} bg={colors.brandYellow} />
 
       <View style={{ position: 'absolute', bottom: 72, alignItems: 'center', gap: 14 }}>
-        <ActivityIndicator size="small" color="rgba(26,27,16,0.8)" />
-        <Text style={{ fontFamily: 'monospace', fontSize: 12, letterSpacing: 1.4, color: 'rgba(26,27,16,0.62)', fontWeight: '600' }}>
+        <ActivityIndicator size="small" color="rgba(255,255,255,0.8)" />
+        <Text style={{ fontFamily: 'monospace', fontSize: 12, letterSpacing: 1.4, color: 'rgba(255,255,255,0.62)', fontWeight: '600' }}>
           LOCAL COLLAB MARKETPLACE
         </Text>
       </View>

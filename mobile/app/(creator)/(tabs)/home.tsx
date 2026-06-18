@@ -363,7 +363,7 @@ export default function CreatorHomeScreen() {
                     flexDirection: 'row',
                     alignItems: 'center',
                     gap: 5,
-                    backgroundColor: '#F8CB46',
+                    backgroundColor: '#1877F2',
                     paddingHorizontal: 11,
                     paddingVertical: 5,
                     borderRadius: 20,
@@ -387,7 +387,7 @@ export default function CreatorHomeScreen() {
                         flexDirection: 'row',
                         alignItems: 'center',
                         gap: 6,
-                        backgroundColor: '#0C831F',
+                        backgroundColor: '#1877F2',
                         paddingHorizontal: 14,
                         paddingVertical: 8,
                         borderRadius: 13,
@@ -410,8 +410,8 @@ export default function CreatorHomeScreen() {
                         borderRadius: 13,
                       }}
                     >
-                      <Text style={{ fontSize: 14, fontWeight: '800', color: INK }}>Apply</Text>
-                      <Icon name="arrowR" size={15} color={INK} />
+                      <Text style={{ fontSize: 14, fontWeight: '800', color: '#1877F2' }}>Apply</Text>
+                      <Icon name="arrowR" size={15} color="#1877F2" />
                     </View>
                   </View>
                 </View>

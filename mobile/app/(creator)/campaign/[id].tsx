@@ -11,7 +11,17 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Header } from '@/components/shared';
 import { CoverImage } from '@/components/campaign/CoverImage';
-import { CampaignCard } from '@/components/campaign';
+import {
+  CampaignCard,
+  CampaignMap,
+  Marker,
+  Circle,
+  MAPS_AVAILABLE,
+  MapPlaceholder,
+  toLatLng,
+  regionForPoint,
+  openInMaps,
+} from '@/components/campaign';
 import {
   Avatar,
   Badge,
@@ -30,7 +40,13 @@ import { useTheme } from '@/components/ThemeProvider';
 import { useAuthStore } from '@/store/authStore';
 import { api, isApiError } from '@/lib/api';
 import { useFetch } from '@/lib/useFetch';
-import { formatReward, formatCountdown, formatDate, formatCompactNumber, isOverdue } from '@/lib/utils';
+import {
+  formatReward,
+  formatCountdown,
+  formatDate,
+  formatCompactNumber,
+  isOverdue,
+} from '@/lib/utils';
 import type { ApplicationStatus } from '@/constants';
 import type { Campaign, BusinessProfile, Application } from '@/types';
 
@@ -158,7 +174,15 @@ export default function CampaignDetailScreen() {
               <Badge status={c.status} />
               {c.isRemote && <Badge tone="accent" label="Remote" />}
             </View>
-            <Text style={{ fontSize: 23, fontWeight: '800', color: colors.text, letterSpacing: -0.4, lineHeight: 29 }}>
+            <Text
+              style={{
+                fontSize: 23,
+                fontWeight: '800',
+                color: colors.text,
+                letterSpacing: -0.4,
+                lineHeight: 29,
+              }}
+            >
               {c.title}
             </Text>
           </View>
@@ -166,19 +190,27 @@ export default function CampaignDetailScreen() {
           {/* Business card */}
           {biz && (
             <Card
-              onPress={() => router.push({ pathname: '/(creator)/business/[id]', params: { id: biz._id } })}
+              onPress={() =>
+                router.push({ pathname: '/(creator)/business/[id]', params: { id: biz._id } })
+              }
               padding={14}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                 <Avatar src={biz.logo} name={biz.businessName} size={46} />
                 <View style={{ flex: 1, minWidth: 0 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <Text numberOfLines={1} style={{ fontSize: 15.5, fontWeight: '700', color: colors.text }}>
+                    <Text
+                      numberOfLines={1}
+                      style={{ fontSize: 15.5, fontWeight: '700', color: colors.text }}
+                    >
                       {biz.businessName}
                     </Text>
                     {biz.isVerified && <Icon name="badge" size={15} color={colors.accent} />}
                   </View>
-                  <Text numberOfLines={1} style={{ fontSize: 12.5, color: colors.text2, marginTop: 1 }}>
+                  <Text
+                    numberOfLines={1}
+                    style={{ fontSize: 12.5, color: colors.text2, marginTop: 1 }}
+                  >
                     {[biz.category, biz.location?.city].filter(Boolean).join(' · ') || 'Business'}
                   </Text>
                 </View>
@@ -224,8 +256,13 @@ export default function CampaignDetailScreen() {
 
           {/* About */}
           <Section title="About this campaign" colors={colors}>
-            <Text style={{ fontSize: 14.5, color: colors.text2, lineHeight: 22 }}>{c.description}</Text>
+            <Text style={{ fontSize: 14.5, color: colors.text2, lineHeight: 22 }}>
+              {c.description}
+            </Text>
           </Section>
+
+          {/* Location (On-Site Location feature) */}
+          <LocationSection campaign={c} colors={colors} />
 
           {/* Deliverables */}
           {c.deliverables.length > 0 && (
@@ -254,15 +291,28 @@ export default function CampaignDetailScreen() {
                         justifyContent: 'center',
                       }}
                     >
-                      <Icon name={PLATFORM_ICON[d.platform] ?? 'sparkles'} size={20} color={colors.accent} />
+                      <Icon
+                        name={PLATFORM_ICON[d.platform] ?? 'sparkles'}
+                        size={20}
+                        color={colors.accent}
+                      />
                     </View>
                     <View style={{ flex: 1, minWidth: 0 }}>
                       <Text style={{ fontSize: 14.5, fontWeight: '700', color: colors.text }}>
                         {d.quantity} × {d.contentType}
                       </Text>
-                      <Text style={{ fontSize: 12.5, color: colors.text2, marginTop: 1 }}>{d.platform}</Text>
+                      <Text style={{ fontSize: 12.5, color: colors.text2, marginTop: 1 }}>
+                        {d.platform}
+                      </Text>
                       {d.requirements ? (
-                        <Text style={{ fontSize: 13, color: colors.text2, marginTop: 5, lineHeight: 19 }}>
+                        <Text
+                          style={{
+                            fontSize: 13,
+                            color: colors.text2,
+                            marginTop: 5,
+                            lineHeight: 19,
+                          }}
+                        >
                           {d.requirements}
                         </Text>
                       ) : null}
@@ -294,7 +344,9 @@ export default function CampaignDetailScreen() {
                     campaign={o}
                     businessName={o.business?.businessName ?? biz?.businessName}
                     compact
-                    onPress={() => router.push({ pathname: '/(creator)/campaign/[id]', params: { id: o._id } })}
+                    onPress={() =>
+                      router.push({ pathname: '/(creator)/campaign/[id]', params: { id: o._id } })
+                    }
                   />
                 ))}
               </View>
@@ -322,7 +374,9 @@ export default function CampaignDetailScreen() {
         }}
       >
         <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 10.5, fontWeight: '700', letterSpacing: 0.6, color: colors.text3 }}>
+          <Text
+            style={{ fontSize: 10.5, fontWeight: '700', letterSpacing: 0.6, color: colors.text3 }}
+          >
             REWARD
           </Text>
           <Text numberOfLines={1} style={{ fontSize: 16, fontWeight: '700', color: colors.money }}>
@@ -345,7 +399,8 @@ export default function CampaignDetailScreen() {
       <BottomSheet ref={pitchRef} title="Apply to this campaign" snapPoints={['62%']}>
         <View style={{ paddingHorizontal: 20, paddingTop: 8, gap: 14 }}>
           <Text style={{ fontSize: 14, color: colors.text2, lineHeight: 20 }}>
-            Add a short pitch (optional) telling {biz?.businessName ?? 'the business'} why you're a great fit.
+            Add a short pitch (optional) telling {biz?.businessName ?? 'the business'} why you're a
+            great fit.
           </Text>
           <TextArea
             value={pitch}
@@ -384,7 +439,11 @@ function ApplyControl({
 }) {
   // Guests (and anyone not signed in as a creator) are prompted to log in.
   if (isGuest || !isCreator) {
-    return <Button icon="lock" onPress={onLogin}>Log in to apply</Button>;
+    return (
+      <Button icon="lock" onPress={onLogin}>
+        Log in to apply
+      </Button>
+    );
   }
   if (myStatus) {
     // Already applied — surface the current state instead of a button.
@@ -394,17 +453,129 @@ function ApplyControl({
     const label = campaignStatus !== 'Active' ? campaignStatus : spotsLeft <= 0 ? 'Full' : 'Closed';
     return (
       <View style={{ opacity: 0.6 }}>
-        <Button disabled onPress={() => {}}>{label}</Button>
+        <Button disabled onPress={() => {}}>
+          {label}
+        </Button>
       </View>
     );
   }
-  return <Button icon="zap" onPress={onApply}>Apply now</Button>;
+  return (
+    <Button icon="zap" onPress={onApply}>
+      Apply now
+    </Button>
+  );
 }
 
-function Section({ title, colors, children }: { title: string; colors: ReturnType<typeof useTheme>['colors']; children: React.ReactNode }) {
+/**
+ * Location block (On-Site Location feature). Shows the exact pin + address +
+ * "Open in Maps" once the creator is accepted (`locationPrecise`); otherwise a
+ * fuzzed circle over the approximate area with a "revealed once accepted" note.
+ * Falls back to a "map coming soon" placeholder while maps are disabled, and
+ * renders nothing for remote campaigns.
+ */
+function LocationSection({
+  campaign,
+  colors,
+}: {
+  campaign: CampaignWithBusiness;
+  colors: ReturnType<typeof useTheme>['colors'];
+}) {
+  const loc = campaign.location;
+  if (campaign.isRemote || !loc) return null;
+
+  const cityLine = [loc.city, loc.state, loc.country].filter(Boolean).join(', ');
+  const exact = loc.locationPrecise && loc.coordinates ? loc.coordinates : null;
+  const approx = loc.approxCoordinates ?? null;
+  const radius = loc.radiusMeters ?? 750;
+
+  // Nothing geographic and no city text → no section at all.
+  if (!exact && !approx && !cityLine) return null;
+
+  const STATIC_MAP = {
+    scrollEnabled: false,
+    zoomEnabled: false,
+    rotateEnabled: false,
+    pitchEnabled: false,
+    toolbarEnabled: false,
+  };
+
+  return (
+    <Section title="Location" colors={colors}>
+      {cityLine ? (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Icon name="mappin" size={16} color={colors.text3} />
+          <Text style={{ fontSize: 14.5, color: colors.text2 }}>{cityLine}</Text>
+        </View>
+      ) : null}
+
+      {!MAPS_AVAILABLE ? (
+        exact || approx ? (
+          <View style={{ marginTop: 10 }}>
+            <MapPlaceholder height={160} hint="Map view is coming soon." />
+          </View>
+        ) : null
+      ) : exact ? (
+        <View style={{ marginTop: 10, gap: 10 }}>
+          <CampaignMap
+            height={180}
+            mapProps={{ initialRegion: regionForPoint(exact, 1200), ...STATIC_MAP }}
+          >
+            <Marker coordinate={toLatLng(exact)} />
+          </CampaignMap>
+          {loc.address ? (
+            <Text style={{ fontSize: 13.5, color: colors.text2, lineHeight: 19 }}>
+              {loc.address}
+            </Text>
+          ) : null}
+          <Button
+            variant="outline"
+            size="sm"
+            icon="arrowUR"
+            onPress={() => openInMaps(exact, campaign.title)}
+          >
+            Open in Maps
+          </Button>
+        </View>
+      ) : approx ? (
+        <View style={{ marginTop: 10, gap: 8 }}>
+          <CampaignMap
+            height={180}
+            mapProps={{ initialRegion: regionForPoint(approx, radius * 3.2), ...STATIC_MAP }}
+          >
+            <Circle
+              center={toLatLng(approx)}
+              radius={radius}
+              strokeColor={colors.accent}
+              fillColor={`${colors.accent}22`}
+              strokeWidth={2}
+            />
+          </CampaignMap>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Icon name="lock" size={14} color={colors.text3} />
+            <Text style={{ flex: 1, fontSize: 12.5, color: colors.text3, lineHeight: 17 }}>
+              Exact location is revealed once you&apos;re accepted.
+            </Text>
+          </View>
+        </View>
+      ) : null}
+    </Section>
+  );
+}
+
+function Section({
+  title,
+  colors,
+  children,
+}: {
+  title: string;
+  colors: ReturnType<typeof useTheme>['colors'];
+  children: React.ReactNode;
+}) {
   return (
     <View style={{ gap: 10 }}>
-      <Text style={{ fontSize: 16, fontWeight: '800', color: colors.text, letterSpacing: -0.2 }}>{title}</Text>
+      <Text style={{ fontSize: 16, fontWeight: '800', color: colors.text, letterSpacing: -0.2 }}>
+        {title}
+      </Text>
       {children}
     </View>
   );
@@ -439,7 +610,9 @@ function FactRow({
     >
       <Icon name={icon} size={19} color={colors.text3} strokeWidth={1.8} />
       <Text style={{ fontSize: 13.5, color: colors.text3, width: 100 }}>{label}</Text>
-      <Text style={{ flex: 1, fontSize: 14, fontWeight: '600', color: tone, textAlign: 'right' }}>{value}</Text>
+      <Text style={{ flex: 1, fontSize: 14, fontWeight: '600', color: tone, textAlign: 'right' }}>
+        {value}
+      </Text>
     </View>
   );
 }

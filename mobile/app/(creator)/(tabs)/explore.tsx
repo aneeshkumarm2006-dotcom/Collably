@@ -12,7 +12,12 @@ import { FlatList, Pressable, RefreshControl, TextInput, View, Text } from 'reac
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Header, NotificationBell } from '@/components/shared';
-import { CampaignCard, FilterBottomSheet, SortBottomSheet } from '@/components/campaign';
+import {
+  CampaignCard,
+  FilterBottomSheet,
+  SortBottomSheet,
+  ExploreMap,
+} from '@/components/campaign';
 import {
   type CampaignFilters,
   type CampaignSort,
@@ -33,7 +38,12 @@ import { api, isApiError } from '@/lib/api';
 import type { Campaign, BusinessProfile } from '@/types';
 
 type CampaignWithBusiness = Campaign & { business?: BusinessProfile };
-type CampaignPage = { data: CampaignWithBusiness[]; page: number; totalPages: number; total: number };
+type CampaignPage = {
+  data: CampaignWithBusiness[];
+  page: number;
+  totalPages: number;
+  total: number;
+};
 
 const PAGE_SIZE = 10;
 
@@ -47,6 +57,7 @@ export default function ExploreScreen() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [filters, setFilters] = useState<CampaignFilters>({});
   const [sort, setSort] = useState<CampaignSort>(isGuest ? 'recent' : 'relevance');
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
 
   const [items, setItems] = useState<CampaignWithBusiness[]>([]);
   const [page, setPage] = useState(1);
@@ -138,7 +149,15 @@ export default function ExploreScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <Header title="Explore" large right={isGuest ? undefined : <NotificationBell onPress={() => router.push('/(creator)/notifications')} />} />
+      <Header
+        title="Explore"
+        large
+        right={
+          isGuest ? undefined : (
+            <NotificationBell onPress={() => router.push('/(creator)/notifications')} />
+          )
+        }
+      />
 
       {/* Sticky search + filter row */}
       <View style={{ paddingHorizontal: 16, paddingBottom: 10, gap: 10 }}>
@@ -179,15 +198,18 @@ export default function ExploreScreen() {
           >
             {activeFilters > 0 ? `Filters · ${activeFilters}` : 'Filters'}
           </Button>
-          <Button variant="outline" size="sm" icon="list" onPress={() => sortRef.current?.present()}>
+          <Button
+            variant="outline"
+            size="sm"
+            icon="list"
+            onPress={() => sortRef.current?.present()}
+          >
             Sort
           </Button>
-          <View style={{ flex: 1 }} />
-          {!loading && (
-            <View style={{ justifyContent: 'center' }}>
-              <Text style={{ fontSize: 12.5, color: colors.text3 }}>{total} found</Text>
-            </View>
-          )}
+          <View style={{ flex: 1, justifyContent: 'center' }}>
+            {!loading && <Text style={{ fontSize: 12.5, color: colors.text3 }}>{total} found</Text>}
+          </View>
+          <ViewToggle value={viewMode} onChange={setViewMode} colors={colors} />
         </View>
       </View>
 
@@ -199,6 +221,13 @@ export default function ExploreScreen() {
         </View>
       ) : error ? (
         <ErrorState body={error} onRetry={onRefresh} />
+      ) : viewMode === 'map' ? (
+        <ExploreMap
+          items={items}
+          total={total}
+          bottomInset={insets.bottom}
+          onOpen={(id) => router.push({ pathname: '/(creator)/campaign/[id]', params: { id } })}
+        />
       ) : (
         <FlatList
           data={items}
@@ -207,13 +236,24 @@ export default function ExploreScreen() {
             <CampaignCard
               campaign={item}
               businessName={item.business?.businessName}
-              onPress={() => router.push({ pathname: '/(creator)/campaign/[id]', params: { id: item._id } })}
+              onPress={() =>
+                router.push({ pathname: '/(creator)/campaign/[id]', params: { id: item._id } })
+              }
             />
           )}
-          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: insets.bottom + 24, gap: 14, flexGrow: 1 }}
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            paddingBottom: insets.bottom + 24,
+            gap: 14,
+            flexGrow: 1,
+          }}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.accent}
+            />
           }
           onEndReached={onEndReached}
           onEndReachedThreshold={0.5}
@@ -242,6 +282,58 @@ export default function ExploreScreen() {
 
       <FilterBottomSheet ref={filterRef} value={filters} onApply={setFilters} />
       <SortBottomSheet ref={sortRef} value={sort} onChange={setSort} allowRelevance={!isGuest} />
+    </View>
+  );
+}
+
+/** Compact List ⇄ Map segmented control for the Explore header. */
+function ViewToggle({
+  value,
+  onChange,
+  colors,
+}: {
+  value: 'list' | 'map';
+  onChange: (v: 'list' | 'map') => void;
+  colors: ReturnType<typeof useTheme>['colors'];
+}) {
+  const opt = (mode: 'list' | 'map', icon: 'list' | 'mappin', label: string) => {
+    const active = value === mode;
+    return (
+      <Pressable
+        onPress={() => onChange(mode)}
+        hitSlop={4}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 5,
+          paddingHorizontal: 11,
+          paddingVertical: 6,
+          borderRadius: 8,
+          backgroundColor: active ? colors.bgElev : 'transparent',
+        }}
+      >
+        <Icon name={icon} size={15} color={active ? colors.accent : colors.text3} />
+        <Text
+          style={{ fontSize: 13, fontWeight: '700', color: active ? colors.text : colors.text3 }}
+        >
+          {label}
+        </Text>
+      </Pressable>
+    );
+  };
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        backgroundColor: colors.card,
+        borderWidth: 1,
+        borderColor: colors.hair,
+        borderRadius: 11,
+        padding: 3,
+      }}
+    >
+      {opt('list', 'list', 'List')}
+      {opt('map', 'mappin', 'Map')}
     </View>
   );
 }

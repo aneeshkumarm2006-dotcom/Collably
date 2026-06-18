@@ -26,9 +26,9 @@ import { BrandMark } from '@/components/shared';
 import { SignupForm, type SignupRole } from './SignupForm';
 import { LoginForm } from './LoginForm';
 
-const INK = '#1A1B10';
-const INK_SOFT = 'rgba(26,27,16,0.66)';
-const INK_CHIP = 'rgba(26,27,16,0.10)';
+const INK = '#FFFFFF';
+const INK_SOFT = 'rgba(255,255,255,0.66)';
+const INK_CHIP = 'rgba(255,255,255,0.18)';
 
 export type PremiumAuthRole = SignupRole | null;
 export type PremiumAuthMode = 'signup' | 'signin';

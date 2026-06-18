@@ -8,7 +8,7 @@
  * gate the "Next" button without duplicating rules.
  */
 import type { Category, RewardType } from '@/constants';
-import type { Campaign, CampaignDeliverable, CampaignReward, GeoLocation } from '@/types';
+import type { Campaign, CampaignDeliverable, CampaignReward, CampaignLocation } from '@/types';
 
 export type CampaignFormState = {
   title: string;
@@ -16,7 +16,8 @@ export type CampaignFormState = {
   category: Category | null;
   coverImage: string | null;
   isRemote: boolean;
-  location: GeoLocation;
+  /** Coarse city/state/country + (when pinned) an exact `coordinates`/`address`. */
+  location: CampaignLocation;
   reward: { type: RewardType | null; description: string; estimatedValue?: number };
   deliverables: CampaignDeliverable[];
   deadline: string | null; // ISO string
@@ -91,7 +92,8 @@ export function validateStep(step: number, f: CampaignFormState): boolean {
     case 2:
       return true; // cover image is optional (gradient fallback)
     case 3:
-      return f.isRemote || !!f.location.city?.trim();
+      // On-site campaigns need at least a coarse city, or an exact pin if dropped.
+      return f.isRemote || !!f.location.city?.trim() || !!f.location.coordinates;
     case 4:
       return !!f.reward.type && f.reward.description.trim().length > 0;
     case 5:
@@ -103,6 +105,23 @@ export function validateStep(step: number, f: CampaignFormState): boolean {
     default:
       return false;
   }
+}
+
+/**
+ * Build the location request body for an on-site campaign: the coarse fields plus
+ * the exact pin (`coordinates`/`address`/`placeId`) when one was dropped. The
+ * server strips any privacy-only fields (`approxCoordinates`, `locationPrecise`)
+ * that may ride along from an edit round-trip.
+ */
+function toLocationPayload(loc: CampaignLocation): CampaignLocation {
+  const out: CampaignLocation = {};
+  if (loc.city?.trim()) out.city = loc.city.trim();
+  if (loc.state?.trim()) out.state = loc.state.trim();
+  if (loc.country?.trim()) out.country = loc.country.trim();
+  if (loc.coordinates) out.coordinates = loc.coordinates;
+  if (loc.address?.trim()) out.address = loc.address.trim();
+  if (loc.placeId) out.placeId = loc.placeId;
+  return out;
 }
 
 /** Map the form to the API request body for create/update. */
@@ -118,7 +137,7 @@ export function toCampaignPayload(f: CampaignFormState) {
     category: f.category,
     coverImage: f.coverImage,
     isRemote: f.isRemote,
-    location: f.isRemote ? undefined : f.location,
+    location: f.isRemote ? undefined : toLocationPayload(f.location),
     reward,
     deliverables: f.deliverables,
     deadline: f.deadline,

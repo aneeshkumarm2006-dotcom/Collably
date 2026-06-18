@@ -28,7 +28,8 @@ import { businessOnly, creatorOnly } from '../middleware/authorize';
 import { asyncHandler } from '../lib/utils';
 import { AppError } from '../middleware/errorHandler';
 import { objectIdParam, parsePagination, paginated } from '../lib/http';
-import { toPublicCampaign } from '../lib/serialize';
+import { toPublicCampaign, type CampaignViewerContext } from '../lib/serialize';
+import { isGeocodingConfigured, forwardGeocode, reverseGeocode } from '../services';
 import { notifyNewApplication } from '../lib/triggers';
 
 const router = Router();
@@ -57,11 +58,21 @@ const rewardSchema = z.object({
   estimatedValue: z.coerce.number().min(0).optional(),
 });
 
+const geoPointSchema = z.object({
+  lat: z.coerce.number().min(-90).max(90),
+  lng: z.coerce.number().min(-180).max(180),
+});
+
 const locationSchema = z
   .object({
     city: z.string().trim().max(120).optional(),
     state: z.string().trim().max(120).optional(),
     country: z.string().trim().max(120).optional(),
+    // On-Site Location: an exact pin + address (optional — coarse city still works).
+    // Unknown extras (e.g. approxCoordinates from an edit round-trip) are stripped.
+    coordinates: geoPointSchema.optional(),
+    address: z.string().trim().max(300).optional(),
+    placeId: z.string().trim().max(300).optional(),
   })
   .optional();
 
@@ -158,6 +169,98 @@ async function requireBusinessProfile(userId: unknown) {
   return profile;
 }
 
+/** String id of a campaign's business ref, whether it's populated or a raw id. */
+function campaignBusinessId(c: CampaignDoc): string {
+  const b = c.businessId as unknown as { _id?: unknown };
+  if (b && typeof b === 'object' && '_id' in b && b._id) return String(b._id);
+  return String(c.businessId);
+}
+
+/**
+ * Resolve the location-precision policy for the current request (On-Site Location
+ * feature). Does the per-role lookups **once**, then returns a cheap per-campaign
+ * classifier so each serialized campaign reveals its exact pin only to an admin,
+ * the owning business, or a creator with an Accepted/Completed application.
+ */
+async function resolveCampaignViewer(
+  req: Express.Request,
+): Promise<(c: CampaignDoc) => CampaignViewerContext> {
+  const role = req.user?.role;
+
+  if (role === 'admin') return () => ({ role: 'admin' });
+
+  if (role === 'business') {
+    const profile = await BusinessProfile.findOne({ userId: req.user!._id }).select('_id');
+    const pid = profile?._id?.toString();
+    return (c) => ({ role: 'business', isOwner: !!pid && campaignBusinessId(c) === pid });
+  }
+
+  if (role === 'creator') {
+    const creator = await CreatorProfile.findOne({ userId: req.user!._id }).select('_id');
+    if (!creator) return () => ({ role: 'creator' });
+    const accepted = await Application.find({
+      creatorId: creator._id,
+      status: { $in: ['Accepted', 'Completed'] },
+    }).select('campaignId');
+    const acceptedSet = new Set(accepted.map((a) => a.campaignId.toString()));
+    return (c) => ({ role: 'creator', isAcceptedCreator: acceptedSet.has(c.id) });
+  }
+
+  return () => ({ role: 'guest' });
+}
+
+type ParsedLocation = z.infer<typeof locationSchema>;
+
+/** True when the new pin is meaningfully different from the stored one. */
+function pinMoved(
+  next: { lat: number; lng: number },
+  prev?: { lat?: number; lng?: number },
+): boolean {
+  if (!prev || typeof prev.lat !== 'number' || typeof prev.lng !== 'number') return false;
+  return Math.abs(next.lat - prev.lat) > 1e-6 || Math.abs(next.lng - prev.lng) > 1e-6;
+}
+
+/**
+ * Best-effort geocode-on-save: fill in whichever of (address ⇄ coordinates) the
+ * business left blank, using the server-side Geocoding key. A no-op (and never
+ * throws) when geocoding isn't configured — the manually-dropped pin stands.
+ *
+ * `prevCoords` is the campaign's stored pin on an edit. If the pin moved, the
+ * `address`/`placeId` carried over from the edit round-trip are now stale, so we
+ * drop them — that re-arms the reverse-geocode branch below, and even when
+ * geocoding is off (or returns nothing) we'd rather store no address than a wrong
+ * one that contradicts the new coordinates.
+ */
+async function applyGeocoding(
+  loc: ParsedLocation,
+  prevCoords?: { lat?: number; lng?: number },
+): Promise<ParsedLocation> {
+  if (!loc) return loc;
+  if (loc.coordinates && pinMoved(loc.coordinates, prevCoords)) {
+    loc.address = undefined;
+    loc.placeId = undefined;
+  }
+  if (!isGeocodingConfigured()) return loc;
+  try {
+    if (loc.coordinates && !loc.address) {
+      const r = await reverseGeocode(loc.coordinates.lat, loc.coordinates.lng);
+      if (r) {
+        if (r.formatted) loc.address = r.formatted;
+        if (!loc.placeId && r.placeId) loc.placeId = r.placeId;
+      }
+    } else if (!loc.coordinates && loc.address) {
+      const r = await forwardGeocode(loc.address);
+      if (r) {
+        loc.coordinates = { lat: r.lat, lng: r.lng };
+        if (!loc.placeId && r.placeId) loc.placeId = r.placeId;
+      }
+    }
+  } catch {
+    /* best-effort; never block a save on a geocoding hiccup */
+  }
+  return loc;
+}
+
 /** Sort spec for the explicit (non-relevance) sorts. Featured always floats up. */
 function sortSpec(sort?: string): Record<string, 1 | -1> {
   switch (sort) {
@@ -242,6 +345,9 @@ router.get(
 
     const total = await Campaign.countDocuments(filter);
 
+    // Location-precision classifier for this viewer (On-Site Location feature).
+    const viewerFor = await resolveCampaignViewer(req);
+
     // Relevance ranking for a signed-in creator on the default sort (PRD §13).
     const useRelevance = (!q.sort || q.sort === 'relevance') && req.user?.role === 'creator';
     if (useRelevance) {
@@ -264,7 +370,7 @@ router.get(
 
       const page = scored
         .slice(pagination.skip, pagination.skip + pagination.limit)
-        .map(({ c }) => toPublicCampaign(c));
+        .map(({ c }) => toPublicCampaign(c, viewerFor(c)));
       res.status(200).json(paginated(page, total, pagination));
       return;
     }
@@ -276,7 +382,13 @@ router.get(
       .limit(pagination.limit)
       .populate('businessId');
 
-    res.status(200).json(paginated(docs.map(toPublicCampaign), total, pagination));
+    res.status(200).json(
+      paginated(
+        docs.map((c) => toPublicCampaign(c, viewerFor(c))),
+        total,
+        pagination,
+      ),
+    );
   }),
 );
 
@@ -289,6 +401,9 @@ router.post(
     const data = campaignCreateSchema.parse(req.body);
     const profile = await requireBusinessProfile(req.user!._id);
 
+    // Fill address ⇄ coordinates server-side when geocoding is configured.
+    if (data.location) data.location = await applyGeocoding(data.location);
+
     const campaign = await Campaign.create({
       ...data,
       businessId: profile._id,
@@ -297,7 +412,10 @@ router.post(
 
     await BusinessProfile.updateOne({ _id: profile._id }, { $inc: { totalCampaigns: 1 } });
 
-    res.status(201).json({ campaign: toPublicCampaign(campaign) });
+    // The owner just created it → reveal the exact pin back to them.
+    res.status(201).json({
+      campaign: toPublicCampaign(campaign, { role: 'business', isOwner: true }),
+    });
   }),
 );
 
@@ -309,7 +427,9 @@ router.get(
     const id = objectIdParam(req.params.id);
     const campaign = await Campaign.findById(id).populate('businessId');
     if (!campaign) throw new AppError(404, 'Campaign not found');
-    res.status(200).json({ campaign: toPublicCampaign(campaign) });
+    // Reveal the exact pin only to the owner / admin / an accepted creator.
+    const viewerFor = await resolveCampaignViewer(req);
+    res.status(200).json({ campaign: toPublicCampaign(campaign, viewerFor(campaign)) });
   }),
 );
 
@@ -346,10 +466,21 @@ router.put(
       campaign.spotsRemaining = data.spotsTotal - accepted;
     }
 
+    // Fill address ⇄ coordinates server-side when geocoding is configured, and
+    // drop a stale carried-over address if the pin moved. Capture the prior pin
+    // BEFORE Object.assign overwrites it.
+    if (data.location) {
+      const prevCoords = campaign.location?.coordinates;
+      data.location = await applyGeocoding(data.location, prevCoords);
+    }
+
     Object.assign(campaign, data);
     await campaign.save();
 
-    res.status(200).json({ campaign: toPublicCampaign(campaign) });
+    // The owner is editing → reveal the exact pin back to them.
+    res.status(200).json({
+      campaign: toPublicCampaign(campaign, { role: 'business', isOwner: true }),
+    });
   }),
 );
 
@@ -386,8 +517,9 @@ router.patch(
     await assertOwnerOrAdmin(campaign, req);
 
     const from = campaign.status;
+    const ownerView: CampaignViewerContext = { role: 'business', isOwner: true };
     if (from === status) {
-      res.status(200).json({ campaign: toPublicCampaign(campaign) });
+      res.status(200).json({ campaign: toPublicCampaign(campaign, ownerView) });
       return;
     }
     if (!canTransitionCampaign(from, status as CampaignStatus)) {
@@ -407,7 +539,7 @@ router.patch(
 
     campaign.status = status as CampaignStatus;
     await campaign.save();
-    res.status(200).json({ campaign: toPublicCampaign(campaign) });
+    res.status(200).json({ campaign: toPublicCampaign(campaign, ownerView) });
   }),
 );
 

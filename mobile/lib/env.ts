@@ -74,6 +74,22 @@ export const GOOGLE_OAUTH_CONFIGURED = Boolean(
   GOOGLE_OAUTH.iosClientId || GOOGLE_OAUTH.androidClientId || GOOGLE_OAUTH.webClientId,
 );
 
+/**
+ * Google Maps SDK key (On-Site Location feature). Read from `EXPO_PUBLIC_*` so
+ * it's inlined into the bundle and `app.config.js` embeds the same value in the
+ * native build. Maps SDK keys are *not* secret — they're locked by app signature
+ * in Google Cloud — so shipping it in the bundle is expected.
+ *
+ * When unset (no key yet), `MAPS_ENABLED` is false and every map surface renders
+ * a "Map coming soon" placeholder instead of a `MapView`. Set the key + run a new
+ * dev build and the maps light up with no other changes. Mirrors the
+ * `GOOGLE_OAUTH_CONFIGURED` degrade-gracefully pattern above.
+ */
+export const GOOGLE_MAPS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || undefined;
+
+/** True once a Maps SDK key is configured for this build (else "map coming soon"). */
+export const MAPS_ENABLED = Boolean(GOOGLE_MAPS_API_KEY);
+
 /** App display version, surfaced in settings / support screens. */
 export const APP_VERSION = Constants.expoConfig?.version ?? '0.0.0';
 

@@ -3,6 +3,25 @@
  */
 export { CampaignCard, type CampaignCardProps } from './CampaignCard';
 export { CoverImage, type CoverImageProps } from './CoverImage';
+export {
+  MapView,
+  Marker,
+  Circle,
+  PROVIDER_GOOGLE,
+  MAPS_AVAILABLE,
+  MapPlaceholder,
+  PriceMarker,
+  CampaignMap,
+  toLatLng,
+  regionForPoint,
+  openInMaps,
+  type LatLng,
+  type MapRegion,
+  type MapPlaceholderProps,
+  type PriceMarkerProps,
+  type CampaignMapProps,
+} from './CampaignMap';
+export { ExploreMap, type ExploreMapProps } from './ExploreMap';
 export { FilterBottomSheet, type FilterBottomSheetProps } from './FilterBottomSheet';
 export { SortBottomSheet, type SortBottomSheetProps } from './SortBottomSheet';
 export {
