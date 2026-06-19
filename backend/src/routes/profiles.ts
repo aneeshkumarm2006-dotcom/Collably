@@ -99,41 +99,63 @@ router.put(
 // --- Creator profile ----------------------------------------------------------
 
 const handleNumber = z.coerce.number().min(0);
+/** A creator's public profile URL for a platform — required when that platform is submitted. */
+const socialLink = z.string().trim().min(1, 'A profile link is required').max(2048);
 
-const creatorProfileSchema = z.object({
-  bio: z.string().trim().max(2000).optional(),
-  niche: z.array(z.enum(NICHES)).max(20).optional(),
-  location: locationSchema,
-  socialHandles: z
-    .object({
+/**
+ * Creators must submit at least one social handle (Instagram, TikTok or YouTube),
+ * each with a `handle` **and** a `link`; follower/subscriber counts are optional.
+ * `socialHandles` is required and refined to ensure ≥1 platform is present.
+ */
+const creatorProfileSchema = z
+  .object({
+    bio: z.string().trim().max(2000).optional(),
+    niche: z.array(z.enum(NICHES)).max(20).optional(),
+    location: locationSchema,
+    socialHandles: z.object({
       instagram: z
         .object({
-          handle: z.string().trim().max(120),
-          followerCount: handleNumber,
+          handle: z.string().trim().min(1).max(120),
+          link: socialLink,
+          followerCount: handleNumber.optional(),
           engagementRate: handleNumber.optional(),
         })
         .optional(),
       youtube: z
-        .object({ handle: z.string().trim().max(120), subscriberCount: handleNumber })
+        .object({
+          handle: z.string().trim().min(1).max(120),
+          link: socialLink,
+          subscriberCount: handleNumber.optional(),
+        })
         .optional(),
       tiktok: z
-        .object({ handle: z.string().trim().max(120), followerCount: handleNumber })
+        .object({
+          handle: z.string().trim().min(1).max(120),
+          link: socialLink,
+          followerCount: handleNumber.optional(),
+        })
         .optional(),
-    })
-    .optional(),
-  contentTypes: z.array(z.enum(CONTENT_TYPES)).max(20).optional(),
-  portfolio: z
-    .array(
-      z.object({
-        imageUrl: urlish,
-        caption: z.string().trim().max(500).optional(),
-        link: urlish.optional(),
-      }),
-    )
-    .max(6, 'A portfolio can hold at most 6 items')
-    .optional(),
-  isUGCOnly: z.boolean().optional(),
-});
+    }),
+    contentTypes: z.array(z.enum(CONTENT_TYPES)).max(20).optional(),
+    portfolio: z
+      .array(
+        z.object({
+          imageUrl: urlish,
+          caption: z.string().trim().max(500).optional(),
+          link: urlish.optional(),
+        }),
+      )
+      .max(6, 'A portfolio can hold at most 6 items')
+      .optional(),
+    isUGCOnly: z.boolean().optional(),
+  })
+  .refine(
+    (d) => Boolean(d.socialHandles.instagram || d.socialHandles.youtube || d.socialHandles.tiktok),
+    {
+      message: 'Add at least one social handle (Instagram, TikTok or YouTube) with its link.',
+      path: ['socialHandles'],
+    },
+  );
 
 /** GET /api/profile/creator — the signed-in creator's profile. */
 router.get(

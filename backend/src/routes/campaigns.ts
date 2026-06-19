@@ -396,6 +396,15 @@ router.post(
     const data = campaignCreateSchema.parse(req.body);
     const profile = await requireBusinessProfile(req.user!._id);
 
+    // Publishing (status Active) requires a verified business. An unverified
+    // ("under review") business may still save the campaign as a Draft.
+    if (data.status === 'Active' && !profile.isVerified) {
+      throw new AppError(
+        403,
+        'Your business is under review. Save it as a draft — you can publish once an admin verifies you.',
+      );
+    }
+
     // Fill address ⇄ coordinates server-side when geocoding is configured.
     if (data.location) data.location = await applyGeocoding(data.location);
 
@@ -497,6 +506,17 @@ router.patch(
     const campaign = await findCampaignOr404(id);
     await assertOwnerOrAdmin(campaign, req);
 
+    // Publishing (→ Active) requires a verified business; an admin may force it.
+    if (status === 'Active' && req.user!.role !== 'admin') {
+      const business = await BusinessProfile.findById(campaign.businessId).select('isVerified');
+      if (!business?.isVerified) {
+        throw new AppError(
+          403,
+          'Your business is under review. You can publish campaigns once an admin verifies you.',
+        );
+      }
+    }
+
     const from = campaign.status;
     const ownerView: CampaignViewerContext = { role: 'business', isOwner: true };
     if (from === status) {
@@ -542,6 +562,15 @@ router.post(
 
     const creator = await CreatorProfile.findOne({ userId: req.user!._id });
     if (!creator) throw new AppError(404, 'Create your creator profile before applying');
+
+    // Admin approval gate: an unverified ("under review") creator can browse but
+    // not apply until an admin verifies them.
+    if (!creator.isVerified) {
+      throw new AppError(
+        403,
+        'Your creator account is under review. You can apply once an admin verifies you.',
+      );
+    }
 
     // One application per (campaign, creator) — pre-check for a clean message,
     // backstopped by the unique compound index against races.

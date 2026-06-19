@@ -40,6 +40,12 @@ export type CampaignFormScreenProps = {
   businessName?: string;
   mode: 'create' | 'edit';
   submitting?: boolean;
+  /**
+   * Whether the business may publish (Active). When false (unverified business),
+   * Step 7 hides the Publish action and only offers Save as draft. Defaults to true
+   * (e.g. the edit flow, which doesn't publish). Server-side checks also enforce this.
+   */
+  canPublish?: boolean;
   /** Map of the final form → request body (already built by `toCampaignPayload`). */
   onSubmit: (payload: ReturnType<typeof toCampaignPayload>, status: 'Draft' | 'Active') => void;
 };
@@ -50,6 +56,7 @@ export function CampaignFormScreen({
   businessName,
   mode,
   submitting,
+  canPublish = true,
   onSubmit,
 }: CampaignFormScreenProps) {
   const { colors } = useTheme();
@@ -128,6 +135,7 @@ export function CampaignFormScreen({
             value={form}
             businessName={businessName}
             submitting={submitting}
+            canPublish={canPublish}
             primaryLabel={mode === 'edit' ? 'Save changes' : 'Publish campaign'}
             showSaveDraft={mode === 'create'}
             onSaveDraft={() => submit('Draft')}

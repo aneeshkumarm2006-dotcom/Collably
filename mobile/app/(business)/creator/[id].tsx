@@ -104,13 +104,13 @@ export default function ApplicantProfileScreen() {
           <Section title="Social reach" colors={colors}>
             <Card padding={0}>
               {social.instagram && (
-                <SocialRow icon="instagram" handle={social.instagram.handle} count={`${formatCompactNumber(social.instagram.followerCount)} followers`} colors={colors} first />
+                <SocialRow icon="instagram" handle={social.instagram.handle} count={social.instagram.followerCount != null ? `${formatCompactNumber(social.instagram.followerCount)} followers` : ''} colors={colors} first />
               )}
               {social.youtube && (
-                <SocialRow icon="youtube" handle={social.youtube.handle} count={`${formatCompactNumber(social.youtube.subscriberCount)} subscribers`} colors={colors} />
+                <SocialRow icon="youtube" handle={social.youtube.handle} count={social.youtube.subscriberCount != null ? `${formatCompactNumber(social.youtube.subscriberCount)} subscribers` : ''} colors={colors} />
               )}
               {social.tiktok && (
-                <SocialRow icon="play" handle={social.tiktok.handle} count={`${formatCompactNumber(social.tiktok.followerCount)} followers`} colors={colors} />
+                <SocialRow icon="play" handle={social.tiktok.handle} count={social.tiktok.followerCount != null ? `${formatCompactNumber(social.tiktok.followerCount)} followers` : ''} colors={colors} />
               )}
             </Card>
           </Section>

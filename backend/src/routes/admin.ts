@@ -29,14 +29,13 @@ import { Application } from '../models/Application';
 import { Report, type ReportDoc } from '../models/Report';
 import { USER_ROLES } from '../../../shared/constants/statuses';
 import { REPORT_STATUSES } from '../../../shared/constants/reports';
-import { authenticate } from '../middleware/authenticate';
+import { adminApiKeyOrAuthenticate } from '../middleware/authenticate';
 import { adminOnly } from '../middleware/authorize';
 import { asyncHandler } from '../lib/utils';
 import { AppError } from '../middleware/errorHandler';
 import { objectIdParam, parsePagination, paginated } from '../lib/http';
 import {
   toPublicUser,
-  toUserSummary,
   toPublicBusinessProfile,
   toPublicCreatorProfile,
   toPublicCampaign,
@@ -45,8 +44,9 @@ import {
 
 const router = Router();
 
-// Every route here is admin-only.
-router.use(authenticate, adminOnly);
+// Every route here is admin-only. Auth is satisfied either by a JWT admin (the
+// in-app/mobile admin) or by the dashboard's `x-admin-api-key` server-to-server key.
+router.use(adminApiKeyOrAuthenticate, adminOnly);
 
 /** Escape user input used inside a `$regex`. */
 function escapeRegex(input: string): string {
@@ -54,12 +54,13 @@ function escapeRegex(input: string): string {
 }
 
 /**
- * When a profile's `userId` ref has been `.populate()`d, serialize it to a
- * `UserSummary` (name + avatar). The admin business/creator moderation lists
- * need the owner's display name, which lives on the User, not the profile.
+ * When a profile's `userId` ref has been `.populate()`d, serialize the owner to a
+ * full `PublicUser`. The admin business/creator moderation lists need the owner's
+ * display name **and email** (for the dashboard) — both live on the User, not the
+ * profile.
  */
-function userSummaryOf(ref: unknown): ReturnType<typeof toUserSummary> | null {
-  return ref && typeof ref === 'object' && 'name' in ref ? toUserSummary(ref as UserDoc) : null;
+function publicUserOf(ref: unknown): ReturnType<typeof toPublicUser> | null {
+  return ref && typeof ref === 'object' && 'name' in ref ? toPublicUser(ref as UserDoc) : null;
 }
 
 // --- Dashboard ---------------------------------------------------------------
@@ -304,9 +305,18 @@ router.get(
   '/businesses',
   asyncHandler(async (req, res) => {
     const pagination = parsePagination(req.query);
-    const q = z.object({ q: z.string().trim().max(120).optional() }).parse(req.query).q;
+    const { q, verified } = z
+      .object({
+        q: z.string().trim().max(120).optional(),
+        verified: z
+          .string()
+          .optional()
+          .transform((v) => (v === undefined ? undefined : v === 'true')),
+      })
+      .parse(req.query);
     const filter: FilterQuery<unknown> = {};
     if (q) filter.businessName = { $regex: escapeRegex(q), $options: 'i' };
+    if (verified !== undefined) filter.isVerified = verified;
 
     const total = await BusinessProfile.countDocuments(filter);
     const docs = await BusinessProfile.find(filter)
@@ -317,7 +327,7 @@ router.get(
 
     const data = docs.map((d) => ({
       ...toPublicBusinessProfile(d),
-      user: userSummaryOf(d.userId),
+      user: publicUserOf(d.userId),
     }));
     res.status(200).json(paginated(data, total, pagination));
   }),
@@ -352,31 +362,48 @@ router.get(
   '/creators',
   asyncHandler(async (req, res) => {
     const pagination = parsePagination(req.query);
-    const total = await CreatorProfile.countDocuments({});
-    const docs = await CreatorProfile.find({})
+    const { verified } = z
+      .object({
+        verified: z
+          .string()
+          .optional()
+          .transform((v) => (v === undefined ? undefined : v === 'true')),
+      })
+      .parse(req.query);
+    const filter: FilterQuery<unknown> = {};
+    if (verified !== undefined) filter.isVerified = verified;
+
+    const total = await CreatorProfile.countDocuments(filter);
+    const docs = await CreatorProfile.find(filter)
       .sort({ createdAt: -1 })
       .skip(pagination.skip)
       .limit(pagination.limit)
       .populate('userId');
     const data = docs.map((d) => ({
       ...toPublicCreatorProfile(d),
-      user: userSummaryOf(d.userId),
+      user: publicUserOf(d.userId),
     }));
     res.status(200).json(paginated(data, total, pagination));
   }),
 );
 
-const creatorPatchSchema = z.object({ isSuspended: z.boolean() });
+const creatorPatchSchema = z
+  .object({
+    isVerified: z.boolean().optional(),
+    isSuspended: z.boolean().optional(),
+  })
+  .refine((v) => v.isVerified !== undefined || v.isSuspended !== undefined, 'Nothing to update');
 
-/** PATCH /api/admin/creators/:id — suspend / unsuspend a creator. */
+/** PATCH /api/admin/creators/:id — verify (approve/revoke) / suspend a creator. */
 router.patch(
   '/creators/:id',
   asyncHandler(async (req, res) => {
     const id = objectIdParam(req.params.id);
-    const { isSuspended } = creatorPatchSchema.parse(req.body);
+    const data = creatorPatchSchema.parse(req.body);
     const profile = await CreatorProfile.findById(id);
     if (!profile) throw new AppError(404, 'Creator profile not found');
-    profile.isSuspended = isSuspended;
+    if (data.isVerified !== undefined) profile.isVerified = data.isVerified;
+    if (data.isSuspended !== undefined) profile.isSuspended = data.isSuspended;
     await profile.save();
     res.status(200).json({ profile: toPublicCreatorProfile(profile) });
   }),

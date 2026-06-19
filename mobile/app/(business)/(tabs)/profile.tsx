@@ -16,6 +16,7 @@ import { useTheme } from '@/components/ThemeProvider';
 import { api, isApiError } from '@/lib/api';
 import { useFetch } from '@/lib/useFetch';
 import { pickAndUploadImage, ImagePermissionError } from '@/lib/imageUpload';
+import { useAuthStore } from '@/store/authStore';
 import type { BusinessProfile } from '@/types';
 
 export default function BusinessProfileScreen() {
@@ -23,9 +24,12 @@ export default function BusinessProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [logoBusy, setLogoBusy] = useState(false);
+  const setApproved = useAuthStore((s) => s.setApproved);
 
   const { data, setData, loading, error, reload } = useFetch(async () => {
     const { data: res } = await api.get<{ profile: BusinessProfile }>('/profile/business');
+    // Keep the cached approval flag (used to gate "publish") in sync with the profile.
+    setApproved(res.profile.isVerified);
     return res.profile;
   }, []);
 
@@ -131,6 +135,33 @@ export default function BusinessProfileScreen() {
               </Button>
             </View>
           </Card>
+
+          {/* Verification status: under review until an admin approves. */}
+          {!data.isVerified && (
+            <View
+              style={{
+                flexDirection: 'row',
+                gap: 12,
+                alignItems: 'flex-start',
+                backgroundColor: colors.warnSoft,
+                borderWidth: 1,
+                borderColor: colors.warn,
+                borderRadius: 14,
+                padding: 14,
+              }}
+            >
+              <Icon name="clock" size={20} color={colors.warn} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 14, fontWeight: '800', color: colors.text }}>
+                  Business under review
+                </Text>
+                <Text style={{ fontSize: 13, color: colors.text2, marginTop: 2, lineHeight: 18 }}>
+                  You can build campaigns and save them as drafts, but can&apos;t publish until an
+                  admin verifies your business.
+                </Text>
+              </View>
+            </View>
+          )}
 
           {/* Stats */}
           <View style={{ flexDirection: 'row', gap: 12 }}>

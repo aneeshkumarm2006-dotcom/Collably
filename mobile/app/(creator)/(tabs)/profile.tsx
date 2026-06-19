@@ -38,9 +38,12 @@ export default function CreatorProfileScreen() {
   const insets = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
+  const setApproved = useAuthStore((s) => s.setApproved);
 
   const { data, loading, error, reload } = useFetch(async () => {
     const { data: res } = await api.get<{ profile: CreatorProfile }>('/profile/creator');
+    // Keep the cached approval flag (used to gate "apply") in sync with the profile.
+    setApproved(res.profile.isVerified);
     return res.profile;
   }, []);
 
@@ -118,7 +121,7 @@ export default function CreatorProfileScreen() {
                   <Text numberOfLines={1} style={{ fontSize: 19, fontWeight: '800', color: colors.text, letterSpacing: -0.3 }}>
                     {user?.name ?? 'Creator'}
                   </Text>
-                  {user?.isVerified && <Icon name="badge" size={16} color={colors.accent} />}
+                  {data?.isVerified && <Icon name="badge" size={16} color={colors.accent} />}
                 </View>
                 <Text numberOfLines={1} style={{ fontSize: 13, color: colors.text2, marginTop: 1 }}>
                   {user?.email}
@@ -136,6 +139,33 @@ export default function CreatorProfileScreen() {
               </Button>
             </View>
           </Card>
+
+          {/* Verification status: under review until an admin approves. */}
+          {data && !data.isVerified && (
+            <View
+              style={{
+                flexDirection: 'row',
+                gap: 12,
+                alignItems: 'flex-start',
+                backgroundColor: colors.warnSoft,
+                borderWidth: 1,
+                borderColor: colors.warn,
+                borderRadius: 14,
+                padding: 14,
+              }}
+            >
+              <Icon name="clock" size={20} color={colors.warn} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 14, fontWeight: '800', color: colors.text }}>
+                  Profile under review
+                </Text>
+                <Text style={{ fontSize: 13, color: colors.text2, marginTop: 2, lineHeight: 18 }}>
+                  You can explore campaigns, but you can&apos;t apply until an admin verifies your
+                  account.
+                </Text>
+              </View>
+            </View>
+          )}
 
           {/* Stats */}
           <View style={{ flexDirection: 'row', gap: 12 }}>
@@ -173,7 +203,11 @@ export default function CreatorProfileScreen() {
                   <SocialRow
                     icon="instagram"
                     handle={data.socialHandles.instagram.handle}
-                    count={`${formatCompactNumber(data.socialHandles.instagram.followerCount)} followers`}
+                    count={
+                      data.socialHandles.instagram.followerCount != null
+                        ? `${formatCompactNumber(data.socialHandles.instagram.followerCount)} followers`
+                        : ''
+                    }
                     colors={colors}
                     first
                   />
@@ -182,7 +216,11 @@ export default function CreatorProfileScreen() {
                   <SocialRow
                     icon="youtube"
                     handle={data.socialHandles.youtube.handle}
-                    count={`${formatCompactNumber(data.socialHandles.youtube.subscriberCount)} subscribers`}
+                    count={
+                      data.socialHandles.youtube.subscriberCount != null
+                        ? `${formatCompactNumber(data.socialHandles.youtube.subscriberCount)} subscribers`
+                        : ''
+                    }
                     colors={colors}
                   />
                 )}
@@ -190,7 +228,11 @@ export default function CreatorProfileScreen() {
                   <SocialRow
                     icon="play"
                     handle={data.socialHandles.tiktok.handle}
-                    count={`${formatCompactNumber(data.socialHandles.tiktok.followerCount)} followers`}
+                    count={
+                      data.socialHandles.tiktok.followerCount != null
+                        ? `${formatCompactNumber(data.socialHandles.tiktok.followerCount)} followers`
+                        : ''
+                    }
                     colors={colors}
                   />
                 )}

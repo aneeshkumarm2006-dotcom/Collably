@@ -60,6 +60,14 @@ export const env = {
   googleClientId: str('GOOGLE_CLIENT_ID'),
 
   /**
+   * Shared secret for server-to-server admin access (the Next.js admin dashboard).
+   * When set, a request carrying `x-admin-api-key: <this>` is treated as an admin
+   * on the `/api/admin/*` routes without a JWT. Leave unset to disable the key path
+   * entirely (the JWT admin path always remains available).
+   */
+  adminApiKey: str('ADMIN_API_KEY'),
+
+  /**
    * Server-side Google Geocoding API key (On-Site Location feature). Used only
    * by `services/geocoding` to turn typed addresses ⇄ coordinates on save. Never
    * shipped to the client. Leave unset → geocoding self-disables ("coming soon")

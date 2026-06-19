@@ -4,18 +4,24 @@ import type { ContentType } from '../constants/contentTypes';
 
 export interface InstagramHandle {
   handle: string;
-  followerCount: number;
+  /** Public profile URL (e.g. https://instagram.com/yourhandle). Required when the platform is submitted. */
+  link: string;
+  followerCount?: number;
   engagementRate?: number;
 }
 
 export interface YouTubeHandle {
   handle: string;
-  subscriberCount: number;
+  /** Public channel URL. Required when the platform is submitted. */
+  link: string;
+  subscriberCount?: number;
 }
 
 export interface TikTokHandle {
   handle: string;
-  followerCount: number;
+  /** Public profile URL. Required when the platform is submitted. */
+  link: string;
+  followerCount?: number;
 }
 
 export interface CreatorSocialHandles {
@@ -44,6 +50,13 @@ export interface CreatorProfile extends Timestamped {
   totalRewardsEarned: number;
   /** UGC-only creators produce content without a public following (PRD §1.3). */
   isUGCOnly: boolean;
+  /**
+   * Admin approval flag (parallel to `BusinessProfile.isVerified`). `false` means
+   * the creator is pending review ("under review"): they can explore the app but
+   * cannot apply to campaigns until an admin verifies them. Distinct from
+   * `User.isVerified`, which tracks *email* verification.
+   */
+  isVerified: boolean;
   /** Admin moderation flag (PRD §7.5, §14). */
   isSuspended: boolean;
 }

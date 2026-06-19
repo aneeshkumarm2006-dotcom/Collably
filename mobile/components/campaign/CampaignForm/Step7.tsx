@@ -6,7 +6,7 @@
 import { ScrollView, Text, View } from 'react-native';
 import { useTheme } from '@/components/ThemeProvider';
 import { formatDate, formatReward } from '@/lib/utils';
-import { Button, Card, TagChip } from '@/components/ui';
+import { Button, Card, Icon, TagChip } from '@/components/ui';
 import { CampaignCard } from '../CampaignCard';
 import type { Campaign } from '@/types';
 import type { CampaignFormState } from './formState';
@@ -21,6 +21,11 @@ export type Step7Props = {
   primaryLabel?: string;
   /** Show the secondary "Save as draft" button (create flow only). */
   showSaveDraft?: boolean;
+  /**
+   * Whether the business may publish. When false, the Publish action is replaced by
+   * an "under review" notice and a single Save-as-draft button. Defaults to true.
+   */
+  canPublish?: boolean;
 };
 
 /** Build a throwaway Campaign-shaped object just to render the preview card. */
@@ -55,6 +60,7 @@ export function Step7({
   onPublish,
   primaryLabel = 'Publish campaign',
   showSaveDraft = true,
+  canPublish = true,
 }: Step7Props) {
   const { colors } = useTheme();
 
@@ -97,13 +103,46 @@ export function Step7({
       </Card>
 
       <View style={{ marginTop: 20, gap: 12 }}>
-        <Button block variant="solid" loading={submitting} onPress={onPublish}>
-          {primaryLabel}
-        </Button>
-        {showSaveDraft && (
-          <Button block variant="outline" disabled={submitting} onPress={onSaveDraft}>
-            Save as draft
-          </Button>
+        {canPublish ? (
+          <>
+            <Button block variant="solid" loading={submitting} onPress={onPublish}>
+              {primaryLabel}
+            </Button>
+            {showSaveDraft && (
+              <Button block variant="outline" disabled={submitting} onPress={onSaveDraft}>
+                Save as draft
+              </Button>
+            )}
+          </>
+        ) : (
+          <>
+            <View
+              style={{
+                flexDirection: 'row',
+                gap: 12,
+                alignItems: 'flex-start',
+                backgroundColor: colors.warnSoft,
+                borderWidth: 1,
+                borderColor: colors.warn,
+                borderRadius: 14,
+                padding: 14,
+              }}
+            >
+              <Icon name="clock" size={20} color={colors.warn} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 14, fontWeight: '800', color: colors.text }}>
+                  Business under review
+                </Text>
+                <Text style={{ fontSize: 13, color: colors.text2, marginTop: 2, lineHeight: 18 }}>
+                  You can save this campaign as a draft now. Once an admin verifies your business,
+                  you&apos;ll be able to publish it.
+                </Text>
+              </View>
+            </View>
+            <Button block variant="solid" loading={submitting} onPress={onSaveDraft}>
+              Save as draft
+            </Button>
+          </>
         )}
       </View>
     </ScrollView>

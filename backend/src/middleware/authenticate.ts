@@ -4,10 +4,12 @@
  * token is missing/invalid or the user no longer exists (e.g. deleted account).
  */
 import type { RequestHandler } from 'express';
+import { Types } from 'mongoose';
 import { verifyToken } from '../lib/jwt';
 import { AppError } from './errorHandler';
 import { asyncHandler } from '../lib/utils';
-import { User } from '../models/User';
+import { env } from '../lib/env';
+import { User, type UserDoc } from '../models/User';
 
 /** Extract a bearer token from the `Authorization` header, if present. */
 function bearer(header?: string): string | null {
@@ -41,6 +43,35 @@ export const authenticate: RequestHandler = asyncHandler(async (req, _res, next)
   req.user = user;
   req.auth = claims;
   next();
+});
+
+/**
+ * Server-to-server admin auth for the Next.js admin dashboard. When the request
+ * carries `x-admin-api-key` matching the configured `ADMIN_API_KEY`, resolve an
+ * admin context (a real seeded admin if one exists, otherwise a synthetic admin
+ * so downstream handlers that read `req.user` don't crash) and proceed. Otherwise
+ * delegate to the normal JWT `authenticate`, so the existing in-app admin (mobile)
+ * path keeps working. Always pair with `adminOnly` on the route.
+ */
+export const adminApiKeyOrAuthenticate: RequestHandler = asyncHandler(async (req, res, next) => {
+  const key = req.header('x-admin-api-key');
+  if (key && env.adminApiKey && key === env.adminApiKey) {
+    const admin = await User.findOne({ role: 'admin' });
+    if (admin) {
+      req.user = admin;
+    } else {
+      const syntheticId = new Types.ObjectId('000000000000000000000000');
+      req.user = {
+        _id: syntheticId,
+        id: syntheticId.toString(),
+        role: 'admin',
+        name: 'Dashboard Admin',
+        isBanned: false,
+      } as unknown as UserDoc;
+    }
+    return next();
+  }
+  return authenticate(req, res, next);
 });
 
 /**

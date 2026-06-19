@@ -38,11 +38,14 @@ type CreatorForm = {
   location: GeoLocation;
   social: {
     igHandle: string;
+    igLink: string;
     igFollowers: string;
     igEngagement: string;
     ytHandle: string;
+    ytLink: string;
     ytSubs: string;
     ttHandle: string;
+    ttLink: string;
     ttFollowers: string;
   };
   contentTypes: ContentType[];
@@ -55,11 +58,32 @@ function emptyForm(): CreatorForm {
     bio: '',
     niche: [],
     location: {},
-    social: { igHandle: '', igFollowers: '', igEngagement: '', ytHandle: '', ytSubs: '', ttHandle: '', ttFollowers: '' },
+    social: {
+      igHandle: '',
+      igLink: '',
+      igFollowers: '',
+      igEngagement: '',
+      ytHandle: '',
+      ytLink: '',
+      ytSubs: '',
+      ttHandle: '',
+      ttLink: '',
+      ttFollowers: '',
+    },
     contentTypes: [],
     isUGCOnly: false,
     portfolio: [],
   };
+}
+
+/** At least one platform with BOTH a handle and a profile link is submitted. */
+function hasOneSocial(f: CreatorForm): boolean {
+  const s = f.social;
+  return Boolean(
+    (s.igHandle.trim() && s.igLink.trim()) ||
+      (s.ytHandle.trim() && s.ytLink.trim()) ||
+      (s.ttHandle.trim() && s.ttLink.trim()),
+  );
 }
 
 /** Whether the given 1-based step is complete enough to advance. */
@@ -67,6 +91,9 @@ function canAdvance(step: number, f: CreatorForm): boolean {
   switch (step) {
     case 1:
       return f.niche.length >= 1; // pick at least one niche; bio is optional
+    case 3:
+      // A social handle + link is mandatory (creators are verified on this).
+      return hasOneSocial(f);
     default:
       return true;
   }
@@ -85,18 +112,37 @@ function toPayload(f: CreatorForm) {
   };
 
   const s = f.social;
+  // Only include a platform when it has BOTH a handle and a link (the backend
+  // requires both); follower/subscriber counts are optional.
   const socialHandles = {
-    ...(s.igHandle.trim()
+    ...(s.igHandle.trim() && s.igLink.trim()
       ? {
           instagram: {
             handle: s.igHandle.trim(),
-            followerCount: toNum(s.igFollowers),
+            link: s.igLink.trim(),
+            ...(s.igFollowers ? { followerCount: toNum(s.igFollowers) } : {}),
             ...(s.igEngagement.trim() ? { engagementRate: Number(s.igEngagement) } : {}),
           },
         }
       : {}),
-    ...(s.ytHandle.trim() ? { youtube: { handle: s.ytHandle.trim(), subscriberCount: toNum(s.ytSubs) } } : {}),
-    ...(s.ttHandle.trim() ? { tiktok: { handle: s.ttHandle.trim(), followerCount: toNum(s.ttFollowers) } } : {}),
+    ...(s.ytHandle.trim() && s.ytLink.trim()
+      ? {
+          youtube: {
+            handle: s.ytHandle.trim(),
+            link: s.ytLink.trim(),
+            ...(s.ytSubs ? { subscriberCount: toNum(s.ytSubs) } : {}),
+          },
+        }
+      : {}),
+    ...(s.ttHandle.trim() && s.ttLink.trim()
+      ? {
+          tiktok: {
+            handle: s.ttHandle.trim(),
+            link: s.ttLink.trim(),
+            ...(s.ttFollowers ? { followerCount: toNum(s.ttFollowers) } : {}),
+          },
+        }
+      : {}),
   };
 
   return {
@@ -248,16 +294,20 @@ export default function CreatorOnboardingScreen() {
         {step === 3 && (
           <>
             <Text style={{ fontSize: 14, color: colors.text2, marginBottom: 16, lineHeight: 20 }}>
-              Add the platforms you post on. Leave a platform blank to skip it.
+              Add at least one platform with your handle and a link to your profile — this is what
+              we verify. You can add more than one.
             </Text>
 
             <SectionLabel>Instagram</SectionLabel>
             <Field label="Handle">
               <TextField value={form.social.igHandle} onChangeText={(igHandle) => setSocial({ igHandle })} placeholder="@yourhandle" autoCapitalize="none" maxLength={120} />
             </Field>
+            <Field label="Profile link">
+              <TextField value={form.social.igLink} onChangeText={(igLink) => setSocial({ igLink })} placeholder="https://instagram.com/yourhandle" autoCapitalize="none" keyboardType="url" maxLength={2048} />
+            </Field>
             <View style={{ flexDirection: 'row', gap: 12 }}>
               <View style={{ flex: 1 }}>
-                <Field label="Followers">
+                <Field label="Followers (optional)">
                   <TextField value={form.social.igFollowers} onChangeText={(v) => setSocial({ igFollowers: digits(v) })} placeholder="0" keyboardType="numeric" />
                 </Field>
               </View>
@@ -272,7 +322,10 @@ export default function CreatorOnboardingScreen() {
             <Field label="Handle">
               <TextField value={form.social.ytHandle} onChangeText={(ytHandle) => setSocial({ ytHandle })} placeholder="Channel name" autoCapitalize="none" maxLength={120} />
             </Field>
-            <Field label="Subscribers">
+            <Field label="Channel link">
+              <TextField value={form.social.ytLink} onChangeText={(ytLink) => setSocial({ ytLink })} placeholder="https://youtube.com/@yourchannel" autoCapitalize="none" keyboardType="url" maxLength={2048} />
+            </Field>
+            <Field label="Subscribers (optional)">
               <TextField value={form.social.ytSubs} onChangeText={(v) => setSocial({ ytSubs: digits(v) })} placeholder="0" keyboardType="numeric" />
             </Field>
 
@@ -280,7 +333,10 @@ export default function CreatorOnboardingScreen() {
             <Field label="Handle">
               <TextField value={form.social.ttHandle} onChangeText={(ttHandle) => setSocial({ ttHandle })} placeholder="@yourhandle" autoCapitalize="none" maxLength={120} />
             </Field>
-            <Field label="Followers">
+            <Field label="Profile link">
+              <TextField value={form.social.ttLink} onChangeText={(ttLink) => setSocial({ ttLink })} placeholder="https://tiktok.com/@yourhandle" autoCapitalize="none" keyboardType="url" maxLength={2048} />
+            </Field>
+            <Field label="Followers (optional)">
               <TextField value={form.social.ttFollowers} onChangeText={(v) => setSocial({ ttFollowers: digits(v) })} placeholder="0" keyboardType="numeric" />
             </Field>
           </>

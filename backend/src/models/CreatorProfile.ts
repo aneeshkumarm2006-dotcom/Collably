@@ -14,15 +14,20 @@ export interface CreatorProfileDoc extends Document<Types.ObjectId> {
   niche: Niche[];
   location: { city?: string; state?: string; country?: string };
   socialHandles: {
-    instagram?: { handle: string; followerCount: number; engagementRate?: number };
-    youtube?: { handle: string; subscriberCount: number };
-    tiktok?: { handle: string; followerCount: number };
+    instagram?: { handle: string; link: string; followerCount?: number; engagementRate?: number };
+    youtube?: { handle: string; link: string; subscriberCount?: number };
+    tiktok?: { handle: string; link: string; followerCount?: number };
   };
   contentTypes: ContentType[];
   portfolio: { imageUrl: string; caption?: string; link?: string }[];
   totalCollabsCompleted: number;
   totalRewardsEarned: number;
   isUGCOnly: boolean;
+  /**
+   * Admin approval flag (parallel to BusinessProfile.isVerified). `false` =
+   * pending review; the creator can browse but not apply until verified.
+   */
+  isVerified: boolean;
   /** Admin moderation flag (PRD §7.5, §14). Suspended profiles are hidden/locked. */
   isSuspended: boolean;
   createdAt: Date;
@@ -47,15 +52,18 @@ const creatorProfileSchema = new Schema<CreatorProfileDoc>(
     socialHandles: {
       instagram: {
         handle: { type: String, trim: true },
+        link: { type: String, trim: true },
         followerCount: { type: Number, min: 0 },
         engagementRate: { type: Number, min: 0 },
       },
       youtube: {
         handle: { type: String, trim: true },
+        link: { type: String, trim: true },
         subscriberCount: { type: Number, min: 0 },
       },
       tiktok: {
         handle: { type: String, trim: true },
+        link: { type: String, trim: true },
         followerCount: { type: Number, min: 0 },
       },
     },
@@ -63,7 +71,7 @@ const creatorProfileSchema = new Schema<CreatorProfileDoc>(
     portfolio: { type: [portfolioItemSchema], default: [] },
     totalCollabsCompleted: { type: Number, default: 0, min: 0 },
     totalRewardsEarned: { type: Number, default: 0, min: 0 },
-    isUGCOnly: { type: Boolean, default: false },
+    isVerified: { type: Boolean, default: false },
     isSuspended: { type: Boolean, default: false },
   },
   { timestamps: true },

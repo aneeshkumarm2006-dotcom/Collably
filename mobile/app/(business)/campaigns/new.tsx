@@ -14,6 +14,9 @@ import { useAuthStore } from '@/store/authStore';
 export default function NewCampaignScreen() {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
+  // Only a verified ("approved") business may publish; an unverified one can still
+  // save a Draft. Server-side checks back this up.
+  const approved = useAuthStore((s) => s.approved);
   const [submitting, setSubmitting] = useState(false);
 
   const create = async (payload: ReturnType<typeof toCampaignPayload>, status: 'Draft' | 'Active') => {
@@ -37,6 +40,7 @@ export default function NewCampaignScreen() {
       mode="create"
       initial={emptyCampaignForm()}
       businessName={user?.name}
+      canPublish={approved}
       submitting={submitting}
       onSubmit={(payload, status) => {
         void create(payload, status);

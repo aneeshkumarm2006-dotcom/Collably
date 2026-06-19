@@ -119,6 +119,7 @@ export function toPublicCreatorProfile(p: CreatorProfileDoc): CreatorProfile {
     totalCollabsCompleted: p.totalCollabsCompleted,
     totalRewardsEarned: p.totalRewardsEarned,
     isUGCOnly: p.isUGCOnly,
+    isVerified: p.isVerified,
     isSuspended: p.isSuspended,
     createdAt: p.createdAt.toISOString(),
     updatedAt: p.updatedAt.toISOString(),

@@ -68,6 +68,7 @@ export default function CampaignDetailScreen() {
 
   const role = useAuthStore((s) => s.role);
   const isGuest = useAuthStore((s) => s.isGuest);
+  const approved = useAuthStore((s) => s.approved);
   const isCreator = role === 'creator';
 
   const pitchRef = useRef<BottomSheetRef>(null);
@@ -387,6 +388,7 @@ export default function CampaignDetailScreen() {
         <ApplyControl
           isGuest={isGuest}
           isCreator={isCreator}
+          approved={approved}
           myStatus={myStatus}
           canApply={canApply}
           campaignStatus={c.status}
@@ -421,6 +423,7 @@ export default function CampaignDetailScreen() {
 function ApplyControl({
   isGuest,
   isCreator,
+  approved,
   myStatus,
   canApply,
   campaignStatus,
@@ -429,6 +432,7 @@ function ApplyControl({
 }: {
   isGuest: boolean;
   isCreator: boolean;
+  approved: boolean;
   myStatus: ApplicationStatus | null;
   canApply: boolean;
   campaignStatus: Campaign['status'];
@@ -446,6 +450,16 @@ function ApplyControl({
   if (myStatus) {
     // Already applied — surface the current state instead of a button.
     return <Badge status={myStatus} />;
+  }
+  if (!approved) {
+    // Creator pending admin verification — can browse, but not apply yet.
+    return (
+      <View style={{ opacity: 0.6 }}>
+        <Button disabled icon="lock" onPress={() => {}}>
+          Under review
+        </Button>
+      </View>
+    );
   }
   if (!canApply) {
     // canApply is false only when the campaign isn't Active (e.g. auto-closed).

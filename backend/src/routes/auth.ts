@@ -263,7 +263,19 @@ router.get(
   authenticate,
   asyncHandler(async (req, res) => {
     // `authenticate` guarantees req.user is set.
-    res.status(200).json({ user: toPublicUser(req.user!) });
+    const user = req.user!;
+    // `approved` = admin approval of the caller's role profile (the apply/publish
+    // gate). Admins are always approved; creators/businesses mirror their profile's
+    // `isVerified` (false when the profile doesn't exist yet).
+    let approved = user.role === 'admin';
+    if (user.role === 'creator') {
+      const profile = await CreatorProfile.findOne({ userId: user._id }).select('isVerified');
+      approved = Boolean(profile?.isVerified);
+    } else if (user.role === 'business') {
+      const profile = await BusinessProfile.findOne({ userId: user._id }).select('isVerified');
+      approved = Boolean(profile?.isVerified);
+    }
+    res.status(200).json({ user: toPublicUser(user), approved });
   }),
 );
 
