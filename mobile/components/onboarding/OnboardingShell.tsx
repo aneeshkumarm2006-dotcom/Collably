@@ -12,7 +12,9 @@
  * steps), so the shell keeps the header pinned at the top and the actions pinned
  * at the bottom while only the step content scrolls.
  */
+import { useRef } from 'react';
 import { KeyboardAvoidingView, Platform, Text, View } from 'react-native';
+import Animated, { FadeInLeft, FadeInRight } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/components/ThemeProvider';
 import { Button } from '@/components/ui';
@@ -56,6 +58,13 @@ export function OnboardingShell({
   const insets = useSafeAreaInsets();
   const label = nextLabel ?? (isLast ? 'Finish setup' : 'Continue');
 
+  // Slide the step body in from the right when advancing, from the left when going
+  // back. The `key={step}` remounts the body each step so the entrance replays
+  // (and conveniently resets the inner ScrollView to the top of the new step).
+  const prevStep = useRef(step);
+  const forward = step >= prevStep.current;
+  prevStep.current = step;
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: colors.bg }}
@@ -70,7 +79,15 @@ export function OnboardingShell({
       </View>
 
       {/* Step body (brings its own ScrollView) */}
-      <View style={{ flex: 1 }}>{children}</View>
+      <View style={{ flex: 1 }}>
+        <Animated.View
+          key={step}
+          entering={(forward ? FadeInRight : FadeInLeft).duration(260)}
+          style={{ flex: 1 }}
+        >
+          {children}
+        </Animated.View>
+      </View>
 
       {/* Pinned actions */}
       <View

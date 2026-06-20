@@ -17,6 +17,7 @@ import type { Server as HttpServer } from 'node:http';
 import { Server as SocketIOServer } from 'socket.io';
 import { verifyToken } from './jwt';
 import { corsOrigins } from './env';
+import { User } from '../models/User';
 import type { UserRole } from '../../../shared/constants/statuses';
 
 interface SocketAuthData {
@@ -38,27 +39,37 @@ function extractBearer(header?: string): string | undefined {
 
 /** Attach a Socket.io server to the HTTP server and wire auth + handlers. */
 export function initRealtime(httpServer: HttpServer): SocketIOServer {
+  const origins = corsOrigins();
   const server = new SocketIOServer(httpServer, {
-    cors: { origin: corsOrigins(), credentials: true },
+    // Mirror the REST CORS policy: no credentials with a wildcard reflect.
+    cors: { origin: origins, credentials: origins !== true },
   });
 
-  // Handshake auth — reuse the same access-token verification as REST.
+  // Handshake auth — reuse the same access-token verification as REST, and reject
+  // banned accounts (so a ban also cuts off realtime, matching the REST guard).
   server.use((socket, next) => {
-    try {
-      const token =
-        (socket.handshake.auth?.token as string | undefined) ??
-        extractBearer(socket.handshake.headers.authorization);
-      if (!token) {
+    void (async () => {
+      try {
+        const token =
+          (socket.handshake.auth?.token as string | undefined) ??
+          extractBearer(socket.handshake.headers.authorization);
+        if (!token) {
+          next(new Error('unauthorized'));
+          return;
+        }
+        const claims = verifyToken(token, 'access');
+        const user = await User.findById(claims.sub).select('isBanned');
+        if (!user || user.isBanned) {
+          next(new Error('unauthorized'));
+          return;
+        }
+        socket.data.userId = claims.sub;
+        socket.data.role = claims.role;
+        next();
+      } catch {
         next(new Error('unauthorized'));
-        return;
       }
-      const claims = verifyToken(token, 'access');
-      socket.data.userId = claims.sub;
-      socket.data.role = claims.role;
-      next();
-    } catch {
-      next(new Error('unauthorized'));
-    }
+    })();
   });
 
   server.on('connection', (socket) => {

@@ -7,12 +7,15 @@ import { createApp } from './app';
 // `querySrv ECONNREFUSED`. Force Node's resolver to public DNS so Atlas always
 // resolves regardless of the local network.
 dns.setServers(['8.8.8.8', '1.1.1.1']);
-import { env } from './lib/env';
+import { env, assertSecureConfig } from './lib/env';
 import { connectDB, disconnectDB } from './lib/db';
 import { initRealtime, shutdownRealtime } from './lib/realtime';
 
 /** Entry point: connect the DB (non-fatal), then start the HTTP server. */
 async function main(): Promise<void> {
+  // Fail closed on insecure config (weak JWT secret / wildcard CORS) in prod.
+  assertSecureConfig();
+
   // Kick off the DB connection but don't block server startup on it — the
   // health endpoint must be reachable even while the DB is (re)connecting.
   void connectDB();

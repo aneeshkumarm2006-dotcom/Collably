@@ -140,6 +140,11 @@ router.post(
     if (!user) {
       throw new AppError(401, 'Account no longer exists');
     }
+    // A ban must cut off the refresh path too — otherwise a banned user keeps
+    // minting fresh access tokens for the life of the refresh token.
+    if (user.isBanned) {
+      throw new AppError(403, 'This account has been suspended.');
+    }
 
     // Rotate: issue a brand-new access + refresh pair on every refresh.
     res.status(200).json(authResponse(user));

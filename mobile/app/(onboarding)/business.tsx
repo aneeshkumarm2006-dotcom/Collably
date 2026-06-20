@@ -11,7 +11,7 @@
 import { useState } from 'react';
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 import { Pressable } from '@/components/ui/SafePressable';
-import { OnboardingShell } from '@/components/onboarding';
+import { LiveBuilderShell, BusinessPreviewCard } from '@/components/onboarding';
 import { FormBanner } from '@/components/auth';
 import { Field, TextField, TextArea, TagChip, Icon, Button, RemoteImage, AutocompleteField } from '@/components/ui';
 import { COUNTRIES, REGIONS, CITY_NAMES, locationForCity } from '@/lib/locations';
@@ -23,7 +23,14 @@ import { pickAndUploadImage, ImagePermissionError } from '@/lib/imageUpload';
 import { useAuthStore } from '@/store/authStore';
 
 const TOTAL_STEPS = 5;
-const STEP_TITLES = ['Basics', 'Location', 'Socials', 'Logo', 'Review'];
+/** Big per-step headline + supporting line shown above the live preview's inputs. */
+const STEP_QUESTIONS: { q: string; h: string }[] = [
+  { q: 'Tell us about your brand', h: 'Your name and category — this is what creators see first.' },
+  { q: 'Where are you located?', h: 'Helps creators find local collabs. Add a website if you have one.' },
+  { q: 'Link your socials', h: 'So creators can check out your brand. All optional.' },
+  { q: 'Add your logo', h: 'Makes your campaigns stand out. You can skip and add it later.' },
+  { q: 'All set — ready to launch?', h: 'Review your brand. You can edit anything later.' },
+];
 
 type BusinessForm = {
   businessName: string;
@@ -81,7 +88,6 @@ function toPayload(f: BusinessForm) {
 }
 
 export default function BusinessOnboardingScreen() {
-  const { colors } = useTheme();
   const user = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
 
@@ -136,11 +142,12 @@ export default function BusinessOnboardingScreen() {
   const onBack = step > 1 ? () => setStep((s) => s - 1) : undefined;
 
   return (
-    <OnboardingShell
-      title="Set up your business"
+    <LiveBuilderShell
       step={step}
       totalSteps={TOTAL_STEPS}
-      stepTitle={STEP_TITLES[step - 1]}
+      question={STEP_QUESTIONS[step - 1].q}
+      hint={STEP_QUESTIONS[step - 1].h}
+      preview={<BusinessPreviewCard form={form} />}
       canAdvance={canAdvance(step, form) && !uploading}
       isLast={step === TOTAL_STEPS}
       submitting={submitting}
@@ -230,9 +237,6 @@ export default function BusinessOnboardingScreen() {
 
         {step === 3 && (
           <>
-            <Text style={{ fontSize: 14, color: colors.text2, marginBottom: 16, lineHeight: 20 }}>
-              Link your social profiles so creators can see your brand. All optional.
-            </Text>
             <Field label="Instagram">
               <TextField
                 value={form.socialLinks.instagram}
@@ -267,7 +271,7 @@ export default function BusinessOnboardingScreen() {
 
         {step === 5 && <ReviewStep form={form} />}
       </ScrollView>
-    </OnboardingShell>
+    </LiveBuilderShell>
   );
 }
 

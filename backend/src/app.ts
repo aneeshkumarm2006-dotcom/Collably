@@ -1,5 +1,6 @@
 import express, { type Express } from 'express';
 import cors from 'cors';
+import rateLimit from 'express-rate-limit';
 import api from './routes';
 import { corsOrigins } from './lib/env';
 import { errorHandler, notFound } from './middleware/errorHandler';
@@ -12,13 +13,34 @@ export function createApp(): Express {
   const app = express();
 
   // Trust the first proxy hop (Render/Railway sit behind a load balancer) so
-  // req.ip / secure cookies behave correctly in production.
+  // req.ip / secure cookies + rate-limit IP keying behave correctly in production.
   app.set('trust proxy', 1);
 
-  // Core middleware.
-  app.use(cors({ origin: corsOrigins(), credentials: true }));
+  // CORS — never combine a wildcard reflect-any origin with credentials (that
+  // lets any site make credentialed cross-origin calls). Credentials are only
+  // enabled when an explicit allowlist is configured (set CORS_ORIGIN in prod).
+  const origins = corsOrigins();
+  app.use(cors({ origin: origins, credentials: origins !== true }));
   app.use(express.json({ limit: '1mb' }));
   app.use(express.urlencoded({ extended: true }));
+
+  // Rate limiting (brute-force / abuse protection). A generous global cap, plus
+  // a stricter cap on the auth surface (login / refresh / password reset).
+  const globalLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 600,
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+  const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 40,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: { message: 'Too many attempts. Please try again in a few minutes.' } },
+  });
+  app.use('/api', globalLimiter);
+  app.use('/api/auth', authLimiter);
 
   // Routes.
   app.use('/api', api);

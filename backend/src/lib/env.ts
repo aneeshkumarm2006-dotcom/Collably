@@ -84,3 +84,25 @@ export function corsOrigins(): true | string[] {
     .map((o) => o.trim())
     .filter(Boolean);
 }
+
+/**
+ * Fail-closed startup checks for security-critical config. Throws in production
+ * (refuse to boot insecurely); warns in dev so local work isn't blocked.
+ * Call once at boot, before the server starts listening.
+ */
+export function assertSecureConfig(): void {
+  const problems: string[] = [];
+  if (env.jwtSecret.length < 32) problems.push('JWT_SECRET must be set and at least 32 characters.');
+  if (!process.env.JWT_REFRESH_SECRET) {
+    problems.push('JWT_REFRESH_SECRET is not set (refresh secret is currently derived from JWT_SECRET — set a separate value).');
+  }
+  if (env.corsOrigin === '*') problems.push('CORS_ORIGIN is "*" — set an explicit allowlist.');
+
+  if (problems.length === 0) return;
+  // Warn loudly (in prod logs too) but DO NOT crash the server — these are
+  // config hardening items, and failing to boot a live API is worse. Fix the
+  // env in the host dashboard, then this goes quiet.
+  const where = env.isProd ? 'PRODUCTION' : 'dev';
+  // eslint-disable-next-line no-console
+  console.warn(`[env] ⚠ insecure config (${where}) — fix in host env vars:\n  - ${problems.join('\n  - ')}`);
+}

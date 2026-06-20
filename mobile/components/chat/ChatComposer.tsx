@@ -1,5 +1,6 @@
 /**
- * Message input row: a growing multiline field + a send button. Owns its own draft
+ * Message input row, WhatsApp-premium: a rounded pill with an attach affordance +
+ * a growing multiline field, and a green circular send button. Owns its own draft
  * text; reports typing changes (for the typing indicator) and hands the trimmed
  * body to `onSend`.
  */
@@ -7,7 +8,8 @@ import { useState } from 'react';
 import { TextInput, View } from 'react-native';
 import { Pressable } from '@/components/ui/SafePressable';
 import { Icon } from '@/components/ui';
-import { useTheme } from '@/components/ThemeProvider';
+import { showToast } from '@/lib/toast';
+import { useChatPalette } from './chatTheme';
 
 export function ChatComposer({
   onSend,
@@ -16,7 +18,8 @@ export function ChatComposer({
   onSend: (body: string) => void;
   onTyping?: (typing: boolean) => void;
 }) {
-  const { colors } = useTheme();
+  const p = useChatPalette();
+  const { colors } = p;
   const [text, setText] = useState('');
   const trimmed = text.trim();
 
@@ -33,23 +36,25 @@ export function ChatComposer({
         flexDirection: 'row',
         alignItems: 'flex-end',
         gap: 8,
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        borderTopWidth: 1,
-        borderTopColor: colors.hair,
-        backgroundColor: colors.bgElev,
+        paddingHorizontal: 10,
+        paddingTop: 8,
+        paddingBottom: 8,
+        backgroundColor: p.chatBg,
       }}
     >
       <View
         style={{
           flex: 1,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 6,
           backgroundColor: colors.card,
-          borderWidth: 1,
+          borderWidth: p.isDark ? 0 : 1,
           borderColor: colors.hair,
-          borderRadius: 20,
-          paddingHorizontal: 14,
-          maxHeight: 120,
-          justifyContent: 'center',
+          borderRadius: 24,
+          paddingLeft: 12,
+          paddingRight: 6,
+          maxHeight: 130,
         }}
       >
         <TextInput
@@ -61,8 +66,16 @@ export function ChatComposer({
           placeholder="Message…"
           placeholderTextColor={colors.text3}
           multiline
-          style={{ fontSize: 15, color: colors.text, paddingTop: 9, paddingBottom: 9 }}
+          style={{ flex: 1, fontSize: 15.5, color: colors.text, paddingTop: 9, paddingBottom: 9 }}
         />
+        <Pressable
+          onPress={() => showToast({ message: 'Attachments coming soon.', type: 'info' })}
+          accessibilityLabel="Attach"
+          hitSlop={6}
+          style={{ paddingVertical: 6 }}
+        >
+          <Icon name="plus" size={22} color={colors.text3} strokeWidth={2} />
+        </Pressable>
       </View>
       <Pressable
         onPress={send}
@@ -70,16 +83,21 @@ export function ChatComposer({
         accessibilityRole="button"
         accessibilityLabel="Send message"
         style={{
-          width: 40,
-          height: 40,
-          borderRadius: 20,
-          backgroundColor: trimmed ? colors.accent : colors.hairStrong,
+          width: 46,
+          height: 46,
+          borderRadius: 999,
+          backgroundColor: p.accent,
           alignItems: 'center',
           justifyContent: 'center',
-          opacity: trimmed ? 1 : 0.6,
+          opacity: trimmed ? 1 : 0.55,
+          shadowColor: '#000',
+          shadowOpacity: p.isDark ? 0 : 0.18,
+          shadowRadius: 6,
+          shadowOffset: { width: 0, height: 3 },
+          elevation: 3,
         }}
       >
-        <Icon name="arrowR" size={20} color={colors.accentText} strokeWidth={2.2} />
+        <Icon name="arrowR" size={21} color="#fff" strokeWidth={2.4} />
       </Pressable>
     </View>
   );

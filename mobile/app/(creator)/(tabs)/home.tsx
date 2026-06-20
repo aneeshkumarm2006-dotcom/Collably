@@ -21,10 +21,14 @@ import {
 import {
   BrandSearch,
   CATEGORY_ICON,
-  categoryTint,
+  CategoryCard,
   HookHeadline,
   INK,
+  LevelStreakCard,
   LocationPill,
+  MatchedRail,
+  NearbyCollabsCard,
+  PremiumEarningsCard,
   Press,
   SectionHead,
   UrgencyBadge,
@@ -158,86 +162,48 @@ export default function CreatorHomeScreen() {
           <BrandSearch placeholder="Search brands, perks, dining…" onPress={goExplore} />
         </View>
 
-        {/* ── Earnings / quick stats card ── */}
-        <View style={{ paddingHorizontal: 20, marginTop: 14 }}>
-          <Press
-            onPress={() => router.push('/(creator)/(tabs)/collabs')}
-            style={{
-              backgroundColor: colors.card,
-              borderWidth: 1,
-              borderColor: colors.hair,
-              borderRadius: 18,
-              padding: 16,
-              ...shadows.cardStrong,
-            }}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 13 }}>
-              <View
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 13,
-                  backgroundColor: colors.brandGreenSoft,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Icon name="gift" size={23} color={colors.brandGreenText} />
-              </View>
-              <View style={{ flex: 1, minWidth: 0 }}>
-                <Text style={{ fontSize: 12, color: colors.text2, fontWeight: '600' }}>Rewards earned</Text>
-                <Text style={{ fontFamily: 'monospace', fontSize: 26, fontWeight: '700', color: colors.brandGreenText, letterSpacing: -0.8 }}>
-                  ${formatCompactNumber(earned)}
-                </Text>
-              </View>
-              <Icon name="chevR" size={20} color={colors.text3} />
-            </View>
-            <View style={{ flexDirection: 'row', marginTop: 14, paddingTop: 13, borderTopWidth: 1, borderTopColor: colors.hair }}>
-              {([[pending.length, 'Applied'], [active.length, 'Active'], [completed, 'Done']] as const).map(([v, l], i) => (
-                <View key={l} style={{ flex: 1, alignItems: 'center', borderLeftWidth: i ? 1 : 0, borderLeftColor: colors.hair }}>
-                  <Text style={{ fontFamily: 'monospace', fontSize: 18, fontWeight: '700', color: colors.text, letterSpacing: -0.3 }}>{v}</Text>
-                  <Text style={{ fontSize: 11, color: colors.text2, marginTop: 1 }}>{l}</Text>
-                </View>
-              ))}
-            </View>
-          </Press>
-        </View>
+        {/* ── Creator level & streak ── */}
+        <LevelStreakCard profile={data?.profile ?? null} />
 
-        {/* ── Category quick-tiles ── */}
+        {/* ── Premium earnings card (count-up + sparkline) ── */}
+        <PremiumEarningsCard
+          earned={earned}
+          pending={pending.length}
+          active={active.length}
+          completed={completed}
+          onPress={() => router.push('/(creator)/(tabs)/collabs')}
+        />
+
+        {/* ── Browse by category (cinematic cards) ── */}
         {cats.length > 0 ? (
           <View style={{ marginTop: 24 }}>
             <SectionHead>Browse by category</SectionHead>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ gap: 13, paddingHorizontal: 20, paddingBottom: 4 }}
+              contentContainerStyle={{ gap: 13, paddingHorizontal: 20, paddingBottom: 6 }}
             >
-              {cats.map(([cat, count]) => {
-                const tint = categoryTint(cat, isDark);
-                return (
-                  <Press key={cat} onPress={goExplore} style={{ width: 74, alignItems: 'center' }}>
-                    <View
-                      style={{
-                        width: 74,
-                        height: 74,
-                        borderRadius: 20,
-                        backgroundColor: tint.bg,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <Icon name={CATEGORY_ICON[cat]} size={32} color={tint.fg} />
-                    </View>
-                    <Text numberOfLines={1} style={{ fontSize: 12.5, fontWeight: '700', color: colors.text, marginTop: 7, letterSpacing: -0.2 }}>
-                      {cat}
-                    </Text>
-                    <Text style={{ fontSize: 10.5, color: colors.text3, fontFamily: 'monospace' }}>{count}</Text>
-                  </Press>
-                );
-              })}
+              {cats.map(([cat, count]) => (
+                <CategoryCard key={cat} category={cat} count={count} icon={CATEGORY_ICON[cat]} onPress={goExplore} />
+              ))}
             </ScrollView>
           </View>
         ) : null}
+
+        {/* ── Matched for you (personalized) ── */}
+        <MatchedRail
+          campaigns={campaigns}
+          niche={data?.profile?.niche ?? []}
+          city={data?.profile?.location?.city}
+          onOpen={(c) => router.push({ pathname: '/(creator)/campaign/[id]', params: { id: c._id } })}
+        />
+
+        {/* ── Collabs near you (map preview) ── */}
+        <NearbyCollabsCard
+          count={campaigns.filter((c) => !c.isRemote).length || campaigns.length}
+          city={city}
+          onPress={goExplore}
+        />
 
         {/* ── Urgency rail: collabs that need action ── */}
         {active.length > 0 ? (

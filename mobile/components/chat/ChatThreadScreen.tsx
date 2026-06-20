@@ -11,12 +11,13 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
+  Text,
   View,
 } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Header } from '@/components/shared';
-import { ErrorState } from '@/components/ui';
+import { ErrorState, Icon } from '@/components/ui';
 import { useTheme } from '@/components/ThemeProvider';
 import { api, isApiError } from '@/lib/api';
 import { showToast } from '@/lib/toast';
@@ -24,13 +25,16 @@ import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
 import { getSocket } from '@/lib/socket';
 import type { Conversation, Message } from '@/types';
-import { MessageBubble } from './MessageBubble';
+import { MessageBubble, TypingBubble } from './MessageBubble';
 import { ChatComposer } from './ChatComposer';
+import { useChatPalette } from './chatTheme';
+import { dayLabel, sameDay } from './time';
 
 const EMPTY: Message[] = [];
 
 export function ChatThreadScreen() {
   const { colors } = useTheme();
+  const pal = useChatPalette();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -43,6 +47,7 @@ export function ChatThreadScreen() {
   const [error, setError] = useState<string | null>(null);
   const [typingFromOther, setTypingFromOther] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
 
   const otherUserId = conv?.otherParticipant?._id;
 
@@ -74,15 +79,23 @@ export function ChatThreadScreen() {
     };
   }, [id, reloadKey]);
 
-  // Mark read on focus and whenever a new message lands while we're viewing.
+  // New thread → reset the "more history" flag so paging works again.
+  useEffect(() => {
+    setHasMore(true);
+  }, [id]);
+
+  // Mark read on focus, and when a NEW INCOMING message arrives (not our own
+  // sends) — avoids a write on every message-length change.
   useFocusEffect(
     useCallback(() => {
       if (id) void useChatStore.getState().markRead(id);
     }, [id]),
   );
+  const newestId = messages[0]?._id;
+  const newestIncoming = !!myId && !!messages[0] && messages[0].senderUserId !== myId;
   useEffect(() => {
-    if (id && messages.length > 0) void useChatStore.getState().markRead(id);
-  }, [id, messages.length]);
+    if (id && newestId && newestIncoming) void useChatStore.getState().markRead(id);
+  }, [id, newestId, newestIncoming]);
 
   // Typing indicator: listen for the other side, with a short auto-clear.
   useEffect(() => {
@@ -123,22 +136,36 @@ export function ChatThreadScreen() {
   );
 
   const loadOlder = useCallback(async () => {
-    if (!id || loadingMore || messages.length === 0) return;
+    if (!id || loadingMore || !hasMore || messages.length === 0) return;
     setLoadingMore(true);
+    const prevLen = messages.length;
     try {
       const before = messages[messages.length - 1]?.createdAt;
       await useChatStore.getState().loadMessages(id, before);
+      // Nothing new came back → we've reached the start of history; stop paging.
+      const newLen = (useChatStore.getState().messages[id] ?? []).length;
+      if (newLen <= prevLen) setHasMore(false);
     } finally {
       setLoadingMore(false);
     }
-  }, [id, loadingMore, messages]);
+  }, [id, loadingMore, hasMore, messages]);
 
   const title = conv?.otherParticipant?.name ?? 'Chat';
   const subtitle = typingFromOther ? 'typing…' : conv?.campaignTitle;
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+    <View style={{ flex: 1, backgroundColor: pal.chatBg }}>
       <Header title={title} subtitle={subtitle} onBack={() => router.back()} variant="card" />
+
+      {/* collab-context strip — reminds you what this thread is about */}
+      {conv?.campaignTitle ? (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 14, paddingVertical: 8, backgroundColor: colors.accentSoft }}>
+          <Icon name="briefcase" size={13} color={colors.accent} strokeWidth={2.2} />
+          <Text numberOfLines={1} style={{ flex: 1, fontSize: 12.5, fontWeight: '700', color: colors.accent }}>
+            Collab · {conv.campaignTitle}
+          </Text>
+        </View>
+      ) : null}
 
       {error && messages.length === 0 ? (
         <ErrorState body={error} onRetry={() => setReloadKey((k) => k + 1)} />
@@ -152,27 +179,44 @@ export function ChatThreadScreen() {
             data={messages}
             inverted
             keyExtractor={(m) => m._id}
-            renderItem={({ item }) => (
-              <MessageBubble message={item} mine={!!myId && item.senderUserId === myId} />
-            )}
-            contentContainerStyle={{ paddingVertical: 12, flexGrow: 1, justifyContent: 'flex-end' }}
+            renderItem={({ item, index }) => {
+              const mine = !!myId && item.senderUserId === myId;
+              const older = messages[index + 1]; // inverted: next item is chronologically earlier
+              const tight = !!older && older.senderUserId === item.senderUserId && sameDay(older.createdAt, item.createdAt);
+              const showDate = !older || !sameDay(older.createdAt, item.createdAt);
+              return (
+                <View>
+                  {showDate ? <DateSeparator label={dayLabel(item.createdAt)} /> : null}
+                  <MessageBubble message={item} mine={mine} tight={tight} />
+                </View>
+              );
+            }}
+            contentContainerStyle={{ paddingVertical: 10 }}
             showsVerticalScrollIndicator={false}
             onEndReached={loadOlder}
             onEndReachedThreshold={0.3}
+            // Inverted: ListHeader renders at the BOTTOM — perfect for the typing bubble.
+            ListHeaderComponent={typingFromOther ? <TypingBubble /> : null}
             ListFooterComponent={
-              loadingMore ? (
-                <ActivityIndicator size="small" color={colors.text3} style={{ marginVertical: 12 }} />
-              ) : null
+              loadingMore ? <ActivityIndicator size="small" color={colors.text3} style={{ marginVertical: 12 }} /> : null
             }
-            ListEmptyComponent={
-              loading ? (
-                <ActivityIndicator size="small" color={colors.text3} style={{ marginTop: 40 }} />
-              ) : null
-            }
+            ListEmptyComponent={loading ? <ActivityIndicator size="small" color={colors.text3} style={{ marginTop: 40 }} /> : null}
           />
           <ChatComposer onSend={send} onTyping={emitTyping} />
         </KeyboardAvoidingView>
       )}
+    </View>
+  );
+}
+
+/** Centered WhatsApp-style date pill between days. */
+function DateSeparator({ label }: { label: string }) {
+  const pal = useChatPalette();
+  return (
+    <View style={{ alignItems: 'center', marginVertical: 10 }}>
+      <View style={{ backgroundColor: pal.pillBg, paddingHorizontal: 12, paddingVertical: 5, borderRadius: 8 }}>
+        <Text style={{ fontSize: 11.5, fontWeight: '700', color: pal.pillText, letterSpacing: 0.3 }}>{label}</Text>
+      </View>
     </View>
   );
 }

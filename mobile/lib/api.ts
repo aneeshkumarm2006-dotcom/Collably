@@ -123,11 +123,31 @@ function extractMessage(raw: unknown): string | null {
   return null;
 }
 
+/** Pull the first field-level validation issue ("path: message") from either the
+ *  nested `{ error: { issues } }` or a flat `{ issues }` response. */
+function firstIssueMessage(data: unknown): string | null {
+  const d = data as { issues?: unknown; error?: { issues?: unknown } } | undefined;
+  const issues = d?.error?.issues ?? d?.issues;
+  if (Array.isArray(issues) && issues.length > 0) {
+    const first = issues[0] as { path?: unknown; message?: unknown } | string;
+    if (typeof first === 'string') return first;
+    if (first && typeof first.message === 'string') {
+      return first.path ? `${String(first.path)}: ${first.message}` : first.message;
+    }
+  }
+  return null;
+}
+
 /** Turn an AxiosError into the normalized `ApiError` shape. */
 function toApiError(error: AxiosError): ApiError {
   const status = error.response?.status ?? 0;
-  const data = error.response?.data as { message?: unknown; error?: unknown } | undefined;
+  const data = error.response?.data as { message?: unknown; error?: unknown; issues?: unknown } | undefined;
   const message =
+    // Prefer the specific zod issue (e.g. "instagram.link: A profile link is
+    // required") over the generic "Validation failed" wrapper. The backend nests
+    // it as { error: { message, issues: [{ path, message }] } }.
+    firstIssueMessage(data) ??
+    extractMessage((data?.error as { message?: unknown } | undefined)?.message) ??
     extractMessage(data?.message) ??
     extractMessage(data?.error) ??
     (status === 0 ? 'Network error — check your connection.' : 'Something went wrong.');

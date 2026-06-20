@@ -120,6 +120,15 @@ const APPLICATIONS = [
 
 async function main(): Promise<void> {
   info('Seed — CollabSpace demo world');
+  // This script WIPES every collection. The DB it connects to may be the shared
+  // Atlas cluster regardless of NODE_ENV, so refuse to run unless explicitly
+  // confirmed — prevents an accidental `npm run seed` from nuking real data.
+  if (process.env.ALLOW_DESTRUCTIVE_SEED !== 'true') {
+    console.error(
+      'Refusing to run: seed.ts deletes ALL users/campaigns/etc. Re-run with ALLOW_DESTRUCTIVE_SEED=true to confirm.',
+    );
+    process.exit(1);
+  }
   await connectDB();
   await wipe();
   const passwordHash = await hashPassword(SEED_PASSWORD);

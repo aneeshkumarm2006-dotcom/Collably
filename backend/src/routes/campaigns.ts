@@ -299,8 +299,10 @@ router.get(
       filter.businessId = profile._id;
       if (q.status) filter.status = q.status;
     } else {
-      // Public discovery: only non-spam Active campaigns by default.
-      filter.status = q.status && req.user ? q.status : 'Active';
+      // Public discovery: ALWAYS only Active, non-spam campaigns. Never honor a
+      // client `status` here — a non-owner must not be able to list other
+      // businesses' Draft/Paused/Closed campaigns (owners use `mine=true`).
+      filter.status = 'Active';
       filter.isSpam = { $ne: true };
       if (q.businessId) filter.businessId = objectIdParam(q.businessId, 'businessId');
     }
