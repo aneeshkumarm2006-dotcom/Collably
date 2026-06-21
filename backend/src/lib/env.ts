@@ -57,7 +57,19 @@ export const env = {
   },
 
   expoAccessToken: str('EXPO_ACCESS_TOKEN'),
+
+  /**
+   * Google OAuth client IDs the server accepts as ID-token audiences. The mobile
+   * app (`expo-auth-session`) issues an ID token whose `aud` is the client ID for
+   * the *current platform* — the web client on Expo web, but the iOS/Android
+   * native client on a device build. The server therefore verifies against every
+   * configured client (see `googleAudiences()`), or native sign-in is rejected as
+   * "Invalid Google token". The web client is also the audience for any web/admin
+   * sign-in. iOS/Android are optional — set them once those OAuth clients exist.
+   */
   googleClientId: str('GOOGLE_CLIENT_ID'),
+  googleIosClientId: str('GOOGLE_IOS_CLIENT_ID'),
+  googleAndroidClientId: str('GOOGLE_ANDROID_CLIENT_ID'),
 
   /**
    * Shared secret for server-to-server admin access (the Next.js admin dashboard).
@@ -75,6 +87,15 @@ export const env = {
    */
   googleGeocodingApiKey: str('GOOGLE_GEOCODING_API_KEY'),
 } as const;
+
+/**
+ * Every configured Google OAuth client ID — the set of accepted ID-token
+ * audiences. Empty when Google sign-in isn't configured yet (the verifier then
+ * fails closed with a clear 500). Order is web, iOS, Android.
+ */
+export function googleAudiences(): string[] {
+  return [env.googleClientId, env.googleIosClientId, env.googleAndroidClientId].filter(Boolean);
+}
 
 /** Origins for the CORS middleware: `true` (reflect any) or an array. */
 export function corsOrigins(): true | string[] {
