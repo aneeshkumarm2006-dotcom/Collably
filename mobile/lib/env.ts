@@ -85,7 +85,13 @@ export const GOOGLE_OAUTH_CONFIGURED = Boolean(
  * dev build and the maps light up with no other changes. Mirrors the
  * `GOOGLE_OAUTH_CONFIGURED` degrade-gracefully pattern above.
  */
-export const GOOGLE_MAPS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || undefined;
+export const GOOGLE_MAPS_API_KEY =
+  Platform.select({
+    ios: process.env.EXPO_PUBLIC_GOOGLE_MAPS_IOS_KEY,
+    android: process.env.EXPO_PUBLIC_GOOGLE_MAPS_ANDROID_KEY,
+  }) ||
+  process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ||
+  undefined;
 
 /** True once a Maps SDK key is configured for this build (else "map coming soon"). */
 export const MAPS_ENABLED = Boolean(GOOGLE_MAPS_API_KEY);

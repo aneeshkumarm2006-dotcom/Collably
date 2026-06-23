@@ -16,34 +16,42 @@
  */
 
 /**
- * Embed the Google Maps SDK key into the native build. The key isn't secret
- * (locked by app signature in Google Cloud), so shipping it in the bundle is
- * expected. Until `EXPO_PUBLIC_GOOGLE_MAPS_API_KEY` is set, no key is embedded
- * and the app shows a "Map coming soon" placeholder (JS gate: `MAPS_ENABLED`).
+ * Embed the Google Maps SDK keys into the native build. The keys aren't secret
+ * (locked by app signature in Google Cloud), so shipping them in the bundle is
+ * expected. A Google API key can hold only ONE application restriction (Android
+ * apps OR iOS apps), so each platform needs its own restricted key. Until a key
+ * is set, no key is embedded and the app shows a "Map coming soon" placeholder
+ * (JS gate: `MAPS_ENABLED`).
  *
- *   EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=AIza...   # one key for both platforms
+ *   EXPO_PUBLIC_GOOGLE_MAPS_ANDROID_KEY=AIza...   # Android-restricted key
+ *   EXPO_PUBLIC_GOOGLE_MAPS_IOS_KEY=AIza...        # iOS-restricted key
+ *
+ * A single legacy `EXPO_PUBLIC_GOOGLE_MAPS_API_KEY` is still honored as a
+ * fallback for either platform that has no platform-specific key set.
  */
 function withMaps(config) {
-  const mapsKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '';
-  if (!mapsKey) return config;
+  const fallback = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '';
+  const androidKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_ANDROID_KEY || fallback;
+  const iosKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_IOS_KEY || fallback;
+  if (!androidKey && !iosKey) return config;
 
-  return {
-    ...config,
-    ios: {
+  const next = { ...config };
+  if (iosKey) {
+    next.ios = {
       ...config.ios,
-      config: {
-        ...(config.ios && config.ios.config),
-        googleMapsApiKey: mapsKey,
-      },
-    },
-    android: {
+      config: { ...(config.ios && config.ios.config), googleMapsApiKey: iosKey },
+    };
+  }
+  if (androidKey) {
+    next.android = {
       ...config.android,
       config: {
         ...(config.android && config.android.config),
-        googleMaps: { apiKey: mapsKey },
+        googleMaps: { apiKey: androidKey },
       },
-    },
-  };
+    };
+  }
+  return next;
 }
 
 /**
