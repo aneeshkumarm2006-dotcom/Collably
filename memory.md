@@ -189,6 +189,30 @@ ids. Ran `npm run build && npm run seed` against Atlas (reads `backend/.env`).
 
 ---
 
+## 13. Explore map price bubble cut off (e.g. "$1.2K" showed "$1.2")
+**Problem:** On the creator Explore map, a campaign's value bubble was clipped —
+a campaign worth 1200 (bubble "$1.2K") rendered as roughly "$1.2", with the
+trailing characters cut off.
+**Cause:** `react-native-maps` rasterizes a custom marker child to a bitmap and
+freezes it (`tracksViewChanges={false}`) to keep panning smooth. `PriceMarker`
+froze on a fixed **600ms-from-mount timer**; on some devices that snapshot was
+taken before the **bold** label had finished measuring, so the bitmap was a hair
+too narrow and clipped the last glyphs. `ClusterBubble` was worse — it set
+`tracksViewChanges={false}` permanently, so a clipped first snapshot never
+re-captured.
+**Fix:** Added `useMarkerSnapshot(contentKey)` in `components/campaign/CampaignMap.tsx`
+(mirrored in `CampaignMap.web.tsx` for export parity). It anchors the freeze to an
+actual `onLayout` pass instead of a guessed delay: keep re-rasterizing until the
+bubble has laid out for the current content, then settle ~250ms later; the
+`contentKey` re-arms it when the label/selection/count changes. Both `PriceMarker`
+and `ClusterBubble` now use it, and their `Text` is pinned with `numberOfLines={1}`
++ `allowFontScaling={false}` (+ `includeFontPadding:false` on the price) so the
+measured width can't drift from what the snapshot captured.
+**Note:** values stay Airbnb-style **compact** by design (`formatCompactNumber`,
+so 1200 → "$1.2K"); the fix is about the clipping, not the compacting.
+
+---
+
 ### Verifying on the iOS simulator (no tap tooling available)
 - Drive screens with deep links after a cold restart:
   `xcrun simctl terminate <UDID> host.exp.Exponent` then

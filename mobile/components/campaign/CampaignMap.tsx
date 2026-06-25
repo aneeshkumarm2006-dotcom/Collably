@@ -13,7 +13,7 @@
  *     we're not on web. Every screen renders `<MapPlaceholder/>` ("coming soon")
  *     until that's true, then the real map appears with no other code changes.
  */
-import { useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Linking, Platform, Text, View } from 'react-native';
 import type { MapViewProps } from 'react-native-maps';
 import type { GeoPoint } from '@/types';
@@ -149,6 +149,50 @@ export function MapPlaceholder({
   );
 }
 
+// --- Custom-marker rasterization helper ---------------------------------------
+
+/**
+ * Android renders a custom marker child to a bitmap and, by default, freezes that
+ * snapshot to keep panning smooth (`tracksViewChanges={false}`). If the snapshot
+ * is captured before the marker's (bold) content has measured, the trailing
+ * glyphs get clipped — e.g. a "$1.2K" price bubble shows just "$1.2" with the
+ * rest cut off. This hook anchors the freeze to an actual layout pass instead of
+ * a guessed delay: it keeps re-rasterizing until the bubble has laid out for the
+ * *current* content, then settles a few frames later.
+ *
+ * Wire `tracksViewChanges` onto the `<Marker>` and `onLayout` onto its child view,
+ * and pass a `contentKey` that changes whenever the rendered content does so a new
+ * label/selection re-arms the capture.
+ */
+export function useMarkerSnapshot(contentKey: string): {
+  tracksViewChanges: boolean;
+  onLayout: () => void;
+} {
+  const [tracksViewChanges, setTracks] = useState(true);
+  const settle = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Re-arm whenever the rendered content changes.
+  useEffect(() => {
+    setTracks(true);
+  }, [contentKey]);
+
+  // Drop any pending settle on unmount.
+  useEffect(
+    () => () => {
+      if (settle.current) clearTimeout(settle.current);
+    },
+    [],
+  );
+
+  const onLayout = useCallback(() => {
+    if (settle.current) clearTimeout(settle.current);
+    // A couple of frames after the view has measured, freeze the bitmap.
+    settle.current = setTimeout(() => setTracks(false), 250);
+  }, []);
+
+  return { tracksViewChanges, onLayout };
+}
+
 // --- Airbnb-style price bubble marker -----------------------------------------
 
 export type PriceMarkerProps = {
@@ -162,20 +206,14 @@ export type PriceMarkerProps = {
 };
 
 /**
- * A tappable price bubble used on the Explore map. `tracksViewChanges` is turned
- * off shortly after mount — on Android, leaving it on for custom marker content
- * tanks scroll performance (each frame re-rasterizes every marker).
+ * A tappable price bubble used on the Explore map. The bitmap freeze is anchored
+ * to the bubble's layout (see `useMarkerSnapshot`) so the value never renders
+ * clipped, and the text is pinned to a single, non-scaling line so its width
+ * stays exactly what the snapshot measured.
  */
 export function PriceMarker({ point, label, selected, onPress, identifier }: PriceMarkerProps) {
   const { colors } = useTheme();
-  const [tracks, setTracks] = useState(true);
-
-  // Re-rasterize briefly whenever the content/selection changes, then settle.
-  useEffect(() => {
-    setTracks(true);
-    const t = setTimeout(() => setTracks(false), 600);
-    return () => clearTimeout(t);
-  }, [label, selected]);
+  const { tracksViewChanges, onLayout } = useMarkerSnapshot(`${label ?? ''}|${selected ? 1 : 0}`);
 
   if (!Marker) return null;
 
@@ -187,10 +225,11 @@ export function PriceMarker({ point, label, selected, onPress, identifier }: Pri
       identifier={identifier}
       coordinate={toLatLng(point)}
       onPress={onPress}
-      tracksViewChanges={tracks}
+      tracksViewChanges={tracksViewChanges}
       anchor={{ x: 0.5, y: 1 }}
     >
       <View
+        onLayout={onLayout}
         style={{
           paddingHorizontal: label ? 11 : 8,
           paddingVertical: 6,
@@ -206,7 +245,19 @@ export function PriceMarker({ point, label, selected, onPress, identifier }: Pri
         }}
       >
         {label ? (
-          <Text style={{ fontSize: 13, fontWeight: '800', color: fg }}>{label}</Text>
+          <Text
+            numberOfLines={1}
+            allowFontScaling={false}
+            style={{
+              fontSize: 13,
+              fontWeight: '800',
+              color: fg,
+              includeFontPadding: false,
+              textAlign: 'center',
+            }}
+          >
+            {label}
+          </Text>
         ) : (
           <Icon name="mappin" size={15} color={fg} strokeWidth={2.2} />
         )}

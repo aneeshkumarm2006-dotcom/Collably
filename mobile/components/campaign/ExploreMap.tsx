@@ -20,6 +20,7 @@ import {
   MapPlaceholder,
   PROVIDER_GOOGLE,
   toLatLng,
+  useMarkerSnapshot,
   type MapRegion,
 } from './CampaignMap';
 import { CampaignCard } from './CampaignCard';
@@ -259,10 +260,12 @@ function ClusterBubble({
   onPress: () => void;
 }) {
   const { colors } = useTheme();
+  const { tracksViewChanges, onLayout } = useMarkerSnapshot(String(count));
   if (!Marker) return null;
   return (
-    <Marker coordinate={toLatLng(point)} onPress={onPress} tracksViewChanges={false}>
+    <Marker coordinate={toLatLng(point)} onPress={onPress} tracksViewChanges={tracksViewChanges}>
       <View
+        onLayout={onLayout}
         style={{
           minWidth: 38,
           height: 38,
@@ -280,7 +283,13 @@ function ClusterBubble({
           elevation: 4,
         }}
       >
-        <Text style={{ fontSize: 13, fontWeight: '800', color: '#FFFFFF' }}>{count}</Text>
+        <Text
+          numberOfLines={1}
+          allowFontScaling={false}
+          style={{ fontSize: 13, fontWeight: '800', color: '#FFFFFF' }}
+        >
+          {count}
+        </Text>
       </View>
     </Marker>
   );

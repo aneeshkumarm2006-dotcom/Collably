@@ -10,7 +10,7 @@
  *
  * Keep this file's exports in sync with `CampaignMap.tsx`.
  */
-import { useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Linking, Platform, Text, View } from 'react-native';
 import type { MapViewProps } from 'react-native-maps'; // type-only → erased at build, safe on web
 import type { GeoPoint } from '@/types';
@@ -122,6 +122,37 @@ export function MapPlaceholder({
       ) : null}
     </View>
   );
+}
+
+// --- Custom-marker rasterization helper ---------------------------------------
+// Kept in sync with CampaignMap.tsx. There is no native marker bitmap on web, so
+// this only needs to preserve the export + hook shape; callers never invoke it
+// here because the surrounding MapView never renders.
+
+export function useMarkerSnapshot(contentKey: string): {
+  tracksViewChanges: boolean;
+  onLayout: () => void;
+} {
+  const [tracksViewChanges, setTracks] = useState(true);
+  const settle = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    setTracks(true);
+  }, [contentKey]);
+
+  useEffect(
+    () => () => {
+      if (settle.current) clearTimeout(settle.current);
+    },
+    [],
+  );
+
+  const onLayout = useCallback(() => {
+    if (settle.current) clearTimeout(settle.current);
+    settle.current = setTimeout(() => setTracks(false), 250);
+  }, []);
+
+  return { tracksViewChanges, onLayout };
 }
 
 // --- Price bubble marker ------------------------------------------------------
