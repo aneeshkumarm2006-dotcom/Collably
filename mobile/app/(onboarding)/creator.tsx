@@ -477,7 +477,7 @@ export default function CreatorOnboardingScreen({ initialIndex = 0 }: { initialI
               multiline
               value={form.bio}
               autoCapitalize="sentences"
-              placeholder="e.g. Mumbai food + lifestyle creator sharing honest reviews…"
+              placeholder="e.g. Toronto food + lifestyle creator sharing honest reviews…"
               maxLength={2000}
               onChangeText={(bio) => patch({ bio })}
             />

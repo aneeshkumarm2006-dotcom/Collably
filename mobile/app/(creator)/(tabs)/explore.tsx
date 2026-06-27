@@ -189,7 +189,7 @@ export default function ExploreScreen() {
           )}
         </View>
 
-        <View style={{ flexDirection: 'row', gap: 10 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <Button
             variant={activeFilters > 0 ? 'tonal' : 'outline'}
             size="sm"
@@ -206,11 +206,16 @@ export default function ExploreScreen() {
           >
             Sort
           </Button>
-          <View style={{ flex: 1, justifyContent: 'center' }}>
-            {!loading && <Text style={{ fontSize: 12.5, color: colors.text3 }}>{total} found</Text>}
-          </View>
+          {/* spacer pushes the toggle to the right; the count moves to its own
+              line below so it never gets squeezed/wrapped on narrow devices. */}
+          <View style={{ flex: 1 }} />
           <ViewToggle value={viewMode} onChange={setViewMode} colors={colors} />
         </View>
+        {!loading && (
+          <Text numberOfLines={1} style={{ fontSize: 12.5, color: colors.text3, marginTop: 8, marginLeft: 2 }}>
+            {total} {total === 1 ? 'result' : 'results'} found
+          </Text>
+        )}
       </View>
 
       {loading ? (

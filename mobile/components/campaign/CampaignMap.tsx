@@ -266,6 +266,143 @@ export function PriceMarker({ point, label, selected, onPress, identifier }: Pri
   );
 }
 
+// --- Gamified "quest" marker (rarity by reward value) -------------------------
+
+export type QuestTier = { key: string; label: string; color: string; icon: IconName };
+
+/** Map a reward value to a loot rarity tier — drives marker color/glow + legend. */
+export function rewardTier(value?: number): QuestTier {
+  const v = typeof value === 'number' ? value : 0;
+  if (v >= 500) return { key: 'legendary', label: 'Legendary', color: '#F5B301', icon: 'star' };
+  if (v >= 200) return { key: 'rare', label: 'Rare', color: '#8B5CF6', icon: 'sparkles' };
+  if (v >= 80) return { key: 'uncommon', label: 'Uncommon', color: '#2D88FF', icon: 'zap' };
+  if (v > 0) return { key: 'common', label: 'Common', color: '#16C79A', icon: 'gift' };
+  return { key: 'mystery', label: 'Mystery', color: '#8A8D91', icon: 'mappin' };
+}
+
+export type QuestMarkerProps = {
+  point: GeoPoint;
+  /** Reward value used to pick the rarity tier + the bubble label. */
+  value?: number;
+  label?: string;
+  selected?: boolean;
+  onPress?: () => void;
+  identifier?: string;
+  /** Campaign preview shown in the floating "cloud" callout when selected. */
+  title?: string;
+  subtitle?: string;
+};
+
+/**
+ * A loot-styled campaign marker: a rarity-colored "gem" chip with a glow and an
+ * icon, so a high-reward collab literally looks like rarer loot on the map.
+ * Static (snapshot-frozen) so it stays crisp + performant inside react-native-maps.
+ */
+export function QuestMarker({ point, value, label, selected, onPress, identifier, title, subtitle }: QuestMarkerProps) {
+  const tier = rewardTier(value);
+  // Key includes title so the snapshot re-freezes when the cloud appears/changes.
+  const { tracksViewChanges, onLayout } = useMarkerSnapshot(
+    `${tier.key}|${label ?? ''}|${selected ? 1 : 0}|${selected ? title ?? '' : ''}`,
+  );
+  if (!Marker) return null;
+
+  const showCloud = selected && (title || label);
+
+  return (
+    <Marker
+      identifier={identifier}
+      coordinate={toLatLng(point)}
+      onPress={onPress}
+      // Keep the selected marker live so its cloud (async text) renders fully;
+      // unselected markers stay frozen via the snapshot for performance.
+      tracksViewChanges={selected ? true : tracksViewChanges}
+      anchor={{ x: 0.5, y: 1 }}
+    >
+      {/* Outer column: cloud callout (when selected) sits above, pin tip at the coord. */}
+      <View onLayout={onLayout} style={{ alignItems: 'center' }}>
+        {showCloud ? (
+          <>
+            <View
+              style={{
+                maxWidth: 188,
+                backgroundColor: '#FFFFFF',
+                borderRadius: 12,
+                paddingHorizontal: 11,
+                paddingVertical: 8,
+                shadowColor: '#000',
+                shadowOpacity: 0.22,
+                shadowRadius: 8,
+                shadowOffset: { width: 0, height: 3 },
+                elevation: 6,
+              }}
+            >
+              {title ? (
+                <Text numberOfLines={1} allowFontScaling={false} style={{ fontSize: 13, fontWeight: '800', color: '#1C1E21', includeFontPadding: false }}>
+                  {title}
+                </Text>
+              ) : null}
+              {subtitle ? (
+                <Text numberOfLines={1} allowFontScaling={false} style={{ fontSize: 11, color: '#65676B', marginTop: 1, includeFontPadding: false }}>
+                  {subtitle}
+                </Text>
+              ) : null}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 5 }}>
+                <Icon name={tier.icon} size={12} color={tier.color} strokeWidth={2.4} />
+                <Text allowFontScaling={false} style={{ fontSize: 12, fontWeight: '800', color: tier.color, includeFontPadding: false }}>
+                  {label || tier.label}
+                </Text>
+              </View>
+            </View>
+            {/* downward tail connecting the cloud to the pin */}
+            <View
+              style={{
+                width: 0,
+                height: 0,
+                borderLeftWidth: 6,
+                borderRightWidth: 6,
+                borderTopWidth: 8,
+                borderLeftColor: 'transparent',
+                borderRightColor: 'transparent',
+                borderTopColor: '#FFFFFF',
+                marginTop: -1,
+                marginBottom: 3,
+              }}
+            />
+          </>
+        ) : null}
+
+        {/* the rarity gem pin */}
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 4,
+            paddingHorizontal: label ? 9 : 7,
+            paddingVertical: 5,
+            borderRadius: 13,
+            backgroundColor: tier.color,
+            borderWidth: selected ? 2.5 : 1.5,
+            borderColor: '#FFFFFF',
+            shadowColor: tier.color,
+            shadowOpacity: 0.7,
+            shadowRadius: selected ? 9 : 6,
+            shadowOffset: { width: 0, height: 0 },
+            elevation: selected ? 8 : 5,
+            transform: [{ scale: selected ? 1.12 : 1 }],
+          }}
+        >
+          <Icon name={tier.icon} size={13} color="#FFFFFF" strokeWidth={2.4} />
+          {label ? (
+            <Text numberOfLines={1} allowFontScaling={false} style={{ fontSize: 12.5, fontWeight: '800', color: '#FFFFFF', includeFontPadding: false }}>
+              {label}
+            </Text>
+          ) : null}
+        </View>
+      </View>
+    </Marker>
+  );
+}
+
 // --- Map frame ----------------------------------------------------------------
 
 export type CampaignMapProps = {
@@ -295,7 +432,15 @@ export function CampaignMap({
   }
   return (
     <View style={{ height, borderRadius: rounded ? 16 : 0, overflow: 'hidden' }}>
-      <MapView style={{ flex: 1 }} provider={PROVIDER_GOOGLE} {...mapProps}>
+      <MapView
+        style={{ flex: 1 }}
+        provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
+        // Consistent gamified look across all maps (muted + dark on iOS); callers
+        // can still override via mapProps.
+        mapType={Platform.OS === 'ios' ? 'mutedStandard' : 'standard'}
+        userInterfaceStyle="dark"
+        {...mapProps}
+      >
         {children}
       </MapView>
     </View>

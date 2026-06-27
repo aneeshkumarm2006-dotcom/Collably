@@ -10,12 +10,15 @@
  * silently dropped. Falls back to a "Map coming soon" placeholder until maps are
  * enabled.
  */
-import { useMemo, useRef, useState } from 'react';
-import { Text, View } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Platform, Text, View } from 'react-native';
+import * as Location from 'expo-location';
 import {
   MapView,
   Marker,
-  PriceMarker,
+  Circle,
+  QuestMarker,
+  rewardTier,
   MAPS_AVAILABLE,
   MapPlaceholder,
   PROVIDER_GOOGLE,
@@ -23,6 +26,8 @@ import {
   useMarkerSnapshot,
   type MapRegion,
 } from './CampaignMap';
+import { Icon } from '@/components/ui';
+import { Pressable } from '@/components/ui/SafePressable';
 import { CampaignCard } from './CampaignCard';
 import { useTheme } from '@/components/ThemeProvider';
 import { formatCompactNumber } from '@/lib/utils';
@@ -144,7 +149,41 @@ export function ExploreMap({ items, onOpen, total, bottomInset = 0 }: ExploreMap
 
   const [region, setRegion] = useState<MapRegion>(() => fitRegion(pins.map((p) => p.point)));
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [userPoint, setUserPoint] = useState<GeoPoint | null>(null);
   const mapRef = useRef<RNMapView>(null);
+
+  // Ask for location once, then center the discovery map on the user so they see
+  // the collabs/brands around them (not a world view).
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted' || !active) return;
+        const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        if (!active) return;
+        const p: GeoPoint = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        setUserPoint(p);
+        mapRef.current?.animateToRegion(
+          { latitude: p.lat, longitude: p.lng, latitudeDelta: 0.25, longitudeDelta: 0.25 },
+          600,
+        );
+      } catch {
+        /* permission denied / unavailable — fall back to the campaign-fit region */
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const recenter = () => {
+    if (!userPoint) return;
+    mapRef.current?.animateToRegion(
+      { latitude: userPoint.lat, longitude: userPoint.lng, latitudeDelta: 0.25, longitudeDelta: 0.25 },
+      500,
+    );
+  };
 
   const clusters = useMemo(() => clusterPins(pins, region), [pins, region]);
   const selected = useMemo(
@@ -183,18 +222,37 @@ export function ExploreMap({ items, onOpen, total, bottomInset = 0 }: ExploreMap
       <MapView
         ref={mapRef}
         style={{ flex: 1 }}
-        provider={PROVIDER_GOOGLE}
+        provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
+        // Apple Maps can't take a full custom skin, but "muted" + dark gives a
+        // flatter, designed look so collab markers pop (full game skin = Google).
+        mapType={Platform.OS === 'ios' ? 'mutedStandard' : 'standard'}
+        userInterfaceStyle="dark"
+        showsUserLocation
+        showsMyLocationButton={false}
         initialRegion={region}
         onRegionChangeComplete={(r: Region) => setRegion(r)}
         onPress={() => setSelectedId(null)}
       >
+        {/* discovery radius around the user */}
+        {userPoint && Circle ? (
+          <Circle
+            center={toLatLng(userPoint)}
+            radius={6000}
+            strokeColor="rgba(45,136,255,0.55)"
+            fillColor="rgba(45,136,255,0.10)"
+            strokeWidth={1.5}
+          />
+        ) : null}
         {clusters.map((cl) =>
           cl.type === 'single' ? (
-            <PriceMarker
+            <QuestMarker
               key={cl.key}
               identifier={cl.key}
               point={cl.point}
+              value={cl.pin.campaign.reward?.estimatedValue}
               label={priceLabel(cl.pin.campaign)}
+              title={cl.pin.campaign.title}
+              subtitle={cl.pin.campaign.business?.businessName}
               selected={cl.pin.id === selectedId}
               onPress={() => {
                 setSelectedId(cl.pin.id);
@@ -225,6 +283,37 @@ export function ExploreMap({ items, onOpen, total, bottomInset = 0 }: ExploreMap
             {pins.length} of {loadedTotal} shown on map · rest are remote/unpinned
           </Text>
         </View>
+      ) : null}
+
+      {/* Rarity legend HUD (hidden while a quest card is open). */}
+      {!selected && pins.length > 0 ? <QuestLegend bottomInset={bottomInset} /> : null}
+
+      {/* Recenter-on-me button. */}
+      {userPoint && !selected ? (
+        <Pressable
+          onPress={recenter}
+          accessibilityLabel="Center on my location"
+          style={{
+            position: 'absolute',
+            right: 12,
+            bottom: bottomInset + 12,
+            width: 46,
+            height: 46,
+            borderRadius: 23,
+            backgroundColor: colors.bgElev,
+            borderWidth: 1,
+            borderColor: colors.hair,
+            alignItems: 'center',
+            justifyContent: 'center',
+            shadowColor: '#000',
+            shadowOpacity: 0.15,
+            shadowRadius: 6,
+            shadowOffset: { width: 0, height: 2 },
+            elevation: 4,
+          }}
+        >
+          <Icon name="mappin" size={21} color={colors.accent} strokeWidth={2.2} />
+        </Pressable>
       ) : null}
 
       {/* Tap-through mini card. */}
@@ -292,6 +381,49 @@ function ClusterBubble({
         </Text>
       </View>
     </Marker>
+  );
+}
+
+/** Game-style "loot tiers" legend so the rarity colors are readable at a glance. */
+function QuestLegend({ bottomInset }: { bottomInset: number }) {
+  const { colors } = useTheme();
+  const tiers = [
+    rewardTier(600),
+    rewardTier(250),
+    rewardTier(100),
+    rewardTier(20),
+  ];
+  return (
+    <View
+      style={{
+        position: 'absolute',
+        left: 12,
+        bottom: bottomInset + 12,
+        backgroundColor: colors.bgElev,
+        borderWidth: 1,
+        borderColor: colors.hair,
+        borderRadius: 14,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        gap: 6,
+        shadowColor: '#000',
+        shadowOpacity: 0.12,
+        shadowRadius: 6,
+        shadowOffset: { width: 0, height: 2 },
+        elevation: 3,
+      }}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 1 }}>
+        <Icon name="sparkles" size={12} color={colors.text2} />
+        <Text style={{ fontSize: 10.5, fontWeight: '800', color: colors.text2, letterSpacing: 0.4 }}>LOOT TIERS</Text>
+      </View>
+      {tiers.map((t) => (
+        <View key={t.key} style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
+          <View style={{ width: 11, height: 11, borderRadius: 6, backgroundColor: t.color, borderWidth: 1, borderColor: '#fff' }} />
+          <Text style={{ fontSize: 11.5, color: colors.text, fontWeight: '600' }}>{t.label}</Text>
+        </View>
+      ))}
+    </View>
   );
 }
 

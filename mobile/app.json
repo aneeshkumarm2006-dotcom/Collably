@@ -13,7 +13,10 @@
       "bundleIdentifier": "com.collably.app",
       "associatedDomains": [
         "applinks:collably.app"
-      ]
+      ],
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Collably uses your location to show nearby brand collabs on the map."
+      }
     },
     "android": {
       "package": "com.collably.app",
@@ -47,7 +50,9 @@
         }
       ],
       "permissions": [
-        "android.permission.RECORD_AUDIO"
+        "android.permission.RECORD_AUDIO",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION"
       ]
     },
     "web": {
