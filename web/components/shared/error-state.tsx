@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
 /**
- * ErrorState — centered icon + title + message + optional retry/home actions.
+ * ErrorState: centered icon + title + message + optional retry/home actions.
  * Used by the route-segment error boundaries (`error.tsx`) so a thrown render
  * error degrades to a recoverable panel instead of a blank screen. Mirrors the
  * visual language of `EmptyState`.
@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 export interface ErrorStateProps {
   title?: string;
   description?: string;
-  /** Wired to the boundary's `reset()` — re-renders the segment. */
+  /** Wired to the boundary's `reset()`; re-renders the segment. */
   onRetry?: () => void;
   action?: React.ReactNode;
   className?: string;
@@ -22,7 +22,7 @@ export interface ErrorStateProps {
 
 export function ErrorState({
   title = 'Something went wrong',
-  description = 'An unexpected error occurred. You can try again — if it keeps happening, please come back in a bit.',
+  description = 'An unexpected error occurred. You can try again. If it keeps happening, please come back in a bit.',
   onRetry,
   action,
   className,

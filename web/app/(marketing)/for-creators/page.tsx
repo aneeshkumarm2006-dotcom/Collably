@@ -7,7 +7,7 @@ import { AudiencePage, type AudiencePageConfig } from '@/components/marketing/au
 export const metadata: Metadata = buildMetadata({
   title: 'For Creators',
   description:
-    'Earn real rewards from local brands — no follower minimums, no agency gatekeeping. Browse campaigns in your niche, apply with a pitch, and get rewarded for content you love making.',
+    'Earn real rewards from local brands, with no follower minimums and no agency gatekeeping. Browse campaigns in your niche, apply with a pitch, and get rewarded for content you love making.',
   path: '/for-creators',
   ogEyebrow: 'For Creators',
   keywords: ['creator collabs', 'UGC creator', 'brand gifting', 'nano influencer', 'creator rewards'],
@@ -21,7 +21,7 @@ const config: AudiencePageConfig = {
     </>
   ),
   subtitle:
-    'Collab with local brands in your niche, get rewarded with products, experiences and cash — and build a portfolio that grows with you. No follower minimums, ever.',
+    'Collab with local brands in your niche, get rewarded with products, experiences and cash, and build a portfolio that grows with you. No follower minimums, ever.',
   primaryCta: { label: 'Join as a creator', href: '/signup' },
   secondaryCta: { label: 'Browse campaigns', href: '/explore' },
   highlights: ['Free to join', 'No follower minimums', 'UGC creators welcome'],
@@ -31,7 +31,7 @@ const config: AudiencePageConfig = {
     {
       icon: Sparkles,
       title: 'No follower gatekeeping',
-      body: 'Nano and UGC-only creators are first-class here. Brands match on content fit and quality — not vanity metrics.',
+      body: 'Nano and UGC-only creators are first-class here. Brands match on content fit and quality, not vanity metrics.',
     },
     {
       icon: Gift,
@@ -53,7 +53,7 @@ const config: AudiencePageConfig = {
   stepsTitle: 'From browsing to rewarded in three steps',
   steps: [
     { title: 'Browse your niche', body: 'Find campaigns from brands matching your niche and your city.' },
-    { title: 'Apply with a pitch', body: 'No agency gatekeeping — just you, your work, and a quick pitch.' },
+    { title: 'Apply with a pitch', body: 'No agency gatekeeping, just you, your work, and a quick pitch.' },
     { title: 'Collab & earn', body: 'Complete the collab, get verified, and the reward is yours.' },
   ],
   faqs: [
@@ -63,7 +63,7 @@ const config: AudiencePageConfig = {
     },
     {
       q: 'How do I get paid?',
-      a: 'Rewards vary by campaign — free products, dining experiences, vouchers, services, memberships, or cash-plus-product. Once the brand verifies your submission, the collab is marked complete and the reward is yours.',
+      a: 'Rewards vary by campaign: free products, dining experiences, vouchers, services, memberships, or cash-plus-product. Once the brand verifies your submission, the collab is marked complete and the reward is yours.',
     },
     {
       q: 'What do I submit after a collab?',
@@ -71,7 +71,7 @@ const config: AudiencePageConfig = {
     },
     {
       q: 'Is it free for creators?',
-      a: 'Yes — joining, building your profile, browsing campaigns, and applying are all completely free.',
+      a: 'Yes. Joining, building your profile, browsing campaigns, and applying are all completely free.',
     },
   ],
   cta: {

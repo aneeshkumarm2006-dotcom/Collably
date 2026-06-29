@@ -16,7 +16,7 @@ import {
 } from '@/lib/onboarding/creator';
 
 // ---------------------------------------------------------------------------
-// looksLikeUrl — scheme optional, must look like a real domain (dot required).
+// looksLikeUrl: scheme optional, must look like a real domain (dot required).
 // ---------------------------------------------------------------------------
 describe('looksLikeUrl', () => {
   it('accepts bare domains and full URLs (the documented cases)', () => {
@@ -54,7 +54,7 @@ describe('looksLikeUrl', () => {
 });
 
 // ---------------------------------------------------------------------------
-// normalizeUrl — add https:// only when scheme missing, leave http(s) alone.
+// normalizeUrl: add https:// only when scheme missing, leave http(s) alone.
 // ---------------------------------------------------------------------------
 describe('normalizeUrl', () => {
   it('adds https:// when the scheme is missing', () => {
@@ -79,7 +79,7 @@ describe('normalizeUrl', () => {
 });
 
 // ---------------------------------------------------------------------------
-// platformValid — handle AND valid link.
+// platformValid: handle AND valid link.
 // ---------------------------------------------------------------------------
 describe('platformValid', () => {
   it('is true only with a non-empty handle AND a valid link', () => {
@@ -100,7 +100,7 @@ describe('platformValid', () => {
 });
 
 // ---------------------------------------------------------------------------
-// platformStarted — handle OR link (any non-empty text).
+// platformStarted: handle OR link (any non-empty text).
 // ---------------------------------------------------------------------------
 describe('platformStarted', () => {
   it('is true when either handle or link has content', () => {
@@ -120,7 +120,7 @@ describe('platformStarted', () => {
 });
 
 // ---------------------------------------------------------------------------
-// hasOneSocial — at least one platform valid.
+// hasOneSocial: at least one platform valid.
 // ---------------------------------------------------------------------------
 describe('hasOneSocial', () => {
   const withIg = (handle: string, link: string): CreatorForm => {
@@ -155,7 +155,7 @@ describe('hasOneSocial', () => {
 });
 
 // ---------------------------------------------------------------------------
-// digits — keep only 0-9.
+// digits: keep only 0-9.
 // ---------------------------------------------------------------------------
 describe('digits', () => {
   it('strips every non-digit character', () => {
@@ -171,7 +171,7 @@ describe('digits', () => {
 });
 
 // ---------------------------------------------------------------------------
-// numOrUndef — finite number or undefined (never NaN/null).
+// numOrUndef: finite number or undefined (never NaN/null).
 // ---------------------------------------------------------------------------
 describe('numOrUndef', () => {
   it('returns undefined for empty / whitespace input', () => {
@@ -199,7 +199,7 @@ describe('numOrUndef', () => {
 });
 
 // ---------------------------------------------------------------------------
-// emptyCreatorForm — shape.
+// emptyCreatorForm: shape.
 // ---------------------------------------------------------------------------
 describe('emptyCreatorForm', () => {
   it('returns the fully-blank form shape', () => {
@@ -239,7 +239,7 @@ describe('emptyCreatorForm', () => {
 });
 
 // ---------------------------------------------------------------------------
-// creatorFormFromProfile — prefill from an existing profile.
+// creatorFormFromProfile: prefill from an existing profile.
 // ---------------------------------------------------------------------------
 describe('creatorFormFromProfile', () => {
   it('maps an empty/partial profile to the blank form (defaults applied)', () => {
@@ -283,7 +283,7 @@ describe('creatorFormFromProfile', () => {
     });
   });
 
-  it('renders a numeric 0 count as "0" (not blank — numStr only blanks null/undefined)', () => {
+  it('renders a numeric 0 count as "0" (not blank: numStr only blanks null/undefined)', () => {
     const profile = {
       socialHandles: {
         instagram: { handle: 'ig', link: 'https://ig.com/me', followerCount: 0, engagementRate: 0 },
@@ -320,7 +320,7 @@ describe('creatorFormFromProfile', () => {
 });
 
 // ---------------------------------------------------------------------------
-// toCreatorPayload — map form → PUT body, dropping empties, normalizing links.
+// toCreatorPayload: map form → PUT body, dropping empties, normalizing links.
 // ---------------------------------------------------------------------------
 describe('toCreatorPayload', () => {
   it('emits only the always-present keys for a blank form', () => {

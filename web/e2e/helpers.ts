@@ -8,11 +8,11 @@ import { expect, type Page } from '@playwright/test';
  * from `mocks/db.ts` (the recovered seed world).
  */
 export const ACCOUNTS = {
-  /** Maya Bennett — onboarded + approved creator (cp-me) with applications + collabs. */
+  /** Maya Bennett: onboarded + approved creator (cp-me) with applications + collabs. */
   creator: 'maya@collably.app',
-  /** Maple & Oak — onboarded + approved business (bp-me) with campaigns + applicants. */
+  /** Maple & Oak: onboarded + approved business (bp-me) with campaigns + applicants. */
   business: 'hello@mapleandoak.ca',
-  /** Peak Fitness Studio — the business sharing the "30-Day Fitness Challenge" collab thread with Maya. */
+  /** Peak Fitness Studio: the business sharing the "30-Day Fitness Challenge" collab thread with Maya. */
   peakFitness: 'hi@peakfitness.ca',
 } as const;
 

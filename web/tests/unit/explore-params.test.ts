@@ -58,7 +58,7 @@ describe('exploreStateFromSearchParams', () => {
   it('carries location, creator tier and q through', () => {
     const state = exploreStateFromSearchParams({
       location: 'Toronto',
-      tier: CREATOR_TIERS[2], // 'Micro (10K–50K)'
+      tier: CREATOR_TIERS[2], // 'Micro (10K-50K)'
       q: 'glow',
     });
     expect(state.filters.location).toBe('Toronto');

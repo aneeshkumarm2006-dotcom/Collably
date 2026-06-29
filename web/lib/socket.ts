@@ -1,5 +1,5 @@
 /**
- * Socket.io client singleton for real-time chat (Phase 9) — the web counterpart
+ * Socket.io client singleton for real-time chat (Phase 9): the web counterpart
  * of `mobile/lib/socket.ts`. Connects to the backend's HTTP origin (`config.socketUrl`,
  * the REST base minus `/api`) and authenticates the handshake with the access
  * token. Because the JWT lives in an httpOnly cookie the browser can't read, the

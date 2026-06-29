@@ -28,7 +28,7 @@ import type { CampaignStatus } from '@/lib/shared';
 import { canTransitionCampaign } from '@/lib/shared';
 import type { PublicCampaign } from '@/lib/api/types';
 import { cn } from '@/lib/utils';
-import { categoryEmoji, categoryGradient } from '@/lib/domain-meta';
+import { categoryIcon, categoryGradient } from '@/lib/domain-meta';
 import { formatDate } from '@/lib/format';
 import { StatusBadge } from '@/components/shared/status-badge';
 import { EmptyState } from '@/components/shared/empty-state';
@@ -285,6 +285,7 @@ function CampaignRow({
   const canClose = c.status === 'Active' || c.status === 'Paused';
   const canComplete = canTransitionCampaign(c.status, 'Completed');
   const appsHref = `/dashboard/business/campaigns/${c._id}/applications`;
+  const CategoryIcon = categoryIcon(c.category);
 
   return (
     <div className="flex flex-wrap items-center gap-4 rounded-lg border border-hair bg-card p-4 shadow-sm transition-shadow hover:shadow-md">
@@ -296,8 +297,8 @@ function CampaignRow({
         {c.coverImage ? (
           <Image src={c.coverImage} alt="" fill sizes="92px" className="object-cover" />
         ) : (
-          <span className="absolute inset-0 flex items-center justify-center text-xl opacity-90">
-            {categoryEmoji(c.category)}
+          <span className="absolute inset-0 flex items-center justify-center opacity-90">
+            <CategoryIcon className="h-6 w-6 text-white/85" />
           </span>
         )}
       </Link>
@@ -311,7 +312,7 @@ function CampaignRow({
         </div>
         <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[12px] text-muted">
           <span className="inline-flex items-center gap-1">
-            {categoryEmoji(c.category)} {c.category}
+            <CategoryIcon className="h-3.5 w-3.5" /> {c.category}
           </span>
           {city && (
             <span className="inline-flex items-center gap-1">

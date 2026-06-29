@@ -1,68 +1,97 @@
 /**
- * Visual metadata for the domain enums — emoji glyphs (reward / category /
- * niche) and category → cover-gradient fallbacks. Keyed by the SHARED enum
+ * Visual metadata for the domain enums: lucide icon glyphs (reward / category /
+ * niche) and category to cover-gradient fallbacks. Keyed by the SHARED enum
  * values (`@/lib/shared`) so they stay in lockstep with the backend.
  *
  * The "blend": covers fall back to neutral-ink gradients (no colored glow),
  * matching the reference card anatomy re-skinned to the app palette.
  */
+import {
+  Baby,
+  BookOpen,
+  Coffee,
+  ConciergeBell,
+  CupSoda,
+  Dumbbell,
+  Flower2,
+  Gamepad2,
+  Gift,
+  Laugh,
+  Leaf,
+  Music,
+  Palette,
+  Plane,
+  Scissors,
+  Shirt,
+  Smartphone,
+  Sofa,
+  Sparkles,
+  Tag,
+  Ticket,
+  TrendingUp,
+  Utensils,
+  UtensilsCrossed,
+  Wallet,
+  type LucideIcon,
+} from 'lucide-react';
+
 import type { Category, Niche, RewardType } from '@/lib/shared';
 
-/** Reward type → emoji (shown small in `RewardPill`). */
-export const REWARD_EMOJI: Record<RewardType, string> = {
-  Product: '🎁',
-  Experience: '✨',
-  Voucher: '🎟️',
-  Service: '🛎️',
-  'Cash+Product': '💰',
+/** Reward type to icon (shown small in `RewardPill`). */
+export const REWARD_ICON: Record<RewardType, LucideIcon> = {
+  Product: Gift,
+  Experience: Sparkles,
+  Voucher: Ticket,
+  Service: ConciergeBell,
+  'Cash+Product': Wallet,
 };
 
-export const rewardEmoji = (type: RewardType): string => REWARD_EMOJI[type] ?? '🎁';
+export const rewardIcon = (type: string): LucideIcon => REWARD_ICON[type as RewardType] ?? Gift;
 
-/** Campaign/business category → emoji (filter chips, `CategoryPill`). */
-export const CATEGORY_EMOJI: Record<Category, string> = {
-  Restaurant: '🍽️',
-  Cafe: '☕',
-  'Food & Beverage': '🥤',
-  Fashion: '👗',
-  Beauty: '💄',
-  'Salon & Spa': '💅',
-  'Health & Wellness': '🌿',
-  Fitness: '🏋️',
-  Tech: '📱',
-  Gaming: '🎮',
-  Travel: '✈️',
-  'Home & Lifestyle': '🛋️',
-  Education: '📚',
-  Other: '🏷️',
+/** Campaign/business category to icon (filter chips, `CategoryPill`). */
+export const CATEGORY_ICON: Record<Category, LucideIcon> = {
+  Restaurant: UtensilsCrossed,
+  Cafe: Coffee,
+  'Food & Beverage': CupSoda,
+  Fashion: Shirt,
+  Beauty: Sparkles,
+  'Salon & Spa': Scissors,
+  'Health & Wellness': Leaf,
+  Fitness: Dumbbell,
+  Tech: Smartphone,
+  Gaming: Gamepad2,
+  Travel: Plane,
+  'Home & Lifestyle': Sofa,
+  Education: BookOpen,
+  Other: Tag,
 };
 
-export const categoryEmoji = (category: string): string =>
-  CATEGORY_EMOJI[category as Category] ?? '🏷️';
+export const categoryIcon = (category: string): LucideIcon =>
+  CATEGORY_ICON[category as Category] ?? Tag;
 
-/** Creator niche → emoji (onboarding pills, creator profiles). */
-export const NICHE_EMOJI: Record<Niche, string> = {
-  Food: '🍜',
-  Lifestyle: '🌸',
-  Fashion: '👗',
-  Beauty: '💄',
-  Fitness: '🏋️',
-  'Health & Wellness': '🌿',
-  Tech: '📱',
-  Gaming: '🎮',
-  Travel: '✈️',
-  Parenting: '🍼',
-  Education: '📚',
-  Comedy: '😂',
-  Music: '🎵',
-  'Art & Design': '🎨',
-  'Business & Finance': '📈',
+/** Creator niche to icon (onboarding pills, creator profiles). */
+export const NICHE_ICON: Record<Niche, LucideIcon> = {
+  Food: Utensils,
+  Lifestyle: Flower2,
+  Fashion: Shirt,
+  Beauty: Sparkles,
+  Fitness: Dumbbell,
+  'Health & Wellness': Leaf,
+  Tech: Smartphone,
+  Gaming: Gamepad2,
+  Travel: Plane,
+  Parenting: Baby,
+  Education: BookOpen,
+  Comedy: Laugh,
+  Music: Music,
+  'Art & Design': Palette,
+  'Business & Finance': TrendingUp,
 };
 
-export const nicheEmoji = (niche: string): string => NICHE_EMOJI[niche as Niche] ?? '✨';
+export const nicheIcon = (niche: string): LucideIcon => NICHE_ICON[niche as Niche] ?? Sparkles;
 
 /**
- * Category → 2-stop cover gradient fallback (used when a campaign has no cover
+ * Category to 2-stop cover gradient fallback (used when a campaign has no cover
  * image, or it fails to load). Neutral-ink tones tuned per category family.
  */
 const CATEGORY_GRADIENT: Record<Category, [string, string]> = {

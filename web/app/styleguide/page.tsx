@@ -1,10 +1,10 @@
 'use client';
 
 /**
- * /styleguide — dev/QA route rendering every Phase 1 shared component. Most
+ * /styleguide: dev/QA route rendering every Phase 1 shared component. Most
  * sections render twice, side by side: a light panel and a `.dark`-scoped panel,
- * so the blend can be eyeballed in both themes at once. (Portalled overlays —
- * dropdowns, popovers, sheets, toasts — follow the GLOBAL theme; use the navbar
+ * so the blend can be eyeballed in both themes at once. (Portalled overlays such as
+ * dropdowns, popovers, sheets, and toasts follow the GLOBAL theme; use the navbar
  * toggle to check those.)
  */
 import { useState } from 'react';
@@ -174,7 +174,7 @@ export default function StyleguidePage() {
     <main className="mx-auto max-w-6xl px-6 py-12">
       <header className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-ink">Collably — Style Guide</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-ink">Collably Style Guide</h1>
           <p className="mt-1 text-sm text-muted">
             Phase 1 design system (the &ldquo;blend&rdquo;). App palette · reference anatomy ·
             shadcn/ui.
@@ -217,10 +217,10 @@ export default function StyleguidePage() {
         <Section title="Typography">
           <DualPanel>
             <div className="space-y-2">
-              <h1 className="text-4xl font-bold tracking-tight text-ink">Heading 1 — system sans</h1>
+              <h1 className="text-4xl font-bold tracking-tight text-ink">Heading 1 (system sans)</h1>
               <h2 className="text-2xl font-bold tracking-tight text-ink">Heading 2</h2>
               <h3 className="text-lg font-semibold text-ink">Heading 3</h3>
-              <p className="text-base text-ink">Body — the quick brown fox jumps over the lazy dog.</p>
+              <p className="text-base text-ink">Body: the quick brown fox jumps over the lazy dog.</p>
               <p className="text-sm text-muted">Secondary / metadata text.</p>
               <p className="font-mono text-sm text-money">$2,450 · 12.4K followers · 3 spots left</p>
             </div>
@@ -431,7 +431,7 @@ export default function StyleguidePage() {
 
             <NotificationBell notifications={notifications} onMarkAllRead={() => toast('Marked all read')} />
 
-            <Button onClick={() => toast.success('Application accepted — creator notified')}>
+            <Button onClick={() => toast.success('Application accepted, creator notified')}>
               Toast success
             </Button>
             <Button variant="outline" onClick={() => toast.error('Something went wrong')}>
@@ -508,7 +508,7 @@ export default function StyleguidePage() {
           <DualPanel>
             <div className="space-y-4">
               <CollabCard
-                title="Spring Tasting Menu — Reel Collab"
+                title="Spring Tasting Menu: Reel Collab"
                 counterparty={{ name: 'Maple & Thyme', role: 'Restaurant · Toronto' }}
                 status="Accepted"
                 reward={reward}
@@ -527,7 +527,7 @@ export default function StyleguidePage() {
                 }
               />
               <CollabCard
-                title="Cold Brew Flight — Summer Feature"
+                title="Cold Brew Flight: Summer Feature"
                 counterparty={{ name: 'Brew & Bloom', role: 'Café · Ottawa' }}
                 status="Overdue"
                 deadline={inDays(-3)}
@@ -643,7 +643,7 @@ export default function StyleguidePage() {
   );
 }
 
-/** Auto-upload variant of ImageUploadZone — signs + uploads straight to Cloudinary. */
+/** Auto-upload variant of ImageUploadZone: signs + uploads straight to Cloudinary. */
 function PortfolioUploadDemo() {
   const [urls, setUrls] = useState<string[]>([]);
   return (

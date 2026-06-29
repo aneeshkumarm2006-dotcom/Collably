@@ -2,8 +2,8 @@
  * SVG marker-icon builders for the explore map (Phase 11). Returns data-URI
  * `<img>` descriptors for classic `google.maps.Marker` icons so we get the app's
  * brand colors without a marker dependency:
- *  - `valuePinIcon` — a green ($money) value pill on a teardrop pin.
- *  - `clusterIcon`  — a brand-blue count bubble for collapsed groups.
+ *  - `valuePinIcon`: a green ($money) value pill on a teardrop pin.
+ *  - `clusterIcon`: a brand-blue count bubble for collapsed groups.
  *
  * Colors are hard-coded hex (matching the design tokens: money `#31A24C`, brand
  * `#1877F2`) because the SVG is rasterized by the browser outside the Tailwind/CSS

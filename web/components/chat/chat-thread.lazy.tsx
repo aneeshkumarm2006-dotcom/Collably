@@ -7,8 +7,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 /**
  * Lazy boundary for the chat thread. The thread pulls in the message timeline,
- * composer, and `socket.io-client` transport — none of which the rest of the
- * dashboard needs — so it's split out of the shared bundle and fetched on the
+ * composer, and `socket.io-client` transport (none of which the rest of the
+ * dashboard needs), so it's split out of the shared bundle and fetched on the
  * client only when a conversation is opened. A skeleton holds the layout.
  */
 const ChatThreadImpl = dynamic(

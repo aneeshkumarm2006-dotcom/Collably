@@ -12,13 +12,13 @@ import { cn } from '@/lib/utils';
 type Social = CreatorForm['social'];
 
 /**
- * Creator "Social handles" step (Phase 5). One connector card per platform —
- * each takes a handle + a public profile link (required together; the backend
+ * Creator "Social handles" step (Phase 5). One connector card per platform.
+ * Each takes a handle + a public profile link (required together; the backend
  * needs the link) plus follower/subscriber counts. A platform reads as
  * "Connected" once it has a handle + a valid link; an amber hint nudges for a
  * link when one's been started. The UGC toggle closes the step.
  *
- * At least one fully-connected platform is required to advance — enforced by the
+ * At least one fully-connected platform is required to advance, enforced by the
  * caller via `hasOneSocial`.
  */
 export function SocialHandlesStep({

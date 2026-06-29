@@ -20,7 +20,7 @@ export default async function CreatorCollabsPage() {
     <DashboardContainer>
       <PageHeader
         title="Active Collabs"
-        subtitle="Campaigns you've been accepted to — take action before the deadline."
+        subtitle="Campaigns you've been accepted to. Take action before the deadline."
       />
 
       {collabs.length === 0 ? (

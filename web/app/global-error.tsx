@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 import './globals.css';
 
 /**
- * Global error boundary — the last line of defence. Catches errors thrown in the
+ * Global error boundary: the last line of defence. Catches errors thrown in the
  * root layout itself (where `app/error.tsx` cannot reach), so it must render its
  * own `<html>`/`<body>`. Intentionally dependency-free (no providers/theme) so it
  * works even when the app shell is the thing that failed.

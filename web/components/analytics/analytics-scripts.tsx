@@ -30,7 +30,7 @@ export function AnalyticsScripts() {
   }
 
   if (provider === 'ga4' && ga4Id) {
-    // Cookie-setting provider — wait for explicit consent.
+    // Cookie-setting provider: wait for explicit consent.
     if (providerRequiresConsent() && consent !== 'granted') return null;
     return (
       <>

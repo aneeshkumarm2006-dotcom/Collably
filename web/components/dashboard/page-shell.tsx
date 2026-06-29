@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils';
 
 /**
- * Shared dashboard page primitives — a centered content container and the
+ * Shared dashboard page primitives: a centered content container and the
  * `.page-head` (title + subtitle + optional action) used across every dashboard
  * route, so the inner pages stay consistent without repeating layout classes.
  */

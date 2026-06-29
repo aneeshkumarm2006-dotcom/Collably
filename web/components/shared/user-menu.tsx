@@ -28,7 +28,7 @@ export interface UserMenuProps {
   className?: string;
 }
 
-/** Avatar dropdown — name/email header + dashboard/profile/settings/logout. */
+/** Avatar dropdown: name/email header + dashboard/profile/settings/logout. */
 export function UserMenu({ user, onLogout, className }: UserMenuProps) {
   const home = dashboardHome(user.role);
   return (

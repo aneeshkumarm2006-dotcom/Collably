@@ -26,14 +26,14 @@ export default function CookiesPage() {
       <h2>2. How we use cookies</h2>
       <ul>
         <li>
-          <strong>Essential cookies</strong> — required to keep you signed in (our session cookies)
+          <strong>Essential cookies:</strong> required to keep you signed in (our session cookies)
           and to operate core features. The site won&apos;t work properly without these.
         </li>
         <li>
-          <strong>Preference cookies</strong> — remember choices such as your light/dark theme.
+          <strong>Preference cookies:</strong> remember choices such as your light/dark theme.
         </li>
         <li>
-          <strong>Analytics cookies</strong> — help us understand how the site is used so we can
+          <strong>Analytics cookies:</strong> help us understand how the site is used so we can
           improve it. These are aggregated and non-identifying where possible.
         </li>
       </ul>

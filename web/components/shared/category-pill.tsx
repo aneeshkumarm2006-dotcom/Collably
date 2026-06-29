@@ -1,10 +1,10 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { categoryEmoji } from '@/lib/domain-meta';
+import { categoryIcon } from '@/lib/domain-meta';
 
 /**
- * CategoryPill — emoji + category name + optional count (green mono). Selectable
+ * CategoryPill: icon + category name + optional count (green mono). Selectable
  * (used as a filter chip): `active` paints it brand; otherwise hover reveals the
  * brand border. Renders a <button> when `onClick` is provided, else a <span>.
  */
@@ -25,9 +25,10 @@ export function CategoryPill({ category, count, active, onClick, className }: Ca
     className,
   );
 
+  const Icon = categoryIcon(category);
   const content = (
     <>
-      <span aria-hidden>{categoryEmoji(category)}</span>
+      <Icon aria-hidden className="h-4 w-4 shrink-0" />
       <span>{category}</span>
       {typeof count === 'number' && (
         <span className="font-mono text-xs text-money">{count}</span>

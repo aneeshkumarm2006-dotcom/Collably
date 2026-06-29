@@ -21,16 +21,16 @@ test('signup → business onboarding → dashboard', async ({ page }) => {
 
   await page.waitForURL(/\/onboarding\/business/);
 
-  // Step 1 — Basics (name pre-filled from signup; category required to advance).
+  // Step 1: Basics (name pre-filled from signup; category required to advance).
   await expect(page.getByRole('heading', { name: 'Tell us about your business' })).toBeVisible();
   await page.getByRole('radio', { name: 'Restaurant' }).click();
   await page.getByRole('button', { name: 'Continue' }).click();
 
-  // Step 2 — Location (optional).
+  // Step 2: Location (optional).
   await page.getByRole('button', { name: 'Continue' }).click();
-  // Step 3 — Socials (optional).
+  // Step 3: Socials (optional).
   await page.getByRole('button', { name: 'Continue' }).click();
-  // Step 4 — Logo (optional) → finish.
+  // Step 4: Logo (optional) → finish.
   await page.getByRole('button', { name: 'Finish setup' }).click();
 
   const cta = page.getByRole('button', { name: 'Go to dashboard' });

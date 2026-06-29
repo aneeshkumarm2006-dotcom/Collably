@@ -1,7 +1,7 @@
 /**
  * Dependency-free grid clustering for map pins (Phase 11). Buckets points by
  * their Web-Mercator world-pixel position at the current zoom, so markers that
- * would visually overlap collapse into one cluster bubble — and split apart as the
+ * would visually overlap collapse into one cluster bubble, and split apart as the
  * user zooms in. Pure + framework-free so it's unit-testable (Phase 14) and shared
  * by the explore map.
  */

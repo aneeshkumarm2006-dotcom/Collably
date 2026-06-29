@@ -103,7 +103,7 @@ function SubmissionCard({
       });
       toast.success(
         action === 'verify'
-          ? 'Submission verified — collab completed 🎉'
+          ? 'Submission verified, collab completed'
           : action === 'revision'
             ? 'Revision requested'
             : 'Submission marked as failed',

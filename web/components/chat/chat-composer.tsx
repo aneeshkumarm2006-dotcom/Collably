@@ -6,7 +6,7 @@ import { SendHorizonal } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 /**
- * Message input row — an auto-growing textarea + a circular send button. Owns its
+ * Message input row: an auto-growing textarea + a circular send button. Owns its
  * draft text; reports typing changes (for the indicator) and hands the trimmed
  * body to `onSend`. Enter sends; Shift+Enter inserts a newline.
  */

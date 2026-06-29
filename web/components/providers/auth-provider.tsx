@@ -15,7 +15,7 @@ import type { SessionUser } from '@/lib/auth/user';
  * that already has the session) to skip the probe and render authed immediately.
  *
  * The action methods call the same-origin `/api/auth/*` route handlers, which own
- * the cookie writes — tokens never touch this client code. Each action keeps the
+ * the cookie writes; tokens never touch this client code. Each action keeps the
  * in-memory `user` in sync and refreshes the router + TanStack cache so server
  * components and authed queries re-resolve under the new identity.
  */

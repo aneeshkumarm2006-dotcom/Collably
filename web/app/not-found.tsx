@@ -9,8 +9,8 @@ export const metadata = {
 
 /**
  * Root 404. Rendered inside `app/layout.tsx` for any unmatched route (and any
- * `notFound()` call without a closer `not-found.tsx`). Kept self-contained — no
- * navbar — with a clear path back into the product.
+ * `notFound()` call without a closer `not-found.tsx`). Kept self-contained (no
+ * navbar) with a clear path back into the product.
  */
 export default function NotFound() {
   return (

@@ -96,7 +96,7 @@ describe('<StatCard>', () => {
     expect(screen.getByTestId('stat-icon')).toBeInTheDocument();
   });
 
-  it('renders the same content under a .dark wrapper (jsdom has no CSS — content stability only)', () => {
+  it('renders the same content under a .dark wrapper (jsdom has no CSS: content stability only)', () => {
     // jsdom applies no CSS; assert the content/structure survives a dark ancestor.
     render(
       <div className="dark">

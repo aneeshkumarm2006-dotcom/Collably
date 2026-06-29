@@ -27,7 +27,7 @@ export interface DashboardTopBarProps {
   className?: string;
 }
 
-/** DashboardTopBar — breadcrumb on the left; theme toggle + bell + avatar menu. */
+/** DashboardTopBar: breadcrumb on the left; theme toggle + bell + avatar menu. */
 export function DashboardTopBar({
   breadcrumbs,
   user,

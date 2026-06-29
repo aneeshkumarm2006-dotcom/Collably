@@ -27,7 +27,7 @@ const DOT_CLASS: Record<NotificationDot, string> = {
 };
 
 /**
- * NotificationBell — bell button with an unread count badge that opens a
+ * NotificationBell: bell button with an unread count badge that opens a
  * dropdown of recent notifications (dot + text + time). Phase 10 wires it to
  * `GET /api/notifications`; here it renders whatever items it's given. The badge
  * prefers the server-authoritative `unreadCount` (which can exceed the handful of

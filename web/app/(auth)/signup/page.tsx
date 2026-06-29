@@ -6,7 +6,7 @@ import { SignupForm } from '@/components/auth/signup-form';
 export const metadata: Metadata = {
   title: 'Sign up',
   description:
-    'Join Collably — connect local businesses with creators for gifting campaigns and collabs.',
+    'Join Collably to connect local businesses with creators for gifting campaigns and collabs.',
 };
 
 export default async function SignupPage({
@@ -19,7 +19,7 @@ export default async function SignupPage({
   return (
     <AuthLayout
       tagline="Start earning from your audience today."
-      subtitle="Join thousands of Canadian creators and brands making collabs happen — no agencies, no gatekeeping."
+      subtitle="Join thousands of Canadian creators and brands making collabs happen, with no agencies and no gatekeeping."
       proof={[
         { value: 'Free', label: 'to join' },
         { value: '0', label: 'follower minimum' },

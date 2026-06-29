@@ -60,7 +60,7 @@ export function emptyCreatorForm(): CreatorForm {
 const numStr = (n: number | undefined): string => (n != null ? String(n) : '');
 
 /**
- * Hydrate the form from an existing profile — the profile-edit page (Phase 7)
+ * Hydrate the form from an existing profile: the profile-edit page (Phase 7)
  * reuses the onboarding form model + `toCreatorPayload`, so the website submits
  * the same shape whether onboarding or editing.
  */
@@ -121,7 +121,7 @@ export const digits = (s: string) => s.replace(/[^0-9]/g, '');
 
 /**
  * Parse a numeric input to a finite number, or `undefined` so the field is
- * omitted entirely — never send NaN/null, which the backend rejects.
+ * omitted entirely: never send NaN/null, which the backend rejects.
  */
 export const numOrUndef = (s: string): number | undefined => {
   const t = (s ?? '').trim();

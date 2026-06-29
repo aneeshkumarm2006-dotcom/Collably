@@ -5,7 +5,7 @@ import type { Metadata } from 'next';
 import { ArrowLeft, Calendar } from 'lucide-react';
 
 import { serverApi } from '@/lib/api/server';
-import { categoryEmoji, categoryGradient } from '@/lib/domain-meta';
+import { categoryIcon, categoryGradient } from '@/lib/domain-meta';
 import { formatDate } from '@/lib/format';
 import { DashboardContainer, PageHeader } from '@/components/dashboard/page-shell';
 import { BusinessApplicationsClient } from '@/components/business/applications-client';
@@ -30,6 +30,7 @@ export default async function CampaignApplicationsPage({
   const ownsIt = profileRes?.profile?._id && res?.campaign.businessId === profileRes.profile._id;
   if (!res?.campaign || !ownsIt) notFound();
   const c = res.campaign;
+  const CategoryIcon = categoryIcon(c.category);
 
   return (
     <DashboardContainer>
@@ -54,8 +55,8 @@ export default async function CampaignApplicationsPage({
           {c.coverImage ? (
             <Image src={c.coverImage} alt="" fill sizes="80px" className="object-cover" />
           ) : (
-            <span className="absolute inset-0 flex items-center justify-center text-lg opacity-90">
-              {categoryEmoji(c.category)}
+            <span className="absolute inset-0 flex items-center justify-center opacity-90">
+              <CategoryIcon className="h-5 w-5 text-white/85" />
             </span>
           )}
         </div>

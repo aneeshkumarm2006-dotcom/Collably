@@ -29,7 +29,7 @@ interface TypingPayload {
 }
 
 /**
- * One chat thread — header (other participant + collab context), the scrolling
+ * One chat thread: header (other participant + collab context), the scrolling
  * message timeline, and the composer. Role-agnostic; the API returns viewer-
  * relative data. Loads history (cursor-paged, newest-first), sends optimistically,
  * marks the thread read on open and on each new incoming message, and relays

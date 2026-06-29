@@ -3,7 +3,7 @@ import type { ComponentType } from 'react';
 /**
  * Blog post metadata. Each post is a `.tsx` module under `content/blog/` that
  * exports `meta` (this shape) + a default React component for the body. The
- * registry in `lib/blog/index.ts` collects them — a lightweight, type-safe
+ * registry in `lib/blog/index.ts` collects them: a lightweight, type-safe
  * content collection with no MDX toolchain.
  */
 export interface BlogPostMeta {
@@ -11,7 +11,7 @@ export interface BlogPostMeta {
   title: string;
   /** Excerpt + meta description + RSS summary (one sentence or two). */
   description: string;
-  /** Editorial category (one per post) — used for the index filter + breadcrumbs. */
+  /** Editorial category (one per post): used for the index filter + breadcrumbs. */
   category: string;
   tags: string[];
   author: { name: string; role?: string };
@@ -20,7 +20,7 @@ export interface BlogPostMeta {
   /** ISO date last updated (defaults to `date`). */
   updated?: string;
   readingMinutes: number;
-  /** Remote cover image (Unsplash/Pixabay/Cloudinary) — hero + social preview. */
+  /** Remote cover image (Unsplash/Pixabay/Cloudinary): hero + social preview. */
   coverImage?: string;
   /** Surface on the index hero. */
   featured?: boolean;

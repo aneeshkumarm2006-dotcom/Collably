@@ -49,7 +49,7 @@ export function OnboardingCelebration({
 
   return (
     <OnboardingFrame>
-      {/* Confetti layer — fixed, non-interactive, behind the card content. */}
+      {/* Confetti layer: fixed, non-interactive, behind the card content. */}
       <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden>
         {pieces.map((p, i) => (
           <span

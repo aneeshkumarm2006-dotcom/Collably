@@ -1,7 +1,7 @@
 /**
  * Thin server→backend helpers for the auth route handlers. They talk to the
  * backend over `BACKEND_INTERNAL_URL` (so MSW intercepts them in mock mode, the
- * same as every other server fetch) and never touch cookies themselves — the
+ * same as every other server fetch) and never touch cookies themselves; the
  * route handlers own cookie writes. Kept separate from `lib/api/server.ts`
  * because auth requests must NOT carry the (possibly stale) access cookie as a
  * Bearer header, and the refresh/me calls run with an explicit token instead.
@@ -56,7 +56,7 @@ export async function fetchMe(accessToken: string): Promise<MeResponse | null> {
     if (!res.ok) return null;
     const data = await parse(res);
     // Treat an unexpected body (no `user`) as no session rather than crashing the
-    // session mapper — defends against a stale/invalid token yielding an odd 200.
+    // session mapper, which defends against a stale/invalid token yielding an odd 200.
     if (!data || typeof data !== 'object' || !(data as { user?: unknown }).user) return null;
     return data as MeResponse;
   } catch {
@@ -68,7 +68,7 @@ export async function fetchMe(accessToken: string): Promise<MeResponse | null> {
  * Exchange a refresh token for a fresh access/refresh pair. Returns null when the
  * refresh token is rejected (the caller then clears the session). A module-level
  * single-flight map dedupes concurrent refreshes for the same token within this
- * server process — mirroring the mobile client's single in-flight refresh so a
+ * server process, mirroring the mobile client's single in-flight refresh so a
  * burst of 401s triggers exactly one `/auth/refresh` round-trip.
  */
 const inflight = new Map<string, Promise<AuthResponse | null>>();

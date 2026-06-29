@@ -62,7 +62,7 @@ export function useMarkAllNotificationsRead() {
 }
 
 /**
- * Mark every notification read in a cached query value — handles both the plain
+ * Mark every notification read in a cached query value. Handles both the plain
  * list (`useNotifications`) and the infinite feed (`{ pages: [...] }`). Returns a
  * new object so React Query treats it as changed; unknown shapes pass through.
  */
@@ -87,7 +87,7 @@ function markCachedRead(value: unknown): unknown {
 /**
  * Refetch every notification query (bell + full feed) so the unread count and
  * the list reconcile against the server. Shared with the realtime layer, which
- * calls this on a `notification:new` socket event — the server stays the source
+ * calls this on a `notification:new` socket event; the server stays the source
  * of truth for the unread count rather than us guessing it client-side.
  */
 export function invalidateNotifications(qc: QueryClient): void {

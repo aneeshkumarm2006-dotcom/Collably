@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 export const metadata: Metadata = buildMetadata({
   title: 'Pricing',
   description:
-    'Collably is free to join for creators and businesses. Post campaigns and pay only in the rewards you offer — no agency retainers. Upgrade to Pro for advanced reach and analytics.',
+    'Collably is free to join for creators and businesses. Post campaigns and pay only in the rewards you offer, with no agency retainers. Upgrade to Pro for advanced reach and analytics.',
   path: '/pricing',
   ogEyebrow: 'Pricing',
 });
@@ -50,7 +50,7 @@ const PLANS: Plan[] = [
     audience: 'For businesses',
     price: 'Free',
     priceNote: 'pay only in rewards',
-    description: 'Post campaigns and reward verified work — no retainer required.',
+    description: 'Post campaigns and reward verified work, no retainer required.',
     cta: { label: 'Post a campaign', href: '/signup' },
     featured: true,
     features: [
@@ -83,11 +83,11 @@ const PLANS: Plan[] = [
 const PRICING_FAQS = [
   {
     q: 'Is Collably really free?',
-    a: 'Yes. Creating an account, building a profile, browsing, applying, and posting campaigns are free. Businesses pay only in the rewards they choose to offer — there are no platform fees on the Starter plan.',
+    a: 'Yes. Creating an account, building a profile, browsing, applying, and posting campaigns are free. Businesses pay only in the rewards they choose to offer, and there are no platform fees on the Starter plan.',
   },
   {
     q: 'What does "pay only in rewards" mean?',
-    a: 'Instead of a cash retainer to an agency, you reward creators with what you already have — products, experiences, vouchers, services, or cash-plus-product. You set the reward and its value, and only reward verified work.',
+    a: 'Instead of a cash retainer to an agency, you reward creators with what you already have: products, experiences, vouchers, services, or cash-plus-product. You set the reward and its value, and only reward verified work.',
   },
   {
     q: 'When should I consider Pro?',
@@ -109,8 +109,8 @@ export default function PricingPage() {
             Simple, honest pricing
           </h1>
           <p className="mx-auto mt-5 max-w-xl text-pretty text-lg text-muted">
-            Free to join for everyone. Businesses pay only in the rewards they offer — no agency
-            retainers, no platform fees to get started.
+            Free to join for everyone. Businesses pay only in the rewards they offer, with no agency
+            retainers and no platform fees to get started.
           </p>
         </div>
 
@@ -181,7 +181,7 @@ export default function PricingPage() {
 
       <CtaBand
         title="Start free, today"
-        subtitle="Join as a creator or post your first campaign as a business — no card required."
+        subtitle="Join as a creator or post your first campaign as a business. No card required."
         primary={{ label: 'Get started', href: '/signup' }}
         secondary={{ label: 'Talk to sales', href: '/contact' }}
       />

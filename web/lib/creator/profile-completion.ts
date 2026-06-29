@@ -1,5 +1,5 @@
 /**
- * Creator profile-completion score — powers the dashboard home "complete your
+ * Creator profile-completion score: powers the dashboard home "complete your
  * profile" widget. Counts the profile-editable fields a creator can fill on the
  * `/dashboard/creator/profile` page (so every "missing" item is actionable),
  * returning a percent + the list of what's left.

@@ -7,7 +7,7 @@ import { AudiencePage, type AudiencePageConfig } from '@/components/marketing/au
 export const metadata: Metadata = buildMetadata({
   title: 'For Businesses',
   description:
-    'Run gifting campaigns and get authentic UGC from local creators — without agency retainers. Post a campaign, review real pitches, accept the creators you love, and verify the content.',
+    'Run gifting campaigns and get authentic UGC from local creators, without agency retainers. Post a campaign, review real pitches, accept the creators you love, and verify the content.',
   path: '/for-businesses',
   ogEyebrow: 'For Businesses',
   keywords: ['UGC for brands', 'influencer marketing', 'creator campaigns', 'brand gifting', 'local marketing'],
@@ -21,7 +21,7 @@ const config: AudiencePageConfig = {
     </>
   ),
   subtitle:
-    'Post a campaign, review pitches from creators who genuinely want to work with you, and pay in rewards you already have. Real UGC, verified end-to-end — no monthly retainers.',
+    'Post a campaign, review pitches from creators who genuinely want to work with you, and pay in rewards you already have. Real UGC, verified end-to-end, with no monthly retainers.',
   primaryCta: { label: 'Post a campaign', href: '/signup' },
   secondaryCta: { label: 'See pricing', href: '/pricing' },
   highlights: ['Free to post', 'No agency retainers', 'Verified submissions'],
@@ -31,7 +31,7 @@ const config: AudiencePageConfig = {
     {
       icon: Wallet,
       title: 'Pay in rewards, not retainers',
-      body: 'Offer products, experiences or vouchers instead of cash agencies. You set the reward and its value — and only reward verified work.',
+      body: 'Offer products, experiences or vouchers instead of cash agencies. You set the reward and its value, and only reward verified work.',
     },
     {
       icon: Users,
@@ -41,7 +41,7 @@ const config: AudiencePageConfig = {
     {
       icon: BadgeCheck,
       title: 'Verified end-to-end',
-      body: 'Creators submit live links and proof. You review and verify each submission before the collab completes — so you get what you paid for.',
+      body: 'Creators submit live links and proof. You review and verify each submission before the collab completes, so you get what you paid for.',
     },
     {
       icon: Megaphone,
@@ -52,14 +52,14 @@ const config: AudiencePageConfig = {
   stepsLabel: 'How it works',
   stepsTitle: 'Launch a campaign in three steps',
   steps: [
-    { title: 'Post a campaign', body: "Tell creators what you're offering and what you need — in minutes." },
+    { title: 'Post a campaign', body: "Tell creators what you're offering and what you need, in minutes." },
     { title: 'Review & accept', body: 'Browse pitches and profiles, then accept the creators that fit your brand.' },
-    { title: 'Verify the content', body: 'Review submissions, verify the post, and complete the collab — UGC without agency costs.' },
+    { title: 'Verify the content', body: 'Review submissions, verify the post, and complete the collab. UGC without agency costs.' },
   ],
   faqs: [
     {
       q: 'How much does it cost to post a campaign?',
-      a: 'Posting campaigns and reviewing applications is free. You only ever provide the reward you advertise — a product, experience, voucher, service, or cash-plus-product — and only after you verify the creator’s work.',
+      a: 'Posting campaigns and reviewing applications is free. You only ever provide the reward you advertise (a product, experience, voucher, service, or cash-plus-product), and only after you verify the creator’s work.',
     },
     {
       q: 'How do I know the content actually went live?',
@@ -67,11 +67,11 @@ const config: AudiencePageConfig = {
     },
     {
       q: 'Can I work with smaller, local creators?',
-      a: 'Absolutely — that’s the point. You can set a minimum follower count or open a campaign to all, including UGC-only creators who shoot clean content without a public following.',
+      a: 'Absolutely. That’s the point. You can set a minimum follower count or open a campaign to all, including UGC-only creators who shoot clean content without a public following.',
     },
     {
       q: 'How is this different from an agency?',
-      a: 'No monthly retainer, no middleman. You post directly, talk to creators directly, and reward verified work — typically at a fraction of agency cost.',
+      a: 'No monthly retainer, no middleman. You post directly, talk to creators directly, and reward verified work, typically at a fraction of agency cost.',
     },
   ],
   cta: {
@@ -81,7 +81,7 @@ const config: AudiencePageConfig = {
       </>
     ),
     subtitle: 'Create a free business account and start receiving pitches from local creators within days.',
-    primary: { label: 'Get started — it’s free', href: '/signup' },
+    primary: { label: 'Get started, it’s free', href: '/signup' },
   },
 };
 

@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils';
 /**
  * Portfolio picker for creator onboarding (Phase 5). Up to `max` images, added
  * either by uploading a file (→ Cloudinary `secure_url`) or by pasting an image
- * URL — matching the design's image + "URL" slots. Each item stores just an
+ * URL, matching the design's image + "URL" slots. Each item stores just an
  * `imageUrl`. Portfolio is optional, so failures (e.g. Cloudinary unconfigured)
  * surface inline without blocking the step.
  */

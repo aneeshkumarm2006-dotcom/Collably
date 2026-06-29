@@ -100,10 +100,10 @@ export default async function CreatorHomePage() {
       )}
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1.6fr_1fr]">
-        {/* Active collabs — take action */}
+        {/* Active collabs: take action */}
         <section>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-lg font-bold text-ink">Active collabs — take action</h2>
+            <h2 className="text-lg font-bold text-ink">Active collabs: take action</h2>
             <Link
               href="/dashboard/creator/collabs"
               className="text-[13px] font-semibold text-brand hover:underline"
@@ -116,7 +116,7 @@ export default async function CreatorHomePage() {
               <EmptyState
                 icon={<Handshake />}
                 title="No active collabs yet"
-                description="Apply to campaigns that match your niche — accepted collabs show up here."
+                description="Apply to campaigns that match your niche, and accepted collabs show up here."
                 action={
                   <Button asChild variant="outline">
                     <Link href="/dashboard/creator/explore">Browse campaigns</Link>

@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 /**
- * Cross-browser + mobile-viewport smoke pass (Phase 14). READ-ONLY — it never
+ * Cross-browser + mobile-viewport smoke pass (Phase 14). READ-ONLY: it never
  * mutates the shared mock state, so it runs safely on Chromium, Firefox, WebKit,
  * and a mobile viewport (see `playwright.config.ts` projects).
  */

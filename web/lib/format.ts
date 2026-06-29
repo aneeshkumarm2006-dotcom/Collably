@@ -22,7 +22,7 @@ function trimZero(n: number): string {
   return n.toFixed(1).replace(/\.0$/, '');
 }
 
-/** "$2,000" — Canada-first currency (app is Canada-first/global). */
+/** "$2,000": Canada-first currency (app is Canada-first/global). */
 export function formatCurrency(value: number, currency = 'CAD'): string {
   return new Intl.NumberFormat('en-CA', {
     style: 'currency',
@@ -32,7 +32,7 @@ export function formatCurrency(value: number, currency = 'CAD'): string {
 }
 
 /**
- * "$180" / "$2.5K" / "$1.2M" — compact currency for tight surfaces (map pins,
+ * "$180" / "$2.5K" / "$1.2M": compact currency for tight surfaces (map pins,
  * value pills). Keeps the `$` prefix but abbreviates the magnitude.
  */
 export function formatCompactCurrency(value: number): string {
@@ -58,7 +58,7 @@ export function daysUntil(deadline: string | Date): number {
   return Math.ceil((d.getTime() - Date.now()) / MS_PER_DAY);
 }
 
-/** "Due today", "2 days left", "Overdue by 3 days" — deadline chips. */
+/** "Due today", "2 days left", "Overdue by 3 days": deadline chips. */
 export function formatCountdown(deadline: string | Date): string {
   const days = daysUntil(deadline);
   if (days === 0) return 'Due today';
@@ -84,28 +84,28 @@ export function isOverdue(deadline: string | Date): boolean {
   return d ? d.getTime() < Date.now() : false;
 }
 
-/** "12 Jun 2026" — compact, locale-stable absolute date. */
+/** "12 Jun 2026": compact, locale-stable absolute date. */
 export function formatDate(value: string | Date): string {
   const d = toDate(value);
   if (!d) return '';
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-/** "12 Jun" — day + month only (deadline chips, where the year is implied). */
+/** "12 Jun": day + month only (deadline chips, where the year is implied). */
 export function formatDateShort(value: string | Date): string {
   const d = toDate(value);
   if (!d) return '';
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 }
 
-/** "3:45 PM" — clock time (chat bubbles). Canada-first, 12-hour. */
+/** "3:45 PM": clock time (chat bubbles). Canada-first, 12-hour. */
 export function formatTime(value: string | Date): string {
   const d = toDate(value);
   if (!d) return '';
   return d.toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit', hour12: true });
 }
 
-/** "2h ago", "3d ago", "just now" — relative time for notifications/feeds. */
+/** "2h ago", "3d ago", "just now": relative time for notifications/feeds. */
 export function formatRelativeTime(value: string | Date): string {
   const d = toDate(value);
   if (!d) return '';

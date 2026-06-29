@@ -1,5 +1,5 @@
 /**
- * POST /api/auth/reset-password — set a new password from a reset token via
+ * POST /api/auth/reset-password: set a new password from a reset token via
  * backend `/auth/reset-password`. The backend auto-logs-in by returning a fresh
  * token pair, so set the session cookies and return the safe user.
  */

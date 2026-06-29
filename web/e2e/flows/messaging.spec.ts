@@ -4,8 +4,8 @@ import { ACCOUNTS, login } from '../helpers';
 /**
  * Messaging round-trip across two participants sharing one collab thread (the
  * "30-Day Fitness Challenge": Maya ↔ Peak Fitness Studio). The creator sends a
- * message; the business — in a separate browser context against the same shared
- * mock store — opens the thread and sees it.
+ * message; the business, in a separate browser context against the same shared
+ * mock store, opens the thread and sees it.
  */
 
 test('creator sends a message and the business receives it', async ({ browser }) => {

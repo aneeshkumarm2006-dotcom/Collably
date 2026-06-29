@@ -41,7 +41,7 @@ export default async function CreatorProfilePage() {
     <DashboardContainer className="max-w-[760px]">
       <PageHeader
         title="Edit profile"
-        subtitle="Keep your profile sharp — brands see this when you apply."
+        subtitle="Keep your profile sharp. Brands see this when you apply."
         action={
           <Button asChild variant="outline">
             <Link href={`/creator/${profile._id}`} target="_blank">
@@ -54,7 +54,7 @@ export default async function CreatorProfilePage() {
       {session && !session.approved && (
         <div className="mb-5 flex items-center gap-3 rounded-lg border border-warn/30 bg-warn-soft px-4 py-3 text-sm text-ink">
           <Clock className="h-4 w-4 shrink-0 text-warn" />
-          Your creator account is under review. You can edit your profile now — applying unlocks once
+          Your creator account is under review. You can edit your profile now; applying unlocks once
           an admin verifies you.
         </div>
       )}

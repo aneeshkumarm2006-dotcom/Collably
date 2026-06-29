@@ -1,6 +1,6 @@
 /**
  * Marketing copy in one place so the landing + audience pages stay in sync.
- * These are editorial/marketing figures (illustrative), not live API data — the
+ * These are editorial/marketing figures (illustrative), not live API data. The
  * "live campaigns" rail and Explore pull the real backend.
  */
 import type { FaqItem } from '@/components/marketing/faq';
@@ -12,7 +12,7 @@ export const PLATFORM_STATS = [
   { value: '4,200+', label: 'Collabs completed' },
 ] as const;
 
-/** Category strip — label + a display count (links into Explore filtered). */
+/** Category strip: label + a display count (links into Explore filtered). */
 export const CATEGORY_STRIP: { label: string; count: number }[] = [
   { label: 'Restaurant', count: 342 },
   { label: 'Fashion', count: 218 },
@@ -25,13 +25,13 @@ export const CATEGORY_STRIP: { label: string; count: number }[] = [
 
 export const HOW_IT_WORKS = {
   business: [
-    { title: 'Post a campaign', body: "Tell creators what you're offering and what you need — in minutes." },
+    { title: 'Post a campaign', body: "Tell creators what you're offering and what you need, in minutes." },
     { title: 'Creators apply', body: 'Browse pitches and profiles from creators who actually want to work with you.' },
-    { title: 'Accept & verify', body: 'Pick the ones you love, verify the content, done — UGC without agency costs.' },
+    { title: 'Accept & verify', body: 'Pick the ones you love, verify the content, done. UGC without agency costs.' },
   ],
   creator: [
     { title: 'Browse your niche', body: 'Find campaigns from brands matching your niche and your city.' },
-    { title: 'Apply with a pitch', body: 'No agency gatekeeping — just you, your work, and a quick pitch.' },
+    { title: 'Apply with a pitch', body: 'No agency gatekeeping, just you, your work, and a quick pitch.' },
     { title: 'Collab & earn', body: 'Complete the collab, earn the reward, and build your portfolio.' },
   ],
 } as const;
@@ -46,7 +46,7 @@ export const FEATURES = [
   {
     icon: 'gift',
     title: 'Real rewards, never "exposure"',
-    body: 'Every campaign states exactly what you earn and its dollar value — before you apply.',
+    body: 'Every campaign states exactly what you earn and its dollar value, before you apply.',
   },
   {
     icon: 'badge-check',
@@ -78,7 +78,7 @@ export const TESTIMONIALS = [
     name: 'Aanya Patel',
     role: '@toronto.eats · Creator',
     quote:
-      'As a nano creator I kept getting ignored by agencies. On Collably I landed three restaurant collabs in my first month — all in Toronto, all genuinely fun.',
+      'As a nano creator I kept getting ignored by agencies. On Collably I landed three restaurant collabs in my first month, all in Toronto, all genuinely fun.',
   },
   {
     initials: 'DR',
@@ -92,18 +92,18 @@ export const TESTIMONIALS = [
     name: 'Marcus Lee',
     role: '@van.foodie.diaries · Creator',
     quote:
-      "The reward is always clear before I apply. No chasing, no “we'll pay in exposure” — just real experiences I actually want.",
+      "The reward is always clear before I apply. No chasing, no “we'll pay in exposure,” just real experiences I actually want.",
   },
 ] as const;
 
 export const GENERAL_FAQS: FaqItem[] = [
   {
     q: 'Is Collably free to join?',
-    a: 'Yes — creating an account, building your profile, and browsing campaigns is completely free for both creators and businesses. Brands only pay for the rewards they offer.',
+    a: 'Yes. Creating an account, building your profile, and browsing campaigns is completely free for both creators and businesses. Brands only pay for the rewards they offer.',
   },
   {
     q: 'Do I need a minimum follower count?',
-    a: 'No. We welcome nano and UGC-only creators. Each campaign sets its own requirements, and many are open to all — brands match on content fit, not follower count.',
+    a: 'No. We welcome nano and UGC-only creators. Each campaign sets its own requirements, and many are open to all. Brands match on content fit, not follower count.',
   },
   {
     q: 'How do rewards work?',
@@ -111,7 +111,7 @@ export const GENERAL_FAQS: FaqItem[] = [
   },
   {
     q: 'What kinds of rewards can I earn?',
-    a: 'Free products, dining experiences, vouchers, services, memberships, and cash-plus-product deals — it varies by brand. The reward and its value show on every campaign.',
+    a: 'Free products, dining experiences, vouchers, services, memberships, and cash-plus-product deals. It varies by brand, and the reward and its value show on every campaign.',
   },
   {
     q: 'How do businesses verify content?',

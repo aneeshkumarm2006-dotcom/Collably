@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 
 /**
- * ConfirmModal — a small confirm/cancel dialog (shadcn Dialog) for destructive
+ * ConfirmModal: a small confirm/cancel dialog (shadcn Dialog) for destructive
  * or irreversible actions (delete campaign, withdraw application, etc.).
  */
 export interface ConfirmModalProps {

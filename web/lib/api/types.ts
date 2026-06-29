@@ -1,7 +1,7 @@
 /**
  * Response-envelope and request-shape types for the data layer. These mirror the
  * backend's serializers (`backend/src/lib/serialize.ts`) and route response
- * bodies exactly — the domain entities themselves come from the shared package
+ * bodies exactly; the domain entities themselves come from the shared package
  * (`@/lib/shared`); only the *envelopes* (pagination, joined refs, auth) and the
  * `HttpClient` contract live here.
  */
@@ -25,7 +25,7 @@ import type { FollowerBucket, CampaignSort, UploadFolder } from '@/lib/constants
 
 /**
  * Query-string params. `buildQuery` drops nullish/empty values, joins arrays as
- * CSV, and stringifies the rest — so a typed params object (e.g.
+ * CSV, and stringifies the rest, so a typed params object (e.g.
  * `CampaignListParams`) can be passed directly. Values are `unknown` to accept
  * those typed objects without a cast.
  */
@@ -169,7 +169,7 @@ export interface MessageResponse {
   message: Message;
 }
 export interface MessageHistoryParams {
-  /** ISO cursor — fetch messages created before this time. */
+  /** ISO cursor: fetch messages created before this time. */
   before?: string;
   limit?: number;
 }
@@ -191,7 +191,7 @@ export interface AuthResponse {
   user: PublicUser;
   accessToken: string;
   refreshToken: string;
-  /** Present on the Google route — whether a new account was just created. */
+  /** Present on the Google route: whether a new account was just created. */
   isNewUser?: boolean;
 }
 

@@ -14,7 +14,7 @@ import { toApiError, errorMessage } from '@/lib/api/errors';
 /** Shape of the backend `/auth/forgot-password` body (passed through verbatim). */
 interface ForgotResponse {
   message?: string;
-  /** Present only in non-production — lets dev jump straight to the reset page. */
+  /** Present only in non-production; lets dev jump straight to the reset page. */
   devResetToken?: string;
 }
 
@@ -61,7 +61,7 @@ export function ForgotPasswordForm() {
         <h1 className="text-[30px] font-semibold tracking-tight text-ink">Check your inbox</h1>
         <p className="mt-2 text-[15px] leading-relaxed text-muted">
           We&apos;ve sent a reset link to <b className="text-ink">{sent.email}</b>. It expires in 30
-          minutes — check your spam folder if you don&apos;t see it.
+          minutes. Check your spam folder if you don&apos;t see it.
         </p>
 
         {sent.devResetToken && (

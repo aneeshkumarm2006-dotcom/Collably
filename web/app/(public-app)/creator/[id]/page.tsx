@@ -8,14 +8,14 @@ import { publicApi } from '@/lib/api/public';
 import { isApiError } from '@/lib/api/errors';
 import type { PublicCreatorProfileResponse } from '@/lib/api/types';
 import { formatCompactNumber, formatCurrency } from '@/lib/format';
-import { nicheEmoji } from '@/lib/domain-meta';
+import { nicheIcon } from '@/lib/domain-meta';
 import { buildMetadata, creatorJsonLd, breadcrumbJsonLd } from '@/lib/seo';
 import { Container } from '@/components/marketing/section';
 import { Avatar } from '@/components/shared/avatar';
 import { EmptyState } from '@/components/shared/empty-state';
 import { JsonLd } from '@/components/shared/json-ld';
 
-// Public profile — on-demand ISR (no per-user variance); cached for `revalidate`.
+// Public profile: on-demand ISR (no per-user variance); cached for `revalidate`.
 export const revalidate = 300;
 export const dynamicParams = true;
 export function generateStaticParams() {
@@ -46,7 +46,7 @@ export async function generateMetadata({
     title: name,
     description:
       res.profile.bio?.slice(0, 180) ??
-      `${name} is a creator on Collably${res.profile.niche.length ? ` — ${res.profile.niche.join(', ')}.` : '.'}`,
+      `${name} is a creator on Collably${res.profile.niche.length ? `: ${res.profile.niche.join(', ')}.` : '.'}`,
     path: `/creator/${id}`,
     image: res.user?.avatar ?? undefined,
     ogEyebrow: 'Creator',
@@ -115,14 +115,17 @@ export default async function CreatorProfilePage({ params }: { params: Promise<{
 
             {profile.niche.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-1.5">
-                {profile.niche.map((n) => (
-                  <span
-                    key={n}
-                    className="inline-flex items-center gap-1 rounded-full border border-hair bg-card px-2.5 py-1 text-[13px] text-ink"
-                  >
-                    <span aria-hidden>{nicheEmoji(n)}</span> {n}
-                  </span>
-                ))}
+                {profile.niche.map((n) => {
+                  const NicheIcon = nicheIcon(n);
+                  return (
+                    <span
+                      key={n}
+                      className="inline-flex items-center gap-1 rounded-full border border-hair bg-card px-2.5 py-1 text-[13px] text-ink"
+                    >
+                      <NicheIcon aria-hidden className="h-3.5 w-3.5" /> {n}
+                    </span>
+                  );
+                })}
               </div>
             )}
 
@@ -186,15 +189,15 @@ export default async function CreatorProfilePage({ params }: { params: Promise<{
 
             {/* Stats */}
             <div className="mt-5 grid grid-cols-3 gap-2.5">
-              <StatTile value={String(profile.totalCollabsCompleted)} label="🤝 Collabs" />
-              <StatTile value={String(platformCount)} label="📱 Platforms" />
+              <StatTile value={String(profile.totalCollabsCompleted)} label="Collabs" />
+              <StatTile value={String(platformCount)} label="Platforms" />
               <StatTile
                 value={
                   profile.totalRewardsEarned > 0
                     ? formatCurrency(profile.totalRewardsEarned)
                     : '—'
                 }
-                label="💰 Earned"
+                label="Earned"
               />
             </div>
           </aside>

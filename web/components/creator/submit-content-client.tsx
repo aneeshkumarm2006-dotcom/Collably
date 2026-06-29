@@ -198,7 +198,7 @@ export function SubmitContentClient({ application }: { application: PublicApplic
             )}
           >
             <AlertTriangle className="h-4 w-4 shrink-0" />
-            {formatCountdown(campaign.deadline)} — {formatDate(campaign.deadline)}
+            {formatCountdown(campaign.deadline)}, {formatDate(campaign.deadline)}
           </div>
         )}
       </div>

@@ -18,10 +18,10 @@ export interface SessionUser {
   /** Whether the role profile (creator/business onboarding) is complete. */
   isOnboarded: boolean;
   /**
-   * Admin approval of the caller's role profile — the apply/publish gate
+   * Admin approval of the caller's role profile: the apply/publish gate
    * (mirrors `GET /auth/me`'s `approved`). Admins are always approved; a
    * creator/business is approved once an admin verifies their profile. `false`
-   * means "under review" — surface a pending state, don't hard-block browse.
+   * means "under review": surface a pending state, don't hard-block browse.
    */
   approved: boolean;
 }
@@ -57,7 +57,7 @@ export function postAuthPath(user: Pick<SessionUser, 'role' | 'isOnboarded'>): s
   return user.isOnboarded ? roleHome(user.role) : onboardingPath(user.role);
 }
 
-/** Can this user apply (creator) / publish (business)? — the approval gate. */
+/** Can this user apply (creator) / publish (business)? The approval gate. */
 export function canTakeGatedAction(user: Pick<SessionUser, 'role' | 'approved'>): boolean {
   if (user.role === 'admin') return true;
   return user.approved;

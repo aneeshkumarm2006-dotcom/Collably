@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 /**
  * Shared graceful-state chrome for every map surface (Phase 11). When Maps JS
  * isn't configured / fails to load / has nothing to plot, we show an informative
- * panel instead of a blank tile — mirroring the geocoding + Cloudinary
+ * panel instead of a blank tile, mirroring the geocoding + Cloudinary
  * "graceful when unconfigured" pattern used across the build.
  */
 export function MapStatePanel({

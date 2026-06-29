@@ -9,7 +9,7 @@
  * auto-fills its region and country. Kept lightweight so it bundles cheaply.
  *
  * The autocomplete always allows free text, so anything not listed can still be
- * typed — the lists are suggestions, not a closed set.
+ * typed; the lists are suggestions, not a closed set.
  */
 
 export type CityRecord = { city: string; state: string; country: string };

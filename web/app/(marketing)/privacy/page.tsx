@@ -19,8 +19,8 @@ export default function PrivacyPage() {
     >
       <h2>1. Information we collect</h2>
       <p>
-        We collect information you provide directly — such as your name, email address, profile
-        details, social handles, campaign content, applications, and messages — as well as
+        We collect information you provide directly, such as your name, email address, profile
+        details, social handles, campaign content, applications, and messages, as well as
         information generated as you use the platform, including device and usage data.
       </p>
 

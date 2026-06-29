@@ -8,12 +8,12 @@ import { toast } from '@/lib/toast';
 /**
  * "Continue with Google" via Google Identity Services. When a web client ID is
  * configured (`NEXT_PUBLIC_GOOGLE_OAUTH_CLIENT_ID`), this loads the GIS script and
- * renders Google's official button, which yields an ID token on success — handed
+ * renders Google's official button, which yields an ID token on success, handed
  * to `onCredential` (the page then calls `AuthProvider.loginWithGoogle`). The
  * backend `/auth/google` verifies that ID token against the same audience.
  *
  * Without a client ID (e.g. local/mock dev), it degrades to a styled placeholder
- * that explains Google sign-in isn't configured — so the design stays intact.
+ * that explains Google sign-in isn't configured, so the design stays intact.
  */
 
 // Minimal slice of the GIS global we use.

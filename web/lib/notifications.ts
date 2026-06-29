@@ -1,11 +1,11 @@
 /**
- * Notification presentation helpers — the per-type icon + dot tone, the
+ * Notification presentation helpers: the per-type icon + dot tone, the
  * deep-link → web-route mapping, and the mapper that feeds the `NotificationBell`
  * dropdown. Shared by the topbar bell and the full notifications page (Phase 7).
  *
  * The backend stores a `deepLinkPath` aimed at the mobile app's navigation; here
  * we normalize it to a website route. Phase 10 refines the per-type targets and
- * adds live updates — this is the best-effort baseline.
+ * adds live updates; this is the best-effort baseline.
  */
 import {
   BadgeCheck,

@@ -22,7 +22,7 @@ import { isApiError } from '@/lib/api/errors';
 import type { PublicCampaign } from '@/lib/api/types';
 import { toCampaignCardData } from '@/lib/campaign-card';
 import { formatCountdown, formatRelativeTime, deadlineUrgency, formatCompactNumber } from '@/lib/format';
-import { categoryEmoji, categoryGradient } from '@/lib/domain-meta';
+import { categoryIcon, categoryGradient } from '@/lib/domain-meta';
 import { buildMetadata, campaignJsonLd, breadcrumbJsonLd, absoluteUrl } from '@/lib/seo';
 import { Container } from '@/components/marketing/section';
 import { RewardPill } from '@/components/shared/reward-pill';
@@ -34,7 +34,7 @@ import { JsonLd } from '@/components/shared/json-ld';
 import { ApplyPanel } from '@/components/campaign/apply-panel';
 import { CampaignLocationMap } from '@/components/maps/campaign-location-map.lazy';
 
-// Public, ISR-cached page — the apply state + (for accepted creators) precise
+// Public, ISR-cached page: the apply state + (for accepted creators) precise
 // location hydrate client-side; the cached shell shows the public projection.
 // `generateStaticParams` (empty) opts the route into on-demand ISR: nothing is
 // prerendered at build, but each id is rendered once and cached for `revalidate`.
@@ -78,7 +78,7 @@ export async function generateMetadata({
     title: campaign.title,
     description:
       campaign.description.slice(0, 180) +
-      (businessName ? ` — a collab from ${businessName} on Collably.` : ''),
+      (businessName ? `, a collab from ${businessName} on Collably.` : ''),
     path: `/campaign/${id}`,
     image: campaign.coverImage ?? undefined,
     ogEyebrow: `Campaign · ${campaign.category}`,
@@ -92,12 +92,13 @@ export default async function CampaignDetailPage({ params }: { params: Promise<{
   if (!campaign) notFound();
 
   const business = campaign.business;
+  const CategoryIcon = categoryIcon(campaign.category);
   const isActive = campaign.status === 'Active';
   const locationText = campaign.isRemote
     ? 'Remote / Online'
     : [campaign.location?.city, campaign.location?.state].filter(Boolean).join(', ') || 'On-site';
 
-  // "More from this business" — other active campaigns by the same business.
+  // "More from this business": other active campaigns by the same business.
   let otherCampaigns: PublicCampaign[] = [];
   if (business?._id) {
     try {
@@ -171,8 +172,8 @@ export default async function CampaignDetailPage({ params }: { params: Promise<{
                   className="object-cover"
                 />
               ) : (
-                <span className="absolute inset-0 flex items-center justify-center text-5xl opacity-90">
-                  {categoryEmoji(campaign.category)}
+                <span className="absolute inset-0 flex items-center justify-center opacity-90">
+                  <CategoryIcon className="h-16 w-16 text-white/85" />
                 </span>
               )}
             </div>
@@ -262,7 +263,7 @@ export default async function CampaignDetailPage({ params }: { params: Promise<{
             )}
           </div>
 
-          {/* RIGHT — sticky apply card */}
+          {/* RIGHT: sticky apply card */}
           <aside className="lg:sticky lg:top-[84px]">
             <div className="rounded-xl border border-hair bg-card p-6 shadow-card">
               <h1 className="text-xl font-bold leading-snug tracking-tight text-ink">

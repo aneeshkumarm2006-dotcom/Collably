@@ -1,16 +1,16 @@
 /**
- * Edge middleware — the first, cheap auth gate for the authed route groups.
+ * Edge middleware: the first, cheap auth gate for the authed route groups.
  *
  * It only checks for the *presence* of a session cookie (access or refresh): no
  * backend call, so it stays fast, Edge-safe, and works identically against the
- * MSW mocks (which the Edge runtime can't intercept). The richer rules —
- * role/area matching, onboarding completeness, approval state — run in the
+ * MSW mocks (which the Edge runtime can't intercept). The richer rules
+ * (role/area matching, onboarding completeness, approval state) run in the
  * route-group layouts (`(dashboard)`, `(onboarding)`) via the request-cached
  * `getSession()`, which CAN reach the backend and refresh tokens.
  *
  * Guests hitting a protected route are sent to `/login?next=<original>` so they
  * land back where they intended after signing in. Public app views
- * (`(public-app)`) and marketing are intentionally NOT matched — guest browse is
+ * (`(public-app)`) and marketing are intentionally NOT matched: guest browse is
  * allowed there.
  */
 import { NextResponse } from 'next/server';

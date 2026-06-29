@@ -46,7 +46,7 @@ npx playwright test e2e/flows/creator.spec.ts          # one flow
   rather than computed colors.
 - **Playwright** (`playwright.config.ts`): runs against a **production** mock
   build (`NEXT_PUBLIC_USE_MOCKS=true`, isolated `.next-e2e` dist dir) on port
-  3100 — the race-free path (the `next dev` + MSW interception race noted in
+  3100, the race-free path (the `next dev` + MSW interception race noted in
   earlier phases doesn't affect a production build). The mock dataset is one
   in-memory store shared by the single server process, so tests run **serially**
   (`workers: 1`); each spec logs in fresh and acts on distinct records.

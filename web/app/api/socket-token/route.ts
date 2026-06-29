@@ -1,8 +1,8 @@
 /**
- * GET /api/socket-token — hands the browser a valid access token for the
+ * GET /api/socket-token: hands the browser a valid access token for the
  * Socket.io handshake (Phase 9). The JWT lives in an httpOnly cookie the client
  * can't read, so this server route reads it, validates it against `/auth/me`, and
- * — if it's expired but a refresh cookie is present — rotates the pair (persisting
+ * (if it's expired but a refresh cookie is present) rotates the pair (persisting
  * the new cookies on the response) before returning the fresh token. Returns
  * `{ token: null }` with 401 for guests / unrecoverable sessions so the client
  * simply skips connecting.
@@ -26,7 +26,7 @@ export async function GET() {
     return NextResponse.json({ token: access });
   }
 
-  // Access missing/expired — rotate via the refresh token and persist the pair.
+  // Access missing/expired: rotate via the refresh token and persist the pair.
   if (refresh) {
     const refreshed = await refreshSession(refresh);
     if (refreshed) {

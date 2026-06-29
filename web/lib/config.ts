@@ -1,5 +1,5 @@
 /**
- * Runtime configuration — the single source of truth for environment-derived
+ * Runtime configuration: the single source of truth for environment-derived
  * settings the data layer needs (API URLs, mock toggle, cookie names).
  *
  * `NEXT_PUBLIC_*` vars are inlined into the client bundle; the rest are
@@ -30,7 +30,7 @@ export const config = {
     process.env.NEXT_PUBLIC_API_URL ??
     'http://localhost:4000/api',
 
-  /** Socket.io origin — backend base WITHOUT `/api` (matches the mobile convention). */
+  /** Socket.io origin: backend base WITHOUT `/api` (matches the mobile convention). */
   socketUrl: process.env.NEXT_PUBLIC_SOCKET_URL ?? 'http://localhost:4000',
 
   /** When true, run against the in-memory MSW mocks instead of the real backend. */
@@ -49,12 +49,12 @@ export const config = {
   /**
    * Google OAuth *web* client ID for Google Identity Services sign-in. Inlined
    * into the client bundle so the GIS button can initialize. Empty when not
-   * configured — the Google button then degrades to a disabled placeholder.
+   * configured, so the Google button then degrades to a disabled placeholder.
    */
   googleOAuthClientId: process.env.NEXT_PUBLIC_GOOGLE_OAUTH_CLIENT_ID ?? '',
 
   /**
-   * Canonical public origin of the website (no trailing slash) — the base for
+   * Canonical public origin of the website (no trailing slash): the base for
    * canonical URLs, Open Graph/Twitter tags, `sitemap.ts`, `robots.ts`, JSON-LD,
    * and the blog RSS feed. Defaults to the production domain.
    */

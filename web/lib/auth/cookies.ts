@@ -9,8 +9,8 @@
 import type { NextResponse } from 'next/server';
 import { ACCESS_COOKIE, REFRESH_COOKIE } from '@/lib/config';
 
-const DEFAULT_ACCESS_MAX_AGE = 60 * 60 * 24 * 7; // 7d — matches backend JWT_EXPIRES_IN
-const DEFAULT_REFRESH_MAX_AGE = 60 * 60 * 24 * 30; // 30d — matches JWT_REFRESH_EXPIRES_IN
+const DEFAULT_ACCESS_MAX_AGE = 60 * 60 * 24 * 7; // 7d, matches backend JWT_EXPIRES_IN
+const DEFAULT_REFRESH_MAX_AGE = 60 * 60 * 24 * 30; // 30d, matches JWT_REFRESH_EXPIRES_IN
 
 export interface TokenPair {
   accessToken: string;
@@ -20,7 +20,7 @@ export interface TokenPair {
 /** Decode a JWT's `exp` (no signature check) → seconds until it expires. */
 function jwtMaxAge(token: string, fallback: number): number {
   const parts = token.split('.');
-  if (parts.length !== 3) return fallback; // e.g. mock tokens — use the default
+  if (parts.length !== 3) return fallback; // e.g. mock tokens, use the default
   try {
     const json = Buffer.from(
       parts[1].replace(/-/g, '+').replace(/_/g, '/'),
@@ -32,7 +32,7 @@ function jwtMaxAge(token: string, fallback: number): number {
       if (seconds > 0) return seconds;
     }
   } catch {
-    // Malformed payload — fall through to the default.
+    // Malformed payload: fall through to the default.
   }
   return fallback;
 }

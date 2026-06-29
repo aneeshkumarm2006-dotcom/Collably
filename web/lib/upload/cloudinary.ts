@@ -4,15 +4,15 @@
  * transport:
  *
  *   1. Ask our backend for signed params via `clientApi.upload.sign({ folder })`
- *      — this goes through the same-origin proxy, which attaches the httpOnly
- *      access cookie server-side, so the Cloudinary API secret never reaches JS.
+ *      (this goes through the same-origin proxy, which attaches the httpOnly
+ *      access cookie server-side, so the Cloudinary API secret never reaches JS).
  *   2. Multipart-POST the `File` straight to Cloudinary with those params.
  *   3. Return the resulting `secure_url` to store on the profile.
  *
  * Onboarding (Phase 5) uses this for the creator portfolio + business logo; the
  * Phase 11 `ImageUploadZone` wiring builds on the same helper. Throws an
  * `ApiError` if signing fails (e.g. Cloudinary unconfigured) and an `Error` if
- * the Cloudinary upload itself fails — callers surface these inline.
+ * the Cloudinary upload itself fails; callers surface these inline.
  */
 import { clientApi } from '@/lib/api/client';
 import type { UploadFolder } from '@/lib/constants';
@@ -39,7 +39,7 @@ export function assertValidImage(file: File): void {
 }
 
 /**
- * Downscale a large image client-side before upload (PRD §8 — "crop/resize
+ * Downscale a large image client-side before upload (PRD §8, "crop/resize
  * client-side"). Re-encodes via a canvas so we never push a 12-megapixel phone
  * photo over the wire when a ~1600px longest-edge copy is plenty for cards and
  * detail pages. Best-effort: animated GIFs, SVGs, decode failures, or a
@@ -47,7 +47,7 @@ export function assertValidImage(file: File): void {
  */
 export async function resizeImageFile(file: File, maxEdge = 1600, quality = 0.85): Promise<File> {
   if (typeof document === 'undefined') return file;
-  // GIF (possibly animated) and SVG don't survive a canvas round-trip — leave them.
+  // GIF (possibly animated) and SVG don't survive a canvas round-trip, so leave them.
   if (file.type === 'image/gif' || file.type === 'image/svg+xml') return file;
   if (!file.type.startsWith('image/')) return file;
 
@@ -97,7 +97,7 @@ export async function uploadToCloudinary(file: File, folder: UploadFolder): Prom
   // 1. Signed params from our backend (cookie attached by the proxy).
   const signed = await clientApi.upload.sign({ folder });
 
-  // Cloudinary's upload endpoint — prefer a server-provided URL, else derive it.
+  // Cloudinary's upload endpoint: prefer a server-provided URL, else derive it.
   const uploadUrl =
     (typeof signed.uploadUrl === 'string' && signed.uploadUrl) ||
     `https://api.cloudinary.com/v1_1/${signed.cloudName}/image/upload`;

@@ -1,7 +1,7 @@
 /**
  * Normalized API errors. Every transport (server fetch, client fetch) throws an
- * `ApiError` on a non-2xx response, so callers — Server Components, route
- * handlers, and TanStack Query hooks alike — catch one consistent shape with a
+ * `ApiError` on a non-2xx response, so callers (Server Components, route
+ * handlers, and TanStack Query hooks alike) catch one consistent shape with a
  * render-safe `message`. The extraction logic mirrors `mobile/lib/api.ts` so the
  * web surfaces the same backend messages (including the first zod field issue).
  */
@@ -26,7 +26,7 @@ export function isApiError(value: unknown): value is ApiError {
 }
 
 /**
- * Render-safe message from any thrown value — `ApiError` (the common case from
+ * Render-safe message from any thrown value: `ApiError` (the common case from
  * the transports), a plain `Error`, else the fallback. Handy in `catch` blocks
  * that just need a string for a banner/toast.
  */
@@ -76,6 +76,6 @@ export function toApiError(status: number, data: unknown): ApiError {
     extractMessage((data as { error?: { message?: unknown } } | undefined)?.error?.message) ??
     extractMessage((data as { message?: unknown } | undefined)?.message) ??
     extractMessage((data as { error?: unknown } | undefined)?.error) ??
-    (status === 0 ? 'Network error — please check your connection.' : 'Something went wrong.');
+    (status === 0 ? 'Network error. Please check your connection.' : 'Something went wrong.');
   return new ApiError(status, message, data);
 }

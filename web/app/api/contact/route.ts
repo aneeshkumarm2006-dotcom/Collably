@@ -3,7 +3,7 @@
  *
  * The backend has no contact resource yet, so for now this logs the message
  * server-side and acknowledges. Wiring it to email/Resend (or a backend
- * `/contact` route) is a drop-in change here — the client contract stays the same.
+ * `/contact` route) is a drop-in change here; the client contract stays the same.
  */
 import { NextResponse } from 'next/server';
 import { contactSchema } from '@/lib/contact';

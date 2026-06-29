@@ -3,14 +3,14 @@
  *
  * `track(event, props)` fans a typed custom event out to whichever provider is
  * configured (`config.analytics.provider`): Plausible (`window.plausible`) or
- * GA4 (`window.gtag`). When the provider is `none` — or the script hasn't loaded
- * (e.g. GA4 before cookie consent) — calls are silent no-ops, so call sites never
+ * GA4 (`window.gtag`). When the provider is `none` (or the script hasn't loaded,
+ * e.g. GA4 before cookie consent), calls are silent no-ops, so call sites never
  * need to guard. Import-and-call from any client component:
  *
  *   import { track } from '@/lib/analytics';
  *   track('campaign_apply', { campaignId });
  *
- * No PII is ever sent — only the small, enumerated event names + coarse props
+ * No PII is ever sent: only the small, enumerated event names plus coarse props
  * below. Page views are handled automatically by the provider scripts.
  */
 import { config } from '@/lib/config';
@@ -64,6 +64,6 @@ export function track(event: AnalyticsEvent, props?: AnalyticsProps): void {
       w.gtag?.('event', event, cleaned ?? {});
     }
   } catch {
-    // Analytics must never break the app — swallow any provider error.
+    // Analytics must never break the app, so swallow any provider error.
   }
 }

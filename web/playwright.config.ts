@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Playwright E2E config — Phase 14. Drives the website against MOCK MODE (the MSW
+ * Playwright E2E config (Phase 14). Drives the website against MOCK MODE (the MSW
  * in-memory backend), so the critical role flows run with no real backend.
  *
  * The mock dataset is a single in-memory store inside ONE Next server process, so
@@ -9,7 +9,7 @@ import { defineConfig, devices } from '@playwright/test';
  * We therefore run serially (`workers: 1`, `fullyParallel: false`) for
  * determinism; each spec logs in fresh and acts on distinct records.
  *
- * Server: a production mock build (`build:e2e`) served by `start:e2e` on :3100 —
+ * Server: a production mock build (`build:e2e`) served by `start:e2e` on :3100,
  * the race-free path (the `next dev` + MSW interception race noted in earlier
  * phases does not affect a production build). `reuseExistingServer` lets a
  * manually-started `start:e2e` be reused during iteration.
@@ -39,7 +39,7 @@ export default defineConfig({
   projects: [
     // Full critical-flow suite (+ the smoke spec) on desktop Chromium.
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-    // Cross-browser + mobile-viewport smoke pass — read-only, so no state races.
+    // Cross-browser + mobile-viewport smoke pass: read-only, so no state races.
     { name: 'firefox', use: { ...devices['Desktop Firefox'] }, testMatch: /smoke\.spec\.ts/ },
     { name: 'webkit', use: { ...devices['Desktop Safari'] }, testMatch: /smoke\.spec\.ts/ },
     { name: 'mobile-chrome', use: { ...devices['Pixel 5'] }, testMatch: /smoke\.spec\.ts/ },

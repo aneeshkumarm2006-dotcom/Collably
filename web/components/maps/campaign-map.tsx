@@ -19,7 +19,7 @@ const DEFAULT_ZOOM = 4;
  * Explore map (Phase 11). Plots campaign pins with green value bubbles, collapses
  * overlapping ones into brand-blue clusters (split apart on zoom-in), routes a
  * pin click to its campaign, and zooms into a cluster click. Degrades to an
- * informative panel when Maps JS is unconfigured / fails — the list view is the
+ * informative panel when Maps JS is unconfigured / fails. The list view is the
  * always-available fallback.
  */
 export function CampaignMap({

@@ -37,7 +37,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
     setSubmitting(true);
     try {
       const user = await resetPassword(token, parsed.data.password);
-      // Auto-logged-in by the backend — send them where they belong.
+      // Auto-logged-in by the backend; send them where they belong.
       router.push(postAuthPath(user));
     } catch (err) {
       setBanner(errorMessage(err));

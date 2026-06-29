@@ -62,7 +62,7 @@ export function HeroCta() {
 }
 
 /**
- * Per-campaign "Sign up to apply" lock bar on the landing live-rail — shown only
+ * Per-campaign "Sign up to apply" lock bar on the landing live-rail, shown only
  * to signed-out visitors. Client-side so the rail stays in a static page.
  */
 export function GuestApplyButton() {

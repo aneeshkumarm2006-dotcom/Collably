@@ -60,20 +60,20 @@ is server-only (route handlers / Server Components).
 A typed, swappable access layer used by both the server and the browser. Endpoints are
 defined **once** as resource modules (`lib/api/resources/*`) and bound to a transport:
 
-- **Server** — `import { serverApi } from '@/lib/api/server'`. Use in Server Components and
+- **Server**: `import { serverApi } from '@/lib/api/server'`. Use in Server Components and
   route handlers. Reads the httpOnly access cookie → `Authorization: Bearer`, talks straight
   to `BACKEND_INTERNAL_URL`, `cache: 'no-store'`.
-- **Client** — `import { clientApi } from '@/lib/api/client'`. Use in client components /
+- **Client**: `import { clientApi } from '@/lib/api/client'`. Use in client components /
   hooks. Calls the **same-origin proxy** `app/api/backend/[...path]`, which forwards to the
-  backend with the cookie attached server-side — so the JWT never reaches client JS.
-- **Hooks** — `lib/api/queries/*` (TanStack Query). Keys live in `lib/api/query-keys.ts`;
+  backend with the cookie attached server-side, so the JWT never reaches client JS.
+- **Hooks**: `lib/api/queries/*` (TanStack Query). Keys live in `lib/api/query-keys.ts`;
   shared defaults + the request-scoped server client in `lib/api/query-client.ts`. SSR lists
   prefetch via `prefetchQueries` (`lib/api/queries/prefetch.ts`) → `<HydrationBoundary>`.
-- **Errors** — every transport throws a normalized `ApiError { status, message, data }`
+- **Errors**: every transport throws a normalized `ApiError { status, message, data }`
   (`lib/api/errors.ts`), extracting the backend's first zod issue (ported from mobile).
-- **Constants** — `lib/constants.ts` re-exports the shared enums and adds web-only domain
+- **Constants**: `lib/constants.ts` re-exports the shared enums and adds web-only domain
   constants (follower buckets, sort options, status tabs) mirroring the backend.
-- **Locations** — `lib/locations.ts` (Canada-first autocomplete, ported from mobile).
+- **Locations**: `lib/locations.ts` (Canada-first autocomplete, ported from mobile).
 
 > Auth is special: don't call `clientApi.auth.*` from the browser (it would return the JWT
 > to JS). Phase 3 adds `/api/auth/*` cookie-setting handlers that call `serverApi.auth.*`.
@@ -81,7 +81,7 @@ defined **once** as resource modules (`lib/api/resources/*`) and bound to a tran
 ## Mock mode
 
 Set `NEXT_PUBLIC_USE_MOCKS=true` to run the UI against the in-memory **MSW** dataset instead
-of the real backend — mirrors the mobile app's `USE_MOCKS`. Convenience script: `npm run
+of the real backend, mirroring the mobile app's `USE_MOCKS`. Convenience script: `npm run
 dev:mock`.
 
 - The seed (`mocks/db.ts`) is the rich "CollabSpace" demo world recovered from
@@ -100,7 +100,7 @@ dev:mock`.
 
 The website reuses the monorepo's canonical domain layer instead of redefining it:
 
-- **Decision:** a TS path alias **`@shared/*` → `../shared/*`** (the root `shared/` package —
+- **Decision:** a TS path alias **`@shared/*` → `../shared/*`** (the root `shared/` package,
   the canonical source; `mobile/_shared` is a generated copy). No extra workspace package.
 - `next.config.js` sets `experimental.externalDir: true` so Next compiles that out-of-app
   TS source, and `tsconfig.json` carries the `@shared/*` path mapping.
@@ -113,8 +113,8 @@ The website reuses the monorepo's canonical domain layer instead of redefining i
 ```
 app/web/
   app/
-    (marketing)/     public marketing — /, /pricing, /about, /blog, …
-    (public-app)/    public app views — /explore, /campaign/[id], /business/[id], /creator/[id]
+    (marketing)/     public marketing: /, /pricing, /about, /blog, …
+    (public-app)/    public app views: /explore, /campaign/[id], /business/[id], /creator/[id]
     (auth)/          /login, /signup, /forgot-password, /reset-password/[token]
     (onboarding)/    /onboarding/creator, /onboarding/business
     (dashboard)/     /dashboard/creator/*, /dashboard/business/*
@@ -135,8 +135,8 @@ app/web/
     format.ts        number/date/countdown/reward helpers (from mobile)
     domain-meta.ts   emoji + gradient maps for the domain enums
     api/
-      server.ts      serverApi — server transport (RSC + route handlers)
-      client.ts      clientApi — browser transport (→ same-origin proxy)
+      server.ts      serverApi: server transport (RSC + route handlers)
+      client.ts      clientApi: browser transport (→ same-origin proxy)
       http.ts        createHttpClient (fetch core, JSON, error normalize)
       errors.ts      ApiError + normalize (first zod issue)
       types.ts       response envelopes + HttpClient contract

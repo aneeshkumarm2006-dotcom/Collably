@@ -8,7 +8,7 @@ import { errorMessage } from '@/lib/api/errors';
 import { toast } from '@/lib/toast';
 import { CATEGORIES } from '@/lib/constants';
 import type { BusinessProfile, Category } from '@/lib/shared';
-import { categoryEmoji } from '@/lib/domain-meta';
+import { categoryIcon } from '@/lib/domain-meta';
 import {
   type BusinessForm,
   businessFormFromProfile,
@@ -46,7 +46,7 @@ function Section({
 
 /**
  * Business profile editor (Phase 8). A single-page, sectioned form prefilled from
- * the existing profile that submits via `PUT /api/profile/business` — reusing the
+ * the existing profile that submits via `PUT /api/profile/business`, reusing the
  * onboarding form model (`businessFormFromProfile` / `toBusinessPayload`) so the
  * payload + validation stay identical to onboarding.
  */
@@ -104,7 +104,7 @@ export function BusinessProfileForm({ profile }: { profile: BusinessProfile }) {
               <SelectCard
                 key={c}
                 label={c}
-                emoji={categoryEmoji(c)}
+                icon={categoryIcon(c)}
                 selected={form.category === c}
                 onClick={() => patch({ category: c })}
               />
@@ -147,7 +147,7 @@ export function BusinessProfileForm({ profile }: { profile: BusinessProfile }) {
         </div>
       </Section>
 
-      <Section title="Social links" description="All optional — add what you have.">
+      <Section title="Social links" description="All optional. Add what you have.">
         <div className="space-y-3">
           <SocialLinkInput
             icon={<Instagram className="h-4 w-4" />}

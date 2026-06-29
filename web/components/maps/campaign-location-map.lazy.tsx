@@ -8,7 +8,7 @@ import { MapStatePanel } from './map-frame';
 /**
  * Lazy boundary for the campaign-detail location map. The Google Maps JS loader +
  * map component are only fetched on the client, after the (statically cached /
- * ISR'd) campaign page hydrates — keeping the maps code out of the initial bundle
+ * ISR'd) campaign page hydrates, keeping the maps code out of the initial bundle
  * and off the server. A skeleton panel holds the layout while it loads.
  */
 const CampaignLocationMapImpl = dynamic(

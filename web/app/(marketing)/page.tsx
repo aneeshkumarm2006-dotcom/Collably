@@ -35,6 +35,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar } from '@/components/shared/avatar';
 import { JsonLd } from '@/components/shared/json-ld';
 import { HeroCta, GuestApplyButton } from '@/components/marketing/hero-cta';
+import { AppPromo } from '@/components/marketing/app-promo';
 
 export const metadata: Metadata = buildMetadata({
   description: SITE_DESCRIPTION,
@@ -85,7 +86,7 @@ export default async function LandingPage() {
               </h1>
               <p className="mt-6 max-w-xl text-pretty text-lg leading-relaxed text-white/70">
                 The marketplace where creators earn real rewards and brands get content that actually
-                converts — no agencies, no follower gatekeeping.
+                converts, with no agencies and no follower gatekeeping.
               </p>
               <HeroCta />
               <div className="mt-8 flex flex-wrap items-center gap-x-4 gap-y-2 font-mono text-[13px] text-white/55">
@@ -141,7 +142,7 @@ export default async function LandingPage() {
           ordinal="01"
           label="How it works"
           title="Two sides, one simple flow"
-          aside="Post, pitch, verify. The whole collab lives in one place — from first hello to verified post."
+          aside="Post, pitch, verify. The whole collab lives in one place, from first hello to verified post."
           split
         />
         <div className="grid gap-10 md:grid-cols-2 md:gap-0">
@@ -185,7 +186,7 @@ export default async function LandingPage() {
               Get paid in experiences you&apos;ll actually love
             </h2>
             <p className="mt-5 max-w-md text-pretty text-base leading-relaxed text-muted">
-              No vague &quot;exposure.&quot; Every campaign spells out exactly what you earn — from
+              No vague &quot;exposure.&quot; Every campaign spells out exactly what you earn, from
               tasting menus to skincare sets to studio memberships, with the dollar value up front.
             </p>
             <Button asChild className="mt-7">
@@ -305,6 +306,9 @@ export default async function LandingPage() {
           <Faq items={GENERAL_FAQS} />
         </div>
       </Section>
+
+      {/* ===== App (coming soon) ===== */}
+      <AppPromo />
 
       {/* ===== Final CTA ===== */}
       <CtaBand

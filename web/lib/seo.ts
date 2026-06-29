@@ -1,5 +1,5 @@
 /**
- * SEO helpers — one place to build per-page `Metadata` (canonical URL,
+ * SEO helpers: one place to build per-page `Metadata` (canonical URL,
  * Open Graph + Twitter cards) and the JSON-LD structured-data objects we embed
  * (Organization, WebSite, BreadcrumbList, Offer for campaigns, Person/Organization
  * for profiles, BlogPosting). Keeps every public route consistent and DRY.
@@ -15,7 +15,7 @@ export const SITE_NAME = 'Collably';
 export const SITE_URL = config.siteUrl;
 export const SITE_TAGLINE = 'The local collab marketplace';
 export const SITE_DESCRIPTION =
-  'Collably is the marketplace where local businesses run gifting campaigns and creators earn real rewards — no agencies, no follower gatekeeping.';
+  'Collably is the marketplace where local businesses run gifting campaigns and creators earn real rewards. No agencies, no follower gatekeeping.';
 
 /** Public social handles (used in footer + Organization `sameAs`). */
 export const SOCIAL_LINKS = {
@@ -41,7 +41,7 @@ export function ogImageUrl(opts?: { title?: string; subtitle?: string; eyebrow?:
 }
 
 export interface PageMetaInput {
-  /** Page title — the root template appends "· Collably". Omit on the homepage. */
+  /** Page title: the root template appends "· Collably". Omit on the homepage. */
   title?: string;
   description: string;
   /** Canonical path, e.g. "/pricing". */
@@ -91,7 +91,7 @@ export function buildMetadata(input: PageMetaInput): Metadata {
 
 // --- JSON-LD builders ---------------------------------------------------------
 
-/** Site-wide Organization node (logo, socials) — embedded once on the homepage. */
+/** Site-wide Organization node (logo, socials): embedded once on the homepage. */
 export function organizationJsonLd() {
   return {
     '@context': 'https://schema.org',

@@ -8,7 +8,7 @@ import { clientApi } from '@/lib/api/client';
 import { errorMessage } from '@/lib/api/errors';
 import { NICHES, CONTENT_TYPES } from '@/lib/constants';
 import type { Niche, ContentType } from '@/lib/shared';
-import { nicheEmoji } from '@/lib/domain-meta';
+import { nicheIcon } from '@/lib/domain-meta';
 import {
   type CreatorForm,
   emptyCreatorForm,
@@ -33,7 +33,7 @@ function toggle<T>(list: T[], item: T): T[] {
 }
 
 /**
- * Creator onboarding flow (Phase 5). A single card with internal step state — no
+ * Creator onboarding flow (Phase 5). A single card with internal step state, no
  * page reloads. Steps: Bio + niche → Location → Social handles → Content types →
  * Portfolio. Finishing upserts via `PUT /api/profile/creator` (which marks the
  * user onboarded server-side), then shows the celebratory finish before routing
@@ -147,7 +147,7 @@ export function CreatorOnboarding({ firstName }: { firstName: string }) {
                 <TogglePill
                   key={n}
                   label={n}
-                  emoji={nicheEmoji(n)}
+                  icon={nicheIcon(n)}
                   selected={form.niche.includes(n)}
                   onClick={() => patch({ niche: toggle(form.niche, n) })}
                 />
@@ -171,7 +171,7 @@ export function CreatorOnboarding({ firstName }: { firstName: string }) {
         <div>
           <StepIntro
             title="Where can brands find you?"
-            description="Connect at least one platform — add a handle and its profile link."
+            description="Connect at least one platform: add a handle and its profile link."
           />
           <SocialHandlesStep
             social={form.social}
@@ -205,7 +205,7 @@ export function CreatorOnboarding({ firstName }: { firstName: string }) {
         <div>
           <StepIntro
             title="Show your best work"
-            description={`Add up to ${MAX_PORTFOLIO} pieces — these sell you to brands. Optional.`}
+            description={`Add up to ${MAX_PORTFOLIO} pieces. These sell you to brands. Optional.`}
           />
           <PortfolioUploader
             items={form.portfolio}

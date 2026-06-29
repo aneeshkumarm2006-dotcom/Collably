@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils';
 
 /**
- * StatusBadge — re-skins the reference `.badge` anatomy to the app palette.
+ * StatusBadge: re-skins the reference `.badge` anatomy to the app palette.
  * Covers every campaign + application lifecycle status (plus Verified/Overdue):
  * a soft-tinted pill with a leading dot and uppercase mono label.
  */

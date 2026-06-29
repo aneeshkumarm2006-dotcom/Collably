@@ -3,7 +3,7 @@ import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 /**
- * StepProgress — onboarding stepper. Desktop shows numbered circles + labels
+ * StepProgress: onboarding stepper. Desktop shows numbered circles + labels
  * with connectors (done = filled brand + check, active = brand ring, upcoming =
  * muted). Mobile collapses to "current label · n/total" + a fill bar.
  */

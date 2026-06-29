@@ -6,14 +6,14 @@ import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 /**
- * Autocomplete — a free-text input with a filtered suggestion dropdown (a
+ * Autocomplete: a free-text input with a filtered suggestion dropdown (a
  * combobox). Typing always edits the value (`onValueChange`); picking a
  * suggestion additionally fires `onSelect` so callers can react (e.g. a city
- * auto-filling its region + country). Anything can be typed — the options are
+ * auto-filling its region + country). Anything can be typed: the options are
  * suggestions, not a closed set (ported intent from `mobile`'s onboarding
  * autocompletes).
  *
- * Keyboard: ↓/↑ move the active option, Enter selects it, Esc closes. The list
+ * Keyboard: Down/Up arrows move the active option, Enter selects it, Esc closes. The list
  * also closes on outside-click and blur. ARIA combobox roles keep it accessible.
  */
 export interface AutocompleteProps {

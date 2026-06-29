@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, type LucideIcon } from 'lucide-react';
 
 import { useAuth } from '@/components/providers/auth-provider';
 import { BrandMark } from '@/components/shared/brand-mark';
@@ -11,9 +11,9 @@ import { ErrorBanner } from '@/components/auth/auth-layout';
 import { cn } from '@/lib/utils';
 
 /**
- * Shared onboarding chrome (Phase 5). `OnboardingFrame` is the page scaffold —
- * page-grey background, a slim top bar (brand + sign-out), and a centered column —
- * used by both the stepper shell and the celebratory finish. `OnboardingShell`
+ * Shared onboarding chrome (Phase 5). `OnboardingFrame` is the page scaffold:
+ * page-grey background, a slim top bar (brand + sign-out), and a centered column.
+ * Used by both the stepper shell and the celebratory finish. `OnboardingShell`
  * adds the card, the `StepProgress` stepper, and the Back / Continue nav.
  *
  * There is intentionally no "Skip" link: onboarding is required (the
@@ -42,7 +42,7 @@ export function OnboardingFrame({ children }: { children: React.ReactNode }) {
 }
 
 export interface OnboardingShellProps {
-  /** Step labels for the progress stepper (input steps only — not the finish). */
+  /** Step labels for the progress stepper (input steps only, not the finish). */
   steps: string[];
   /** 0-based index of the active step. */
   current: number;
@@ -134,12 +134,12 @@ export function TogglePill({
   label,
   selected,
   onClick,
-  emoji,
+  icon: Icon,
 }: {
   label: string;
   selected: boolean;
   onClick: () => void;
-  emoji?: string;
+  icon?: LucideIcon;
 }) {
   return (
     <button
@@ -154,21 +154,21 @@ export function TogglePill({
           : 'border-hair-strong bg-card text-muted hover:border-brand-secondary hover:text-ink',
       )}
     >
-      {emoji && <span aria-hidden>{emoji}</span>}
+      {Icon && <Icon aria-hidden className="h-4 w-4 shrink-0" />}
       {label}
     </button>
   );
 }
 
-/** Selection card for single-select sets (business category) — a bigger target than a pill. */
+/** Selection card for single-select sets (business category): a bigger target than a pill. */
 export function SelectCard({
   label,
-  emoji,
+  icon: Icon,
   selected,
   onClick,
 }: {
   label: string;
-  emoji?: string;
+  icon?: LucideIcon;
   selected: boolean;
   onClick: () => void;
 }) {
@@ -185,11 +185,7 @@ export function SelectCard({
           : 'border-hair-strong text-ink hover:border-brand-secondary',
       )}
     >
-      {emoji && (
-        <span className="text-xl" aria-hidden>
-          {emoji}
-        </span>
-      )}
+      {Icon && <Icon className="h-5 w-5 shrink-0" aria-hidden />}
       <span className="truncate">{label}</span>
     </button>
   );

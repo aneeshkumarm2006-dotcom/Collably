@@ -19,8 +19,8 @@ export interface ExploreState {
 /** Creator-tier label (FilterSidebar) → backend follower bucket. */
 const TIER_TO_BUCKET: Record<string, FollowerBucket | undefined> = {
   'Open to all': undefined,
-  'Nano (1K–10K)': 'nano',
-  'Micro (10K–50K)': 'micro',
+  'Nano (1K-10K)': 'nano',
+  'Micro (10K-50K)': 'micro',
   'Mid (50K+)': 'mid',
 };
 

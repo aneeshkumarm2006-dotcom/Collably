@@ -5,7 +5,7 @@
  * role/onboarding rules with `redirect()`.
  *
  * Approval is intentionally NOT a hard gate here: an unapproved creator/business
- * can still browse their dashboard and see "pending review" states — the
+ * can still browse their dashboard and see "pending review" states; the
  * apply/publish actions are gated in the UI via `canTakeGatedAction`.
  */
 import 'server-only';

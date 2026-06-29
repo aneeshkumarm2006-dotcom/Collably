@@ -23,7 +23,7 @@ export const defaultQueryOptions: DefaultOptions = {
   queries: {
     staleTime: 60 * 1000,
     refetchOnWindowFocus: false,
-    // Retry once, but never retry a client error (4xx) — those won't fix themselves.
+    // Retry once, but never retry a client error (4xx); those won't fix themselves.
     retry: (failureCount, error) => {
       if (isApiError(error) && error.status >= 400 && error.status < 500) return false;
       return failureCount < 1;

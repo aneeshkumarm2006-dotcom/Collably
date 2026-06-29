@@ -61,7 +61,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       });
     }
   } catch {
-    // Backend unavailable — ship the static + blog sitemap.
+    // Backend unavailable: ship the static + blog sitemap.
   }
 
   return [...staticEntries, ...blogEntries, ...dynamicEntries];

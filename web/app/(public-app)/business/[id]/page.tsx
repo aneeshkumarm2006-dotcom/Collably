@@ -8,7 +8,7 @@ import { publicApi } from '@/lib/api/public';
 import { isApiError } from '@/lib/api/errors';
 import type { PublicBusinessProfileResponse, PublicCampaign } from '@/lib/api/types';
 import { toCampaignCardData } from '@/lib/campaign-card';
-import { categoryEmoji } from '@/lib/domain-meta';
+import { categoryIcon } from '@/lib/domain-meta';
 import { buildMetadata, businessJsonLd, breadcrumbJsonLd } from '@/lib/seo';
 import { Container } from '@/components/marketing/section';
 import { Avatar } from '@/components/shared/avatar';
@@ -17,7 +17,7 @@ import { EmptyState } from '@/components/shared/empty-state';
 import { Button } from '@/components/ui/button';
 import { JsonLd } from '@/components/shared/json-ld';
 
-// Public profile — on-demand ISR (no per-user variance); cached for `revalidate`.
+// Public profile: on-demand ISR (no per-user variance); cached for `revalidate`.
 export const revalidate = 300;
 export const dynamicParams = true;
 export function generateStaticParams() {
@@ -63,6 +63,7 @@ export default async function BusinessProfilePage({ params }: { params: Promise<
   const { profile } = res;
   const loc = [profile.location?.city, profile.location?.state].filter(Boolean).join(', ');
   const igHandle = profile.socialLinks?.instagram;
+  const CategoryIcon = categoryIcon(profile.category);
 
   let active: PublicCampaign[] = [];
   try {
@@ -113,8 +114,8 @@ export default async function BusinessProfilePage({ params }: { params: Promise<
                     <BadgeCheck className="h-3.5 w-3.5" /> Verified
                   </span>
                 )}
-                <span>
-                  {categoryEmoji(profile.category)} {profile.category}
+                <span className="inline-flex items-center gap-1">
+                  <CategoryIcon className="h-3.5 w-3.5" /> {profile.category}
                 </span>
                 {loc && (
                   <span className="inline-flex items-center gap-1">

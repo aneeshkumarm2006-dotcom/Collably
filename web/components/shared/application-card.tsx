@@ -6,7 +6,7 @@ import { Avatar } from '@/components/shared/avatar';
 import { StatusBadge, statusTone } from '@/components/shared/status-badge';
 
 /**
- * ApplicationCard — a creator's application as seen by a business: identity +
+ * ApplicationCard: a creator's application as seen by a business, with identity +
  * pitch + portfolio + decision actions. A left accent border reflects the
  * decision (accepted = green, rejected = red + dimmed).
  */

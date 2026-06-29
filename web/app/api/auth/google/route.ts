@@ -1,5 +1,5 @@
 /**
- * POST /api/auth/google — verify a Google ID token (obtained client-side from the
+ * POST /api/auth/google: verify a Google ID token (obtained client-side from the
  * Google Identity Services button with the *web* client ID) via backend
  * `/auth/google`, set the session cookies, and return the safe user plus
  * `isNewUser` so the client can route brand-new accounts into onboarding. A `role`

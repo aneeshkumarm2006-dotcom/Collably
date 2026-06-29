@@ -6,7 +6,7 @@ import type { CardAppStatus } from '@/lib/creator/application-status';
 import { CampaignCard } from '@/components/shared/campaign-card';
 
 /**
- * "Matching your niche" rail on the authed creator Explore — a brand-tinted band
+ * "Matching your niche" rail on the authed creator Explore: a brand-tinted band
  * with a horizontally-scrolling set of relevance-ranked campaigns for the
  * creator's niches. Hidden when there's nothing to recommend.
  */
@@ -34,7 +34,7 @@ export function CreatorNicheRail({
           <h2 className="font-bold text-ink">
             Matching your niche{' '}
             <span className="text-brand">
-              {niches.length > 0 ? `— ${nicheText}` : ''}
+              {niches.length > 0 ? `: ${nicheText}` : ''}
             </span>
           </h2>
           <p className="text-[13px] text-muted">Hand-picked from your profile</p>

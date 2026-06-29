@@ -1,5 +1,5 @@
 /**
- * POST /api/auth/logout — clear the session cookies. The backend uses stateless
+ * POST /api/auth/logout: clear the session cookies. The backend uses stateless
  * JWTs (no server-side session to revoke) and push tokens are mobile-only, so
  * this is purely a cookie wipe.
  */

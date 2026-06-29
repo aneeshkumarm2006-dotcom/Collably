@@ -1,6 +1,6 @@
 /**
  * Map a campaign list to plottable points (Phase 11). A campaign contributes a
- * pin when it carries a coordinate — the exact `coordinates` for authorized
+ * pin when it carries a coordinate: the exact `coordinates` for authorized
  * viewers, or the server-fuzzed `approxCoordinates` for everyone else (the
  * serializer guarantees the precise pin never reaches an unauthorized viewer).
  * Remote / not-yet-pinned campaigns are skipped.

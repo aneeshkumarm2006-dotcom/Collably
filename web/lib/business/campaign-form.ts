@@ -1,11 +1,11 @@
 /**
  * Campaign create/edit form model + payload mapping (Phase 8). Framework-neutral
  * (no React) so the form component, prefill, and validation share one source of
- * truth — and the submitted body matches the backend's `campaignCreateSchema`
+ * truth, and the submitted body matches the backend's `campaignCreateSchema`
  * exactly (`backend/src/routes/campaigns.ts`).
  *
  * Numeric inputs are held as strings (the natural `<input>` value) and coerced on
- * submit. The domain has no "spots" model, so the form has no capacity field —
+ * submit. The domain has no "spots" model, so the form has no capacity field,
  * consistent with the rest of the build; min-followers gates audience size.
  */
 import type {
@@ -97,7 +97,7 @@ export function campaignFormFromCampaign(c: PublicCampaign): CampaignForm {
       ...(loc.state ? { state: loc.state } : {}),
       ...(loc.country ? { country: loc.country } : {}),
     },
-    // Owner responses carry the exact pin (locationPrecise) — keep it so a coarse
+    // Owner responses carry the exact pin (locationPrecise), so keep it so a coarse
     // edit round-trips it back instead of dropping it.
     locationPin: {
       ...(loc.coordinates ? { coordinates: loc.coordinates } : {}),

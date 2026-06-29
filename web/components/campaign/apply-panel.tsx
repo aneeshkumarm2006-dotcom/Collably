@@ -145,7 +145,7 @@ export function ApplyPanel({ campaignId, campaignTitle, isActive }: ApplyPanelPr
         <Button disabled className="w-full" size="lg">
           Apply now
         </Button>
-        <Note>Your creator account is under review — you can apply once it’s verified.</Note>
+        <Note>Your creator account is under review. You can apply once it’s verified.</Note>
       </PanelShell>
     );
   }
@@ -163,7 +163,7 @@ export function ApplyPanel({ campaignId, campaignTitle, isActive }: ApplyPanelPr
           <DialogHeader>
             <DialogTitle>Apply to this campaign</DialogTitle>
             <DialogDescription>
-              Tell {campaignTitle ? 'them' : 'the brand'} why you’d be a great fit — your style, your
+              Tell {campaignTitle ? 'them' : 'the brand'} why you’d be a great fit: your style, your
               audience, why this brand. They’ll see this with your profile.
             </DialogDescription>
           </DialogHeader>

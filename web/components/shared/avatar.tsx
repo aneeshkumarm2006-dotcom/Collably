@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import { initials } from '@/lib/format';
 
 /**
- * Avatar — image with an initials fallback (brand bg, white mono initials),
+ * Avatar: image with an initials fallback (brand bg, white mono initials),
  * built on the shadcn/Radix avatar primitive. `size` is px; `shape` toggles a
  * circle (default) or a rounded square (the reference `.avatar-sq`).
  */

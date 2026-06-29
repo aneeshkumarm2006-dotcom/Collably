@@ -1,8 +1,8 @@
 'use client';
 
 /**
- * Campaign query hooks — the reference pattern every list/detail screen follows
- * (Phases 6–8 add the rest the same way). Reads go through `clientApi` (the
+ * Campaign query hooks: the reference pattern every list/detail screen follows
+ * (Phases 6-8 add the rest the same way). Reads go through `clientApi` (the
  * same-origin proxy); keys come from `queryKeys`; the apply mutation invalidates
  * the affected caches on success.
  */

@@ -4,7 +4,7 @@ import { defineConfig } from 'vitest/config';
 
 /**
  * Vitest config for the unit (utils + API mappers) and component (shared
- * components, light/dark + states) tests — Phase 14. Playwright E2E lives under
+ * components, light/dark + states) tests (Phase 14). Playwright E2E lives under
  * `e2e/` with its own runner (`playwright.config.ts`) and is excluded here.
  *
  * Path aliases mirror `tsconfig.json` (`@/*` → this app, `@shared/*` → the

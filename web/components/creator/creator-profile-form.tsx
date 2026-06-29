@@ -8,7 +8,7 @@ import { errorMessage } from '@/lib/api/errors';
 import { toast } from '@/lib/toast';
 import { NICHES, CONTENT_TYPES } from '@/lib/constants';
 import type { CreatorProfile, Niche, ContentType } from '@/lib/shared';
-import { nicheEmoji } from '@/lib/domain-meta';
+import { nicheIcon } from '@/lib/domain-meta';
 import {
   type CreatorForm,
   creatorFormFromProfile,
@@ -52,7 +52,7 @@ function Section({
 
 /**
  * Creator profile editor (Phase 7). A single-page, sectioned form prefilled from
- * the existing profile that submits via `PUT /api/profile/creator` — reusing the
+ * the existing profile that submits via `PUT /api/profile/creator`, reusing the
  * onboarding form model (`creatorFormFromProfile` / `toCreatorPayload`) so the
  * payload + validation stay identical to onboarding.
  */
@@ -107,7 +107,7 @@ export function CreatorProfileForm({ profile }: { profile: CreatorProfile }) {
               <TogglePill
                 key={n}
                 label={n}
-                emoji={nicheEmoji(n)}
+                icon={nicheIcon(n)}
                 selected={form.niche.includes(n)}
                 onClick={() => patch({ niche: toggle(form.niche, n) })}
               />
@@ -122,7 +122,7 @@ export function CreatorProfileForm({ profile }: { profile: CreatorProfile }) {
 
       <Section
         title="Social handles"
-        description="Connect at least one platform — add a handle and its profile link."
+        description="Connect at least one platform: add a handle and its profile link."
       >
         <SocialHandlesStep
           social={form.social}
@@ -145,7 +145,7 @@ export function CreatorProfileForm({ profile }: { profile: CreatorProfile }) {
         </div>
       </Section>
 
-      <Section title="Portfolio" description={`Show your best work — up to ${MAX_PORTFOLIO} pieces.`}>
+      <Section title="Portfolio" description={`Show your best work, up to ${MAX_PORTFOLIO} pieces.`}>
         <PortfolioUploader
           items={form.portfolio}
           onChange={(portfolio) => patch({ portfolio })}

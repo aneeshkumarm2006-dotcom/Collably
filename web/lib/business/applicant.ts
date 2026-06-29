@@ -2,7 +2,7 @@
  * Derive the business-facing view of an applicant from a `PublicApplication`
  * (Phase 8). The applicant lists/cards need the creator's display name (on the
  * joined `creatorUser`), a headline social handle + reach (on the joined
- * `creator` profile's `socialHandles`), niche, city, and portfolio — assembled
+ * `creator` profile's `socialHandles`), niche, city, and portfolio, assembled
  * here once so the applications, collabs, and submissions screens stay identical.
  */
 import type { PublicApplication } from '@/lib/api/types';
@@ -22,7 +22,7 @@ export interface ApplicantView {
   profileHref?: string;
 }
 
-/** The platform with the largest audience — the handle a business sees first. */
+/** The platform with the largest audience: the handle a business sees first. */
 function headlineHandle(handles: CreatorSocialHandles): { handle: string; count?: number } | null {
   const candidates = [
     handles.instagram && {

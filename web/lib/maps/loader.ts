@@ -6,7 +6,7 @@
  * `MapsUnconfiguredError`, and callers fall back to a textual location card / the
  * city-only flow rather than erroring.
  *
- * The API key is a NEXT_PUBLIC_ value by necessity — the Maps SDK runs in the
+ * The API key is a NEXT_PUBLIC_ value by necessity: the Maps SDK runs in the
  * browser, so the key necessarily ships in the build (Google's recommended
  * protection is HTTP-referrer restrictions on the key, configured in Phase 15).
  */
@@ -32,7 +32,7 @@ export function isMapsConfigured(): boolean {
 let loadPromise: Promise<typeof google.maps> | null = null;
 
 /**
- * Load Maps JS, returning the `google.maps` namespace. Idempotent — repeated
+ * Load Maps JS, returning the `google.maps` namespace. Idempotent: repeated
  * calls share one `<script>` and one promise. Rejects with `MapsUnconfiguredError`
  * if no key is set (so callers can branch to the unconfigured UI without a probe).
  */

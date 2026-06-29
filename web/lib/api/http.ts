@@ -65,7 +65,7 @@ export function createHttpClient(clientConfig: HttpClientConfig): HttpClient {
     const hasBody = body !== undefined && body !== null;
     if (hasBody) headers.set('content-type', 'application/json');
 
-    // `cache` and `next.revalidate` are mutually exclusive in Next's fetch — only
+    // `cache` and `next.revalidate` are mutually exclusive in Next's fetch, so only
     // pass `next` when we're not forcing a `cache` mode (and vice-versa).
     const cacheMode = options?.cache ?? (options?.next || defaultNext ? undefined : defaultCache);
     const nextHint = options?.next ?? (cacheMode ? undefined : defaultNext);
@@ -81,7 +81,7 @@ export function createHttpClient(clientConfig: HttpClientConfig): HttpClient {
         signal: options?.signal,
       });
     } catch (err) {
-      // Network/abort failure — surface as a status-0 ApiError (preserves aborts).
+      // Network/abort failure: surface as a status-0 ApiError (preserves aborts).
       if (err instanceof DOMException && err.name === 'AbortError') throw err;
       throw toApiError(0, { message: (err as Error)?.message });
     }

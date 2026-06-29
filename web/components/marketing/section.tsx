@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
 
-/** Centered max-width container — the marketing/public-app horizontal rhythm. */
+/** Centered max-width container for the marketing/public-app horizontal rhythm. */
 export function Container({
   children,
   className,

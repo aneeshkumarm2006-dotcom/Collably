@@ -129,7 +129,7 @@ describe('<ConfirmModal>', () => {
     expect(screen.getByText('Boom')).toBeInTheDocument();
   });
 
-  it('renders the same content inside a dark-mode wrapper (jsdom has no CSS — structure only)', () => {
+  it('renders the same content inside a dark-mode wrapper (jsdom has no CSS: structure only)', () => {
     // jsdom does not apply CSS, so "dark mode" here only asserts that the
     // component renders identical content/structure without crashing under a
     // `.dark` ancestor. That is the honest extent of jsdom dark-mode testing.

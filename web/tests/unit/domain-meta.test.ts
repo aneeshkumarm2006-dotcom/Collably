@@ -1,75 +1,89 @@
 import { describe, expect, it } from 'vitest';
+import {
+  BookOpen,
+  Coffee,
+  CupSoda,
+  Gift,
+  Laugh,
+  Palette,
+  Sparkles,
+  Tag,
+  TrendingUp,
+  UtensilsCrossed,
+  Utensils,
+  Flower2,
+  Smartphone,
+  Ticket,
+  ConciergeBell,
+  Wallet,
+} from 'lucide-react';
 import type { Category, Niche, RewardType } from '@/lib/shared';
 import { CATEGORIES, NICHES, REWARD_TYPES } from '@/lib/shared';
-import {
-  categoryEmoji,
-  categoryGradient,
-  nicheEmoji,
-  rewardEmoji,
-} from '@/lib/domain-meta';
+import { categoryGradient, categoryIcon, nicheIcon, rewardIcon } from '@/lib/domain-meta';
 
-describe('rewardEmoji', () => {
-  it('maps every known reward type to a non-empty glyph', () => {
+describe('rewardIcon', () => {
+  it('maps every known reward type to an icon component', () => {
     for (const type of REWARD_TYPES) {
-      expect(rewardEmoji(type)).toBeTruthy();
+      expect(typeof rewardIcon(type)).toBe('object');
+      expect(rewardIcon(type)).toBeTruthy();
     }
   });
 
-  it('returns the specific glyph for known reward types', () => {
-    expect(rewardEmoji('Product')).toBe('🎁');
-    expect(rewardEmoji('Experience')).toBe('✨');
-    expect(rewardEmoji('Voucher')).toBe('🎟️');
-    expect(rewardEmoji('Service')).toBe('🛎️');
-    expect(rewardEmoji('Cash+Product')).toBe('💰');
+  it('returns the specific icon for known reward types', () => {
+    expect(rewardIcon('Product')).toBe(Gift);
+    expect(rewardIcon('Experience')).toBe(Sparkles);
+    expect(rewardIcon('Voucher')).toBe(Ticket);
+    expect(rewardIcon('Service')).toBe(ConciergeBell);
+    expect(rewardIcon('Cash+Product')).toBe(Wallet);
   });
 
-  it('falls back to the gift glyph for an unknown reward type', () => {
-    expect(rewardEmoji('Mystery' as unknown as RewardType)).toBe('🎁');
-    expect(rewardEmoji('' as unknown as RewardType)).toBe('🎁');
+  it('falls back to the gift icon for an unknown reward type', () => {
+    expect(rewardIcon('Mystery' as unknown as RewardType)).toBe(Gift);
+    expect(rewardIcon('' as unknown as RewardType)).toBe(Gift);
   });
 });
 
-describe('categoryEmoji', () => {
-  it('maps every known category to a non-empty glyph', () => {
+describe('categoryIcon', () => {
+  it('maps every known category to an icon component', () => {
     for (const category of CATEGORIES) {
-      expect(categoryEmoji(category)).toBeTruthy();
+      expect(categoryIcon(category)).toBeTruthy();
     }
   });
 
-  it('returns the specific glyph for known categories', () => {
-    expect(categoryEmoji('Restaurant')).toBe('🍽️');
-    expect(categoryEmoji('Cafe')).toBe('☕');
-    expect(categoryEmoji('Food & Beverage')).toBe('🥤');
-    expect(categoryEmoji('Tech')).toBe('📱');
-    expect(categoryEmoji('Other')).toBe('🏷️');
+  it('returns the specific icon for known categories', () => {
+    expect(categoryIcon('Restaurant')).toBe(UtensilsCrossed);
+    expect(categoryIcon('Cafe')).toBe(Coffee);
+    expect(categoryIcon('Food & Beverage')).toBe(CupSoda);
+    expect(categoryIcon('Tech')).toBe(Smartphone);
+    expect(categoryIcon('Other')).toBe(Tag);
   });
 
-  it('falls back to the tag glyph for unknown / empty categories', () => {
-    expect(categoryEmoji('Aerospace')).toBe('🏷️');
-    expect(categoryEmoji('')).toBe('🏷️');
-    expect(categoryEmoji('restaurant')).toBe('🏷️'); // case-sensitive lookup
+  it('falls back to the tag icon for unknown / empty categories', () => {
+    expect(categoryIcon('Aerospace')).toBe(Tag);
+    expect(categoryIcon('')).toBe(Tag);
+    expect(categoryIcon('restaurant')).toBe(Tag); // case-sensitive lookup
   });
 });
 
-describe('nicheEmoji', () => {
-  it('maps every known niche to a non-empty glyph', () => {
+describe('nicheIcon', () => {
+  it('maps every known niche to an icon component', () => {
     for (const niche of NICHES) {
-      expect(nicheEmoji(niche)).toBeTruthy();
+      expect(nicheIcon(niche)).toBeTruthy();
     }
   });
 
-  it('returns the specific glyph for known niches', () => {
-    expect(nicheEmoji('Food')).toBe('🍜');
-    expect(nicheEmoji('Lifestyle')).toBe('🌸');
-    expect(nicheEmoji('Comedy')).toBe('😂');
-    expect(nicheEmoji('Art & Design')).toBe('🎨');
-    expect(nicheEmoji('Business & Finance')).toBe('📈');
+  it('returns the specific icon for known niches', () => {
+    expect(nicheIcon('Food')).toBe(Utensils);
+    expect(nicheIcon('Lifestyle')).toBe(Flower2);
+    expect(nicheIcon('Comedy')).toBe(Laugh);
+    expect(nicheIcon('Art & Design')).toBe(Palette);
+    expect(nicheIcon('Business & Finance')).toBe(TrendingUp);
   });
 
-  it('falls back to the sparkle glyph for unknown / empty niches', () => {
-    expect(nicheEmoji('Astrology')).toBe('✨');
-    expect(nicheEmoji('')).toBe('✨');
-    expect(nicheEmoji('food')).toBe('✨'); // case-sensitive lookup
+  it('falls back to the sparkles icon for unknown / empty niches', () => {
+    expect(nicheIcon('Astrology')).toBe(Sparkles);
+    expect(nicheIcon('')).toBe(Sparkles);
+    expect(nicheIcon('food')).toBe(Sparkles); // case-sensitive lookup
   });
 });
 

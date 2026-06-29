@@ -1,5 +1,5 @@
 /**
- * GET /api/auth/me — the current session user (or `{ user: null }` for guests).
+ * GET /api/auth/me: the current session user (or `{ user: null }` for guests).
  * Used by `AuthProvider.refresh()` to re-sync client state after actions that
  * change it (e.g. completing onboarding, profile approval). Reads the httpOnly
  * cookie via the shared `getSession()` so it transparently benefits from the

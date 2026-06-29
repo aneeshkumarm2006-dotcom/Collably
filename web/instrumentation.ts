@@ -11,6 +11,6 @@ export async function register() {
     // `bypass` lets non-API requests (Next assets, Cloudinary images) pass through.
     server.listen({ onUnhandledRequest: 'bypass' });
     // eslint-disable-next-line no-console
-    console.log('[mocks] MSW node server started — running against in-memory data.');
+    console.log('[mocks] MSW node server started, running against in-memory data.');
   }
 }

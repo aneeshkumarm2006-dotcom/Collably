@@ -17,7 +17,7 @@ export default async function ResetPasswordPage({
 
   return (
     <AuthLayout
-      tagline="Almost there — set a new password."
+      tagline="Almost there. Set a new password."
       subtitle="Pick a strong password and we'll log you straight back in."
       proof={[
         { value: '8,500+', label: 'creators' },

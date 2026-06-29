@@ -20,7 +20,7 @@ export default function Post() {
     <>
       <p>
         A gifting campaign is the simplest way to get authentic, creator-made content without an
-        agency retainer: you offer a reward — a product, an experience, a voucher — and creators apply
+        agency retainer: you offer a reward (a product, an experience, a voucher) and creators apply
         to collaborate. Done well, you get content that converts and a roster of creators who genuinely
         like your brand. Here&apos;s how to run your first one.
       </p>
@@ -28,7 +28,7 @@ export default function Post() {
       <h2>1. Start with the outcome</h2>
       <p>
         Before you write a word, decide what success looks like. More footfall this month? A library of
-        UGC for your ads? Awareness for a new launch? Your goal shapes everything — the reward, the
+        UGC for your ads? Awareness for a new launch? Your goal shapes everything: the reward, the
         deliverables, and which creators you accept.
       </p>
 
@@ -36,7 +36,7 @@ export default function Post() {
       <p>
         The strongest campaigns make the value obvious and generous relative to the ask. State the
         reward and its dollar value up front. A tasting menu for two, a full product set, a
-        three-month membership — concrete and clearly worth a creator&apos;s time.
+        three-month membership: concrete and clearly worth a creator&apos;s time.
       </p>
       <blockquote>
         If you wouldn&apos;t apply for it yourself, it&apos;s probably not compelling enough.
@@ -46,11 +46,11 @@ export default function Post() {
       <p>Vague briefs get vague content. Spell out exactly what you need:</p>
       <ul>
         <li>Platform and format (e.g. 1 Instagram Reel + 2 Stories);</li>
-        <li>Must-haves — tag your handle, use a hashtag, feature a specific product;</li>
+        <li>Must-haves, such as tagging your handle, using a hashtag, or featuring a specific product;</li>
         <li>A realistic deadline so creators can plan their shoot.</li>
       </ul>
       <p>
-        Leave room for creativity within those guardrails — creators know their audience better than
+        Leave room for creativity within those guardrails. Creators know their audience better than
         anyone, and the content performs best when it sounds like them.
       </p>
 
@@ -73,12 +73,12 @@ export default function Post() {
         <li><strong>Reward:</strong> your hero product or signature experience, value stated.</li>
         <li><strong>Deliverables:</strong> 1 Reel + 2 Stories, tag + hashtag, 7-day deadline.</li>
         <li><strong>Open to:</strong> all creators (or a modest minimum if you need reach).</li>
-        <li><strong>Goal:</strong> 3–5 pieces of UGC you can reshare and run as ads.</li>
+        <li><strong>Goal:</strong> 3-5 pieces of UGC you can reshare and run as ads.</li>
       </ol>
 
       <p>
         Keep it focused, make the value clear, and let creators do what they do best. Your first
-        campaign doesn&apos;t need to be perfect — it needs to be live.
+        campaign doesn&apos;t need to be perfect. It needs to be live.
       </p>
     </>
   );

@@ -3,7 +3,7 @@
  * platforms, content types, reward types, statuses) live in the shared package
  * and are re-exported here so a screen has one import site; the web-only pieces
  * below (follower buckets, sort options, status tab groupings) mirror the
- * backend's own definitions verbatim — keep them in lockstep with
+ * backend's own definitions verbatim. Keep them in lockstep with
  * `backend/src/routes/campaigns.ts` and the shared status enums.
  */
 import {
@@ -63,12 +63,12 @@ export type FollowerBucket = (typeof FOLLOWER_BUCKETS)[number];
 /** Human labels for each bucket (filter chips). */
 export const FOLLOWER_BUCKET_LABELS: Record<FollowerBucket, string> = {
   under1k: 'Under 1K',
-  '1k-10k': '1K – 10K',
-  '10k-50k': '10K – 50K',
+  '1k-10k': '1K - 10K',
+  '10k-50k': '10K - 50K',
   '50k+': '50K+',
   nano: 'Nano (<10K)',
-  micro: 'Micro (10K–50K)',
-  mid: 'Mid (50K–200K)',
+  micro: 'Micro (10K-50K)',
+  mid: 'Mid (50K-200K)',
   macro: 'Macro (200K+)',
 };
 

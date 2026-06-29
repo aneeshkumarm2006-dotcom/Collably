@@ -37,7 +37,7 @@ let tempSeq = 0;
 
 // --- Cache prefix helpers -----------------------------------------------------
 
-/** All conversation *list* queries (any params) — for targeted invalidation. */
+/** All conversation *list* queries (any params), for targeted invalidation. */
 const listKeyPrefix = [...queryKeys.conversations.all, 'list'] as const;
 
 // --- Queries ------------------------------------------------------------------
@@ -120,7 +120,7 @@ export function useMarkConversationRead(conversationId: string) {
 /**
  * Insert a message into a thread's cached history (prepend, newest-first), or
  * replace it in place if its `_id` is already present (e.g. a `readAt` update).
- * No-op when the thread query isn't mounted — the thread refetches on open.
+ * No-op when the thread query isn't mounted; the thread refetches on open.
  */
 export function upsertMessage(qc: QueryClient, conversationId: string, message: Message): void {
   qc.setQueryData<MessagesData>(queryKeys.conversations.messages(conversationId), (prev) => {

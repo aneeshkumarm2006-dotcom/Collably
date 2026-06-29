@@ -146,7 +146,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       <div className="mt-16">
         <CtaBand
           title="Ready to start a collab?"
-          subtitle="Join Collably free — as a creator or a business — and put these ideas to work."
+          subtitle="Join Collably free, as a creator or a business, and put these ideas to work."
           primary={{ label: 'Get started', href: '/signup' }}
           secondary={{ label: 'Browse campaigns', href: '/explore' }}
         />

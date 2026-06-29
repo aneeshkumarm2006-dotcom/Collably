@@ -1,5 +1,5 @@
 /**
- * MSW request handlers — the in-memory backend used when
+ * MSW request handlers: the in-memory backend used when
  * `NEXT_PUBLIC_USE_MOCKS=true`. Each handler mirrors the shape and status codes
  * of the real route in `backend/src/routes/*` and reads/writes the `mocks/db`
  * store. Authed handlers resolve the caller from a `Bearer mock.<userId>` token
@@ -168,7 +168,7 @@ export const handlers = [
     const id = viewerId(request);
     if (!id) return err(401, 'Authentication required');
     const profile = getDb().businesses.find((b) => b.userId === id);
-    return profile ? ok({ profile }) : err(404, 'Business profile not found — complete onboarding first');
+    return profile ? ok({ profile }) : err(404, 'Business profile not found. Complete onboarding first');
   }),
   http.put(u('/profile/business'), async ({ request }) => {
     const id = viewerId(request);
@@ -208,7 +208,7 @@ export const handlers = [
     const id = viewerId(request);
     if (!id) return err(401, 'Authentication required');
     const profile = getDb().creators.find((c) => c.userId === id);
-    return profile ? ok({ profile }) : err(404, 'Creator profile not found — complete onboarding first');
+    return profile ? ok({ profile }) : err(404, 'Creator profile not found. Complete onboarding first');
   }),
   http.put(u('/profile/creator'), async ({ request }) => {
     const id = viewerId(request);

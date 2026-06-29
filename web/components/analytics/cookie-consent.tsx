@@ -9,7 +9,7 @@ import { useConsent } from './use-consent';
 /**
  * A minimal, accessible cookie-consent banner. It only renders when the
  * configured analytics provider actually sets cookies (GA4) AND the visitor
- * hasn't decided yet — cookieless setups (Plausible / analytics off) never show
+ * hasn't decided yet. Cookieless setups (Plausible / analytics off) never show
  * it. Choosing "Accept" loads the analytics script; "Decline" keeps it off.
  */
 export function CookieConsent() {

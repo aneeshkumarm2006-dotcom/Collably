@@ -10,7 +10,7 @@ import { Prose } from '@/components/marketing/prose';
 export const metadata: Metadata = buildMetadata({
   title: 'About',
   description:
-    'Collably is the local collab marketplace built to make creator–brand partnerships fair, transparent, and effortless — for creators of every size and the businesses around them.',
+    'Collably is the local collab marketplace built to make creator and brand partnerships fair, transparent, and effortless, for creators of every size and the businesses around them.',
   path: '/about',
   ogEyebrow: 'About',
 });
@@ -60,7 +60,7 @@ export default function AboutPage() {
           </h1>
           <p className="mx-auto mt-6 max-w-xl text-pretty text-lg leading-relaxed text-white/70">
             We&apos;re building the marketplace where local businesses and creators of every size
-            can work together — without agencies, gatekeeping, or guesswork.
+            can work together, without agencies, gatekeeping, or guesswork.
           </p>
         </Container>
       </header>
@@ -72,7 +72,7 @@ export default function AboutPage() {
           <p>
             Brilliant local creators kept getting ignored by agencies for not having &quot;enough&quot;
             followers. Meanwhile, small businesses were quoted thousands a month for content that
-            didn&apos;t feel authentic. Both sides wanted the same thing — genuine collaborations —
+            didn&apos;t feel authentic. Both sides wanted the same thing, genuine collaborations,
             but there was no fair, transparent place to make them happen.
           </p>
           <p>
@@ -83,7 +83,7 @@ export default function AboutPage() {
           </p>
           <h2>What we believe</h2>
           <p>
-            The best content comes from people who actually love a brand — not from whoever has the
+            The best content comes from people who actually love a brand, not from whoever has the
             biggest audience. When the value is clear and the process is fair, both sides win, and the
             content is better for it.
           </p>

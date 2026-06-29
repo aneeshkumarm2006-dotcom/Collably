@@ -3,7 +3,7 @@ import Image from 'next/image';
 
 import type { PublicApplication } from '@/lib/api/types';
 import { cn } from '@/lib/utils';
-import { categoryEmoji, categoryGradient } from '@/lib/domain-meta';
+import { categoryIcon, categoryGradient } from '@/lib/domain-meta';
 import { formatDate } from '@/lib/format';
 import { RewardPill } from '@/components/shared/reward-pill';
 import { StatusBadge } from '@/components/shared/status-badge';
@@ -28,6 +28,7 @@ export function CreatorApplicationRow({
   const business = campaign?.business ?? application.business;
   const dimmed = ['Rejected', 'Withdrawn', 'Cancelled'].includes(application.status);
   const date = dateLabel ?? `Applied ${formatDate(application.createdAt)}`;
+  const CategoryIcon = categoryIcon(campaign?.category ?? '');
 
   return (
     <div
@@ -43,8 +44,8 @@ export function CreatorApplicationRow({
         {campaign?.coverImage ? (
           <Image src={campaign.coverImage} alt="" fill sizes="84px" className="object-cover" />
         ) : (
-          <span className="absolute inset-0 flex items-center justify-center text-xl opacity-90">
-            {categoryEmoji(campaign?.category ?? '')}
+          <span className="absolute inset-0 flex items-center justify-center opacity-90">
+            <CategoryIcon className="h-6 w-6 text-white/85" />
           </span>
         )}
       </div>

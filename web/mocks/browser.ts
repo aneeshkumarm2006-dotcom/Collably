@@ -1,5 +1,5 @@
 /**
- * MSW browser worker — OPTIONAL. In this app's architecture the browser never
+ * MSW browser worker: OPTIONAL. In this app's architecture the browser never
  * calls the backend directly (it goes through the same-origin proxy, intercepted
  * node-side in `mocks/server.ts`), so this worker isn't started by default. It's
  * kept for the case where a future feature fetches the backend straight from the

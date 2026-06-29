@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 /**
- * Theme toggle — three-way system/light/dark, mirroring the mobile app's theme
+ * Theme toggle: three-way system/light/dark, mirroring the mobile app's theme
  * intent (`mobile/store/themeStore.ts`). The sun/moon swap is CSS-only (no JS),
  * so it's correct before hydration; the active checkmark needs the client value.
  */

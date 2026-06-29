@@ -9,7 +9,7 @@ import { ContactForm } from '@/components/marketing/contact-form';
 export const metadata: Metadata = buildMetadata({
   title: 'Contact',
   description:
-    'Get in touch with the Collably team — questions about creator collabs, running campaigns, press, or support. We usually reply within one business day.',
+    'Get in touch with the Collably team about creator collabs, running campaigns, press, or support. We usually reply within one business day.',
   path: '/contact',
   ogEyebrow: 'Contact',
 });

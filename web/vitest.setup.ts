@@ -1,5 +1,5 @@
 /**
- * Global test setup for the Vitest (jsdom) suite — Phase 14.
+ * Global test setup for the Vitest (jsdom) suite (Phase 14).
  *
  * Adds jest-dom matchers, cleans the DOM between tests, stubs the Next.js
  * runtime modules our shared components touch (`next/image`, `next/link`,
@@ -18,7 +18,7 @@ afterEach(() => {
   cleanup();
 });
 
-// `server-only` throws if imported outside a Server Component — neutralize it so
+// `server-only` throws if imported outside a Server Component, so neutralize it
 // shared modules that re-export across the server/client boundary still import.
 vi.mock('server-only', () => ({}));
 

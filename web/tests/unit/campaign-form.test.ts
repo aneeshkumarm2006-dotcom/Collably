@@ -75,7 +75,7 @@ describe('emptyCampaignForm', () => {
   });
 });
 
-describe('campaignFormFromCampaign — prefill', () => {
+describe('campaignFormFromCampaign: prefill', () => {
   it('maps every field from a fully-populated campaign', () => {
     const c = makeCampaign({
       title: 'Brunch Collab',
@@ -175,7 +175,7 @@ describe('campaignFormFromCampaign — prefill', () => {
   });
 });
 
-describe('validateCampaignForm — required fields', () => {
+describe('validateCampaignForm: required fields', () => {
   it('returns no errors for a valid form', () => {
     expect(validateCampaignForm(validForm())).toEqual({});
   });
@@ -203,7 +203,7 @@ describe('validateCampaignForm — required fields', () => {
   });
 });
 
-describe('validateCampaignForm — title length', () => {
+describe('validateCampaignForm: title length', () => {
   it('accepts a title exactly at TITLE_MAX', () => {
     expect(validateCampaignForm(validForm({ title: 'a'.repeat(TITLE_MAX) })).title).toBeUndefined();
   });
@@ -214,7 +214,7 @@ describe('validateCampaignForm — title length', () => {
   });
 });
 
-describe('validateCampaignForm — estimatedValue', () => {
+describe('validateCampaignForm: estimatedValue', () => {
   const value = (estimatedValue: string) => validForm({ reward: { type: 'Experience', description: 'x', estimatedValue } });
 
   it('accepts a blank, zero, or positive amount', () => {
@@ -229,7 +229,7 @@ describe('validateCampaignForm — estimatedValue', () => {
   });
 });
 
-describe('validateCampaignForm — minFollowers', () => {
+describe('validateCampaignForm: minFollowers', () => {
   const min = (minFollowers: string) => validForm({ minFollowers });
 
   it('accepts a blank, zero, or whole positive number', () => {
@@ -245,7 +245,7 @@ describe('validateCampaignForm — minFollowers', () => {
   });
 });
 
-describe('validateCampaignForm — deliverables', () => {
+describe('validateCampaignForm: deliverables', () => {
   it('flags an empty deliverables list', () => {
     expect(validateCampaignForm(validForm({ deliverables: [] })).deliverables).toBe('Add at least one deliverable.');
   });

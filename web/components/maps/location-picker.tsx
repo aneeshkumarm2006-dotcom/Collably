@@ -16,7 +16,7 @@ const DEFAULT_CENTER: google.maps.LatLngLiteral = { lat: 56.13, lng: -106.35 };
 /**
  * Exact-pin editor for the campaign form (Phase 11, On-Site Location feature).
  * Forward-geocodes a typed address via `/api/geocoding/search`, drops a draggable
- * pin, and reverse-geocodes drags via `/api/geocoding/reverse` — all through the
+ * pin, and reverse-geocodes drags via `/api/geocoding/reverse`, all through the
  * same-origin proxy so the Google key stays server-side. Fully graceful: when
  * geocoding/maps aren't configured (the default here) the business just keeps the
  * coarse city above; an existing pin (on edit) is preserved and shown as text.
@@ -74,7 +74,7 @@ export function LocationPicker({
         return;
       }
       if (!res.result) {
-        setHint('No match for that address — try adding a city or postal code.');
+        setHint('No match for that address. Try adding a city or postal code.');
         return;
       }
       onChange({

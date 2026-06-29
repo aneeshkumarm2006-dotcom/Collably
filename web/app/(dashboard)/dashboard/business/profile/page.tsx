@@ -54,7 +54,7 @@ export default async function BusinessProfilePage() {
       {session && !session.approved && (
         <div className="mb-5 flex items-center gap-3 rounded-lg border border-warn/30 bg-warn-soft px-4 py-3 text-sm text-ink">
           <Clock className="h-4 w-4 shrink-0 text-warn" />
-          Your business is under review. You can edit your profile now — publishing campaigns unlocks
+          Your business is under review. You can edit your profile now; publishing campaigns unlocks
           once an admin verifies you.
         </div>
       )}

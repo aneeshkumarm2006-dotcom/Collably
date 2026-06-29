@@ -22,11 +22,11 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 
-/** Creator-tier (follower bucket) options — website discovery concept. */
+/** Creator-tier (follower bucket) options: website discovery concept. */
 export const CREATOR_TIERS = [
   'Open to all',
-  'Nano (1K–10K)',
-  'Micro (10K–50K)',
+  'Nano (1K-10K)',
+  'Micro (10K-50K)',
   'Mid (50K+)',
 ] as const;
 
@@ -80,7 +80,7 @@ function CheckRow({
 }
 
 /**
- * FilterSidebar — explore filters as an accordion (category / location / reward
+ * FilterSidebar: explore filters as an accordion (category / location / reward
  * / platform / creator-tier). Controlled via `value` + `onChange`. Pair with
  * `FilterSidebarSheet` for the mobile drawer.
  */
@@ -199,7 +199,7 @@ export function FilterSidebar({ value, onChange, categoryCounts, className }: Fi
   );
 }
 
-/** Mobile filter drawer — a "Filters" button that opens the sidebar in a Sheet. */
+/** Mobile filter drawer: a "Filters" button that opens the sidebar in a Sheet. */
 export function FilterSidebarSheet(props: FilterSidebarProps & { triggerClassName?: string }) {
   const { triggerClassName, ...sidebar } = props;
   return (

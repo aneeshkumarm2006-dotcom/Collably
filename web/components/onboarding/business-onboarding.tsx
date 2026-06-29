@@ -9,7 +9,7 @@ import { clientApi } from '@/lib/api/client';
 import { errorMessage } from '@/lib/api/errors';
 import { CATEGORIES } from '@/lib/constants';
 import type { Category } from '@/lib/shared';
-import { categoryEmoji } from '@/lib/domain-meta';
+import { categoryIcon } from '@/lib/domain-meta';
 import { type BusinessForm, emptyBusinessForm, toBusinessPayload } from '@/lib/onboarding/business';
 import {
   OnboardingShell,
@@ -87,7 +87,7 @@ export function BusinessOnboarding({ businessName }: { businessName: string }) {
     return (
       <OnboardingCelebration
         title={`You're all set${form.businessName.trim() ? `, ${form.businessName.trim()}` : ''}!`}
-        message="Your profile is ready — post your first campaign and start finding creators."
+        message="Your profile is ready. Post your first campaign and start finding creators."
         ctaLabel="Go to dashboard"
         loading={navigating}
         onContinue={() => {
@@ -133,7 +133,7 @@ export function BusinessOnboarding({ businessName }: { businessName: string }) {
                 <SelectCard
                   key={c}
                   label={c}
-                  emoji={categoryEmoji(c)}
+                  icon={categoryIcon(c)}
                   selected={form.category === c}
                   onClick={() => patch({ category: c })}
                 />
@@ -183,7 +183,7 @@ export function BusinessOnboarding({ businessName }: { businessName: string }) {
 
       {index === 2 && (
         <div>
-          <StepIntro title="Connect your socials" description="All optional — add what you have." />
+          <StepIntro title="Connect your socials" description="All optional. Add what you have." />
           <div className="space-y-3">
             <SocialLinkInput
               icon={<Instagram className="h-4 w-4" />}

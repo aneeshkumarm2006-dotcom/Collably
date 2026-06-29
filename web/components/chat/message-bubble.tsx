@@ -18,7 +18,7 @@ export function MessageBubble({
 }: {
   message: Message;
   mine: boolean;
-  /** Same sender as the message just above — tighten spacing, drop the tail. */
+  /** Same sender as the message just above: tighten spacing, drop the tail. */
   tight?: boolean;
 }) {
   const pending = message._id.startsWith('temp-');

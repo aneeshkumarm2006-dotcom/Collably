@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 
 /**
- * LocationFields — City / Region / Country autocompletes wired to the shared
+ * LocationFields: City / Region / Country autocompletes wired to the shared
  * Canada-first location data (`@/lib/locations`, ported from `mobile`). Choosing
  * a city from the suggestions auto-fills its region + country; every field still
  * accepts free text, so anything not listed can be typed. Region + country are

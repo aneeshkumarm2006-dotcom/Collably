@@ -5,12 +5,12 @@ import { Calendar, Check, MapPin } from 'lucide-react';
 import type { CampaignReward } from '@/lib/shared';
 import { cn } from '@/lib/utils';
 import { formatDateShort } from '@/lib/format';
-import { categoryEmoji, categoryGradient } from '@/lib/domain-meta';
+import { categoryIcon, categoryGradient } from '@/lib/domain-meta';
 import { Avatar } from '@/components/shared/avatar';
 import { RewardPill } from '@/components/shared/reward-pill';
 
 /**
- * View-model for a campaign card — a denormalized slice of `Campaign` + its
+ * View-model for a campaign card: a denormalized slice of `Campaign` + its
  * business, with the card-only bits (spotsLeft, applicationStatus) the API
  * computes per-viewer. Phase 6 maps `Campaign` → this; the styleguide builds it
  * directly.
@@ -49,12 +49,13 @@ function Chip({ children }: { children: React.ReactNode }) {
 }
 
 const APPLIED_OVERLAY = {
-  applied: { label: '✓ Applied', className: 'bg-success text-white' },
-  accepted: { label: '✓ Accepted', className: 'bg-brand text-white' },
+  applied: { label: 'Applied', className: 'bg-success text-white' },
+  accepted: { label: 'Accepted', className: 'bg-brand text-white' },
   rejected: { label: 'Not selected', className: 'bg-muted text-white' },
 } as const;
 
 function Cover({ campaign, compact }: { campaign: CampaignCardData; compact?: boolean }) {
+  const CategoryIcon = categoryIcon(campaign.category);
   return (
     <div
       className={cn(
@@ -75,15 +76,15 @@ function Cover({ campaign, compact }: { campaign: CampaignCardData; compact?: bo
           )}
         />
       ) : (
-        <span className="absolute inset-0 flex items-center justify-center text-3xl opacity-90">
-          {categoryEmoji(campaign.category)}
+        <span className="absolute inset-0 flex items-center justify-center opacity-90">
+          <CategoryIcon className="h-10 w-10 text-white/85" />
         </span>
       )}
 
       {!compact && (
         <div className="pointer-events-none absolute inset-0 flex items-start justify-between p-3">
           <span className="inline-flex items-center gap-1 rounded-xs border border-hair bg-card px-2.5 py-1 font-mono text-[11px] font-medium uppercase tracking-wide text-ink">
-            {categoryEmoji(campaign.category)} {campaign.category}
+            <CategoryIcon className="h-3 w-3" /> {campaign.category}
           </span>
           {typeof campaign.spotsLeft === 'number' && (
             <span

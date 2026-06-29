@@ -46,7 +46,7 @@ function collabBucket(app: PublicApplication): Bucket {
   return 'Awaiting';
 }
 
-/** "1× Instagram Reel · 1× Story" — compact deliverables summary. */
+/** "1× Instagram Reel · 1× Story": compact deliverables summary. */
 function deliverableSummary(deliverables?: CampaignDeliverable[]): string {
   if (!deliverables || deliverables.length === 0) return 'Content deliverables';
   return deliverables.map((d) => `${d.quantity}× ${d.platform} ${d.contentType}`).join(' · ');

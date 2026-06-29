@@ -1,9 +1,9 @@
 /**
- * Client-side auth validation — zod schemas that mirror the backend's
+ * Client-side auth validation: zod schemas that mirror the backend's
  * `registerSchema` / `loginSchema` / `forgotPasswordSchema` / `resetPasswordSchema`
  * (`app/backend/src/routes/auth.ts`) so the forms catch the same mistakes before a
  * round-trip and surface inline field errors. The backend stays the source of
- * truth — these only avoid obviously-bad submissions.
+ * truth; these only avoid obviously-bad submissions.
  *
  * Framework-neutral (no `'use client'`) so server route handlers could reuse them
  * too; the form components import them directly.
@@ -15,7 +15,7 @@ export const MIN_PASSWORD_LENGTH = 8;
 
 const email = z.string().trim().min(1, 'Email is required').email('Enter a valid email');
 
-/** New-password rule shared by register + reset (backend: 8–128 chars). */
+/** New-password rule shared by register + reset (backend: 8-128 chars). */
 const newPassword = z
   .string()
   .min(MIN_PASSWORD_LENGTH, `Password must be at least ${MIN_PASSWORD_LENGTH} characters`)

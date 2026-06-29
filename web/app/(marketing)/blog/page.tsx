@@ -10,7 +10,7 @@ import { PostCard } from '@/components/blog/post-card';
 export const metadata: Metadata = buildMetadata({
   title: 'Blog',
   description:
-    'Guides, playbooks, and ideas on creator collabs, gifting campaigns, and building a brand with local creators — from the Collably team.',
+    'Guides, playbooks, and ideas on creator collabs, gifting campaigns, and building a brand with local creators, from the Collably team.',
   path: '/blog',
   ogEyebrow: 'Blog',
 });
@@ -29,7 +29,7 @@ export default function BlogIndexPage() {
             Ideas for creators &amp; brands
           </h1>
           <p className="mt-4 max-w-xl text-pretty text-lg text-muted">
-            Playbooks and perspectives on running collabs that work — for both sides of the
+            Playbooks and perspectives on running collabs that work, for both sides of the
             marketplace.
           </p>
         </div>

@@ -4,7 +4,7 @@ export const meta: BlogPostMeta = {
   slug: 'why-follower-minimums-are-broken',
   title: 'Why follower minimums are broken (and what brands should look at instead)',
   description:
-    'Follower counts are a vanity metric that hides your best creators. Here is what actually predicts great collab content — and how to find it.',
+    'Follower counts are a vanity metric that hides your best creators. Here is what actually predicts great collab content, and how to find it.',
   category: 'Creators',
   tags: ['creators', 'ugc', 'strategy'],
   author: { name: 'The Collably Team', role: 'Collably' },
@@ -21,7 +21,7 @@ export default function Post() {
       <p>
         For years, the first question every brand asked a creator was: &quot;How many followers do you
         have?&quot; It&apos;s the wrong question. A follower count tells you how many people clicked
-        &quot;follow&quot; at some point — not how many will watch, trust, or act on a recommendation
+        &quot;follow&quot; at some point, not how many will watch, trust, or act on a recommendation
         today.
       </p>
 
@@ -34,15 +34,15 @@ export default function Post() {
       <p>The follower number hides the three things that actually matter:</p>
       <ul>
         <li>
-          <strong>Engagement</strong> — do people comment, save, and share? That&apos;s a signal of
+          <strong>Engagement:</strong> do people comment, save, and share? That&apos;s a signal of
           real attention.
         </li>
         <li>
-          <strong>Relevance</strong> — is the audience the people you actually want to reach (right
+          <strong>Relevance:</strong> is the audience the people you actually want to reach (right
           niche, right city)?
         </li>
         <li>
-          <strong>Craft</strong> — is the content well-shot, on-brand, and genuinely persuasive?
+          <strong>Craft:</strong> is the content well-shot, on-brand, and genuinely persuasive?
         </li>
       </ul>
 
@@ -53,12 +53,12 @@ export default function Post() {
         they write for your campaign tell you far more than a follower count ever could.
       </p>
       <blockquote>
-        The best content comes from people who already love what you do — not from whoever has the
+        The best content comes from people who already love what you do, not from whoever has the
         biggest audience.
       </blockquote>
       <p>
         This is exactly why we built Collably without follower gatekeeping. Campaigns can set a
-        minimum if they truly need reach, but many are open to all — including UGC-only creators who
+        minimum if they truly need reach, but many are open to all, including UGC-only creators who
         shoot clean, scroll-stopping product content without any public following at all.
       </p>
 
@@ -66,12 +66,12 @@ export default function Post() {
       <ol>
         <li>Define the outcome you want (footfall, UGC for ads, awareness) before you define an audience size.</li>
         <li>Filter by niche and city first; sort by fit, not followers.</li>
-        <li>Read the pitch and the portfolio — accept the creators whose work matches your brand.</li>
+        <li>Read the pitch and the portfolio, then accept the creators whose work matches your brand.</li>
         <li>Verify the deliverables, then build a roster of creators you&apos;ll work with again.</li>
       </ol>
 
       <p>
-        Drop the vanity metric, and a whole tier of talented, motivated creators opens up — usually at
+        Drop the vanity metric, and a whole tier of talented, motivated creators opens up, usually at
         a fraction of the cost.
       </p>
     </>

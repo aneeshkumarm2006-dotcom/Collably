@@ -6,7 +6,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: {
-    default: 'Collably — Influencer ↔ Brand Collabs & Gifting',
+    default: 'Collably: Influencer ↔ Brand Collabs & Gifting',
     template: '%s · Collably',
   },
   description:

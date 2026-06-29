@@ -4,7 +4,7 @@ import type { BusinessProfile } from '@/lib/shared';
 import { toCampaignCardData } from '@/lib/campaign-card';
 
 /**
- * Unit tests for `toCampaignCardData` — the API `PublicCampaign` → card
+ * Unit tests for `toCampaignCardData`: the API `PublicCampaign` → card
  * view-model mapper. (Distinct from the component test in
  * `tests/components/campaign-card.test.tsx`, which renders the card.)
  */
@@ -53,7 +53,7 @@ function makeCampaign(overrides: Partial<PublicCampaign> = {}): PublicCampaign {
   };
 }
 
-describe('toCampaignCardData — happy path', () => {
+describe('toCampaignCardData: happy path', () => {
   it('maps every core field from the campaign + joined business', () => {
     const card = toCampaignCardData(makeCampaign());
     expect(card).toMatchObject({
@@ -82,7 +82,7 @@ describe('toCampaignCardData — happy path', () => {
   });
 });
 
-describe('toCampaignCardData — business fallbacks', () => {
+describe('toCampaignCardData: business fallbacks', () => {
   it('falls back to "A business" and a null avatar when no business is joined', () => {
     const card = toCampaignCardData(makeCampaign({ business: undefined }));
     expect(card.business.name).toBe('A business');
@@ -97,7 +97,7 @@ describe('toCampaignCardData — business fallbacks', () => {
   });
 });
 
-describe('toCampaignCardData — city / remote', () => {
+describe('toCampaignCardData: city / remote', () => {
   it('uses "Remote" when isRemote is true, ignoring any location.city', () => {
     const card = toCampaignCardData(
       makeCampaign({ isRemote: true, location: { city: 'Toronto' } }),
@@ -118,7 +118,7 @@ describe('toCampaignCardData — city / remote', () => {
   });
 });
 
-describe('toCampaignCardData — cover image normalization', () => {
+describe('toCampaignCardData: cover image normalization', () => {
   it('passes a present cover image through', () => {
     const card = toCampaignCardData(makeCampaign({ coverImage: 'https://x/y.png' }));
     expect(card.coverImage).toBe('https://x/y.png');
@@ -135,7 +135,7 @@ describe('toCampaignCardData — cover image normalization', () => {
   });
 });
 
-describe('toCampaignCardData — deliverables[0] extraction', () => {
+describe('toCampaignCardData: deliverables[0] extraction', () => {
   it('reads platform / contentType / quantity from the FIRST deliverable', () => {
     const card = toCampaignCardData(
       makeCampaign({
@@ -167,7 +167,7 @@ describe('toCampaignCardData — deliverables[0] extraction', () => {
   });
 });
 
-describe('toCampaignCardData — closed default vs override', () => {
+describe('toCampaignCardData: closed default vs override', () => {
   it.each(['Draft', 'Paused', 'Closed', 'Completed'] as const)(
     'defaults closed to true for non-Active status %s',
     (status) => {
@@ -186,7 +186,7 @@ describe('toCampaignCardData — closed default vs override', () => {
   });
 });
 
-describe('toCampaignCardData — applicationStatus passthrough', () => {
+describe('toCampaignCardData: applicationStatus passthrough', () => {
   it.each(['applied', 'accepted', 'rejected'] as const)(
     'passes opts.applicationStatus=%s straight through',
     (applicationStatus) => {

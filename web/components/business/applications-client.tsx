@@ -42,7 +42,7 @@ export function BusinessApplicationsClient({ campaignId }: { campaignId?: string
       await decide.mutateAsync({ id: app._id, status });
       toast.success(
         status === 'Accepted'
-          ? `Accepted ${app.creatorUser?.name ?? 'the creator'} — they can start the collab.`
+          ? `Accepted ${app.creatorUser?.name ?? 'the creator'}. They can start the collab.`
           : 'Application rejected',
       );
     } catch (err) {

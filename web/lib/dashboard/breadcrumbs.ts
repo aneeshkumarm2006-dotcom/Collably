@@ -17,7 +17,7 @@ const EXTRA_LABELS: Record<string, string> = {
   edit: 'Edit',
 };
 
-/** A path segment that's a record id (24-hex Mongo id) — never shown as a crumb. */
+/** A path segment that's a record id (24-hex Mongo id): never shown as a crumb. */
 const isIdSegment = (seg: string) => /^[a-f0-9]{24}$/i.test(seg) || /^\d+$/.test(seg);
 
 function navLabelMap(role: Role): Record<string, string> {
@@ -44,7 +44,7 @@ export function dashboardBreadcrumbs(pathname: string, role: Role): Crumb[] {
     if (label) crumbs.push({ label, href });
   }
 
-  // The deepest crumb is the current page — drop its link.
+  // The deepest crumb is the current page, so drop its link.
   const last = crumbs[crumbs.length - 1];
   if (last) delete last.href;
   return crumbs;

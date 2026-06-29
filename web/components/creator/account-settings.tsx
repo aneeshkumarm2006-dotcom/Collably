@@ -120,7 +120,7 @@ export function AccountSettings({ user }: { user: PublicUser }) {
       });
       setEmailPassword('');
       await refresh();
-      toast.success('Email updated — verify your new address from the email we sent.');
+      toast.success('Email updated. Verify your new address from the email we sent.');
     } catch (err) {
       toast.error(errorMessage(err, 'Could not update your email'));
     } finally {

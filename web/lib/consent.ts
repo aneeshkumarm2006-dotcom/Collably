@@ -34,7 +34,7 @@ export function writeConsent(state: 'granted' | 'denied'): void {
   try {
     window.localStorage.setItem(STORAGE_KEY, state);
   } catch {
-    // Private mode / storage disabled — fall through; the in-memory event still fires.
+    // Private mode / storage disabled: fall through; the in-memory event still fires.
   }
   window.dispatchEvent(new CustomEvent<ConsentState>(CONSENT_EVENT, { detail: state }));
 }

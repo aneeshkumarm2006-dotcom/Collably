@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * The persistent dashboard chrome (Phase 7/8) — role-aware sidebar + sticky top
+ * The persistent dashboard chrome (Phase 7/8): role-aware sidebar + sticky top
  * bar wrapped around the routed page. Breadcrumbs are derived from the pathname
  * (so pages don't thread them), the bell is wired live to the notifications feed,
  * and logout flows through the auth context. Used by both the creator and

@@ -20,7 +20,7 @@ import {
 
 const NOW = new Date('2026-06-29T12:00:00.000Z');
 
-describe('notificationVisual — known types', () => {
+describe('notificationVisual: known types', () => {
   const cases = [
     ['account_created', Sparkles, 'brand'],
     ['password_reset', Bell, 'neutral'],
@@ -41,7 +41,7 @@ describe('notificationVisual — known types', () => {
   });
 });
 
-describe('notificationVisual — fallback', () => {
+describe('notificationVisual: fallback', () => {
   it('falls back to the Bell icon with a brand dot for an unknown type', () => {
     const visual = notificationVisual('something_new_in_phase_99');
     expect(visual.icon).toBe(Bell);
@@ -54,7 +54,7 @@ describe('notificationVisual — fallback', () => {
   });
 });
 
-describe('notificationHref — empty / base cases', () => {
+describe('notificationHref: empty / base cases', () => {
   it('returns the role base for undefined, empty, "/" and whitespace-only paths', () => {
     expect(notificationHref(undefined, 'creator')).toBe('/dashboard/creator');
     expect(notificationHref('', 'creator')).toBe('/dashboard/creator');
@@ -67,7 +67,7 @@ describe('notificationHref — empty / base cases', () => {
   });
 });
 
-describe('notificationHref — public detail routes pass through', () => {
+describe('notificationHref: public detail routes pass through', () => {
   it.each([
     '/campaign/abc123',
     '/business/biz1',
@@ -84,7 +84,7 @@ describe('notificationHref — public detail routes pass through', () => {
   });
 });
 
-describe('notificationHref — chat deep links', () => {
+describe('notificationHref: chat deep links', () => {
   it('maps /chat/:id to the role messages thread', () => {
     expect(notificationHref('/chat/conv1', 'creator')).toBe('/dashboard/creator/messages/conv1');
     expect(notificationHref('/chat/conv9', 'business')).toBe('/dashboard/business/messages/conv9');
@@ -97,7 +97,7 @@ describe('notificationHref — chat deep links', () => {
   });
 });
 
-describe('notificationHref — collab detail → collabs list', () => {
+describe('notificationHref: collab detail → collabs list', () => {
   it('maps a bare /collabs/:id to the role collabs list', () => {
     expect(notificationHref('/collabs/app1', 'creator')).toBe('/dashboard/creator/collabs');
     expect(notificationHref('/collabs/app1', 'business')).toBe('/dashboard/business/collabs');
@@ -110,7 +110,7 @@ describe('notificationHref — collab detail → collabs list', () => {
   });
 });
 
-describe('notificationHref — dashboard re-rooting', () => {
+describe('notificationHref: dashboard re-rooting', () => {
   it('re-roots a cross-role dashboard path to the current role, keeping the tail', () => {
     expect(notificationHref('/dashboard/business/applications', 'creator')).toBe(
       '/dashboard/creator/applications',
@@ -137,7 +137,7 @@ describe('notificationHref — dashboard re-rooting', () => {
   });
 });
 
-describe('notificationHref — known section links', () => {
+describe('notificationHref: known section links', () => {
   it.each([
     'applications',
     'submissions',
@@ -158,7 +158,7 @@ describe('notificationHref — known section links', () => {
   });
 });
 
-describe('notificationHref — unknown paths fall back to base', () => {
+describe('notificationHref: unknown paths fall back to base', () => {
   it('returns the role base for an unrecognized first segment', () => {
     expect(notificationHref('/random', 'creator')).toBe('/dashboard/creator');
     expect(notificationHref('/foo/bar', 'business')).toBe('/dashboard/business');

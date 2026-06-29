@@ -1,5 +1,5 @@
 /**
- * robots.txt — allow crawling of the public site; keep authed/app-internal
+ * robots.txt: allow crawling of the public site; keep authed/app-internal
  * areas out of the index. Points crawlers at the sitemap.
  */
 import type { MetadataRoute } from 'next';

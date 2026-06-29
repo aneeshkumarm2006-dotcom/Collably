@@ -21,26 +21,26 @@ test('signup → creator onboarding → dashboard', async ({ page }) => {
 
   await page.waitForURL(/\/onboarding\/creator/);
 
-  // Step 1 — Bio & niche (niche required to advance).
+  // Step 1: Bio & niche (niche required to advance).
   await expect(page.getByRole('heading', { name: 'Tell brands about you' })).toBeVisible();
   await page.getByRole('checkbox', { name: 'Food' }).click();
   await page.getByRole('button', { name: 'Continue' }).click();
 
-  // Step 2 — Location (optional).
+  // Step 2: Location (optional).
   await expect(page.getByRole('heading', { name: 'Where are you based?' })).toBeVisible();
   await page.getByRole('button', { name: 'Continue' }).click();
 
-  // Step 3 — Socials (≥1 platform with a handle + valid link required).
+  // Step 3: Socials (≥1 platform with a handle + valid link required).
   await expect(page.getByRole('heading', { name: 'Where can brands find you?' })).toBeVisible();
   await page.locator('#social-instagram-handle').fill('testcreator');
   await page.locator('#social-instagram-link').fill('https://instagram.com/testcreator');
   await page.getByRole('button', { name: 'Continue' }).click();
 
-  // Step 4 — Content types (optional).
+  // Step 4: Content types (optional).
   await expect(page.getByRole('heading', { name: 'What do you create?' })).toBeVisible();
   await page.getByRole('button', { name: 'Continue' }).click();
 
-  // Step 5 — Portfolio (optional) → finish.
+  // Step 5: Portfolio (optional) → finish.
   await expect(page.getByRole('heading', { name: 'Show your best work' })).toBeVisible();
   await page.getByRole('button', { name: 'Finish setup' }).click();
 

@@ -38,7 +38,7 @@ const SOCIALS = [
   { label: 'LinkedIn', href: '#', icon: Linkedin },
 ];
 
-/** Footer — always-dark, 4-column. Brand + tagline + socials, then link columns. */
+/** Footer: always-dark, 4-column. Brand + tagline + socials, then link columns. */
 export function Footer({ className }: { className?: string }) {
   return (
     <footer className={cn('bg-dark-sidebar text-white/60', className)}>

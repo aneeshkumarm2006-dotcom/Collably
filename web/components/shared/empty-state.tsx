@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils';
 
 /**
- * EmptyState — centered icon + title + description + optional action. Used
+ * EmptyState: centered icon + title + description + optional action. Used
  * wherever a list/grid/query returns nothing (explore, applications, etc.).
  */
 export interface EmptyStateProps {

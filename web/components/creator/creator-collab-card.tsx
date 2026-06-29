@@ -5,17 +5,17 @@ import { Calendar, CheckCircle2, ExternalLink, MapPin, MessageSquare } from 'luc
 import type { PublicApplication } from '@/lib/api/types';
 import type { CampaignDeliverable } from '@/lib/shared';
 import { cn } from '@/lib/utils';
-import { categoryEmoji, categoryGradient } from '@/lib/domain-meta';
+import { categoryIcon, categoryGradient } from '@/lib/domain-meta';
 import { formatDate, isOverdue } from '@/lib/format';
 import { CountdownChip } from '@/components/shared/collab-card';
 import { RewardPill } from '@/components/shared/reward-pill';
 import { StatusBadge } from '@/components/shared/status-badge';
 import { Button } from '@/components/ui/button';
 
-/** "1× Instagram Reel — tag @brand, 20s+" for the "what to create" checklist. */
+/** "1× Instagram Reel: tag @brand, 20s+" for the "what to create" checklist. */
 export function deliverableLabel(d: CampaignDeliverable): string {
   const base = `${d.quantity}× ${d.platform} ${d.contentType}`;
-  return d.requirements ? `${base} — ${d.requirements}` : base;
+  return d.requirements ? `${base}: ${d.requirements}` : base;
 }
 
 /** Order active collabs: action-needed (un-submitted) first, then soonest deadline. */
@@ -46,6 +46,7 @@ function CollabCover({
   cover?: string | null;
   className?: string;
 }) {
+  const CategoryIcon = categoryIcon(category ?? '');
   return (
     <div
       className={cn('relative shrink-0 overflow-hidden rounded-md bg-secondary', className)}
@@ -54,8 +55,8 @@ function CollabCover({
       {cover ? (
         <Image src={cover} alt="" fill sizes="160px" className="object-cover" />
       ) : (
-        <span className="absolute inset-0 flex items-center justify-center text-2xl opacity-90">
-          {categoryEmoji(category ?? '')}
+        <span className="absolute inset-0 flex items-center justify-center opacity-90">
+          <CategoryIcon className="h-8 w-8 text-white/85" />
         </span>
       )}
     </div>

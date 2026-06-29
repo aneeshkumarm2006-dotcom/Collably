@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button';
 type Filter = 'all' | 'unread';
 
 /**
- * The Messages list — a search field + All/Unread filter above the thread rows.
+ * The Messages list: a search field + All/Unread filter above the thread rows.
  * Role-agnostic (the API returns viewer-relative data); rows link into the
  * current role's thread route. Kept live by the conversation-list query (which
  * `useDashboardRealtime` invalidates on incoming messages).
@@ -169,7 +169,7 @@ function ConversationRow({
   const mineLast = c.lastSenderUserId === meId;
   const preview = c.lastMessage
     ? `${mineLast ? 'You: ' : ''}${c.lastMessage}`
-    : 'No messages yet — say hello 👋';
+    : 'No messages yet. Say hello.';
 
   return (
     <li className="border-b border-hair last:border-b-0">

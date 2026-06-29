@@ -1,5 +1,5 @@
 /**
- * Contact form schema — shared by the client form (inline validation) and the
+ * Contact form schema, shared by the client form (inline validation) and the
  * `/api/contact` route handler (server-side validation). Framework-neutral.
  */
 import { z } from 'zod';

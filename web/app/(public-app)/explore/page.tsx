@@ -13,7 +13,7 @@ import { ExploreClient } from '@/components/explore/explore-client';
 export const metadata: Metadata = buildMetadata({
   title: 'Explore Campaigns',
   description:
-    'Browse live gifting campaigns from local brands. Filter by category, location, reward, and platform — and apply to the collabs that fit your niche.',
+    'Browse live gifting campaigns from local brands. Filter by category, location, reward, and platform, and apply to the collabs that fit your niche.',
   path: '/explore',
   ogEyebrow: 'Explore',
 });

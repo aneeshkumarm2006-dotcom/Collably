@@ -14,7 +14,7 @@ import {
   UPLOAD_FOLDERS,
 } from '@/lib/constants';
 
-describe('canTransitionCampaign — valid transitions', () => {
+describe('canTransitionCampaign: valid transitions', () => {
   it('allows Draft → Active', () => {
     expect(canTransitionCampaign('Draft', 'Active')).toBe(true);
   });
@@ -36,7 +36,7 @@ describe('canTransitionCampaign — valid transitions', () => {
   });
 });
 
-describe('canTransitionCampaign — invalid transitions', () => {
+describe('canTransitionCampaign: invalid transitions', () => {
   it('rejects Draft → anything but Active', () => {
     expect(canTransitionCampaign('Draft', 'Paused')).toBe(false);
     expect(canTransitionCampaign('Draft', 'Closed')).toBe(false);

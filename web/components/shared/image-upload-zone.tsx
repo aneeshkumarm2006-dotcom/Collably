@@ -16,7 +16,7 @@ import { cn } from '@/lib/utils';
 type PickedFile = { file: File; url: string };
 
 /**
- * ImageUploadZone — drag-and-drop + click-to-pick image zone with live previews.
+ * ImageUploadZone: drag-and-drop + click-to-pick image zone with live previews.
  *
  * Two modes:
  *  - **Preview only** (default): surfaces the chosen `File`s via `onChange` for a
@@ -31,13 +31,13 @@ export interface ImageUploadZoneProps {
   value?: string[];
   /** Fires with the currently picked `File`s (preview-only mode). */
   onChange?: (files: File[]) => void;
-  /** Cloudinary folder — when set, picked files upload immediately to Cloudinary. */
+  /** Cloudinary folder; when set, picked files upload immediately to Cloudinary. */
   uploadFolder?: UploadFolder;
   /** Auto-upload mode: fires with the newly uploaded `secure_url`s. */
   onUploaded?: (urls: string[]) => void;
   /** Downscale large images before upload (auto-upload mode). Default: true. */
   resize?: boolean;
-  /** Remove an already-uploaded image (by index) — shows an X when provided. */
+  /** Remove an already-uploaded image (by index); shows an X when provided. */
   onRemoveExisting?: (index: number) => void;
   multiple?: boolean;
   maxFiles?: number;
@@ -59,7 +59,7 @@ export function ImageUploadZone({
   maxFiles = 6,
   accept = 'image/*',
   label = 'Drag & drop or click to upload',
-  hint = 'PNG, JPG, or WEBP — up to 10MB each',
+  hint = 'PNG, JPG, or WEBP, up to 10MB each',
   disabled,
   className,
 }: ImageUploadZoneProps) {

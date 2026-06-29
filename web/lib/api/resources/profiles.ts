@@ -1,5 +1,5 @@
 /**
- * Profile endpoints (PRD §7.2) — the caller's own business/creator profile
+ * Profile endpoints (PRD §7.2): the caller's own business/creator profile
  * (read + upsert, the latter completing onboarding) and public profile lookups
  * by id. Maps 1:1 to `backend/src/routes/profiles.ts`.
  */
@@ -36,27 +36,27 @@ export interface CreatorProfileInput {
 
 export function createProfilesApi(http: HttpClient) {
   return {
-    /** GET /profile/business — own business profile (404 until created). */
+    /** GET /profile/business: own business profile (404 until created). */
     getBusiness: (signal?: AbortSignal) =>
       http.get<BusinessProfileResponse>('/profile/business', { signal }),
 
-    /** PUT /profile/business — create or update own business profile. */
+    /** PUT /profile/business: create or update own business profile. */
     saveBusiness: (input: BusinessProfileInput) =>
       http.put<BusinessProfileResponse>('/profile/business', input),
 
-    /** GET /profile/creator — own creator profile (404 until created). */
+    /** GET /profile/creator: own creator profile (404 until created). */
     getCreator: (signal?: AbortSignal) =>
       http.get<CreatorProfileResponse>('/profile/creator', { signal }),
 
-    /** PUT /profile/creator — create or update own creator profile. */
+    /** PUT /profile/creator: create or update own creator profile. */
     saveCreator: (input: CreatorProfileInput) =>
       http.put<CreatorProfileResponse>('/profile/creator', input),
 
-    /** GET /profile/creator/:id — public creator profile by CreatorProfile id. */
+    /** GET /profile/creator/:id: public creator profile by CreatorProfile id. */
     getPublicCreator: (id: string, signal?: AbortSignal) =>
       http.get<PublicCreatorProfileResponse>(`/profile/creator/${id}`, { signal }),
 
-    /** GET /profile/business/:id — public business profile by BusinessProfile id. */
+    /** GET /profile/business/:id: public business profile by BusinessProfile id. */
     getPublicBusiness: (id: string, signal?: AbortSignal) =>
       http.get<PublicBusinessProfileResponse>(`/profile/business/${id}`, { signal }),
   };

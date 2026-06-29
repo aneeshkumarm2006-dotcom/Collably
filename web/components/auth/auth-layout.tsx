@@ -5,7 +5,7 @@ import { BrandMark } from '@/components/shared/brand-mark';
 import { CampaignCard, type CampaignCardData } from '@/components/shared/campaign-card';
 
 /**
- * Shared auth shell — the split-screen brand panel (left, dark) + form panel
+ * Shared auth shell: the split-screen brand panel (left, dark) + form panel
  * (right). Used by every `(auth)` page so login / signup / forgot / reset share
  * one branded frame; only the copy (`tagline`, `subtitle`, `proof`) and the form
  * (`children`) change per page.
@@ -24,7 +24,7 @@ export interface ProofStat {
 const PREVIEW_CAMPAIGNS: CampaignCardData[] = [
   {
     id: 'preview-maple-oak',
-    title: 'Cozy autumn brunch — shoot our new seasonal menu',
+    title: 'Cozy autumn brunch: shoot our new seasonal menu',
     category: 'Food & Beverage',
     business: { name: 'Maple & Oak', city: 'Toronto' },
     reward: { type: 'Product', description: 'Brunch for two, on us', estimatedValue: 120 },
@@ -35,7 +35,7 @@ const PREVIEW_CAMPAIGNS: CampaignCardData[] = [
   },
   {
     id: 'preview-bloom-beauty',
-    title: 'Glow drop launch — unboxing + first impressions',
+    title: 'Glow drop launch: unboxing + first impressions',
     category: 'Beauty',
     business: { name: 'Bloom Beauty', city: 'Vancouver' },
     reward: { type: 'Cash+Product', description: '$250 + full product set', estimatedValue: 250 },
@@ -59,7 +59,7 @@ export interface AuthLayoutProps {
 export function AuthLayout({ children, tagline, subtitle, proof }: AuthLayoutProps) {
   return (
     <div className="grid min-h-screen lg:grid-cols-[2fr_3fr]">
-      {/* Brand panel — hidden on small screens */}
+      {/* Brand panel (hidden on small screens) */}
       <aside className="relative hidden overflow-hidden bg-dark-sidebar p-11 text-white lg:flex lg:flex-col">
         {/* Subtle grid texture */}
         <div

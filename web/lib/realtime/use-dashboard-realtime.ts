@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Dashboard realtime wiring (Phase 9 chat + Phase 10 notifications) — mounted once
+ * Dashboard realtime wiring (Phase 9 chat + Phase 10 notifications), mounted once
  * in the dashboard shell, the web counterpart of `mobile/lib/useChatSocket`. Once a
  * session is present it fetches a socket token, connects the shared Socket.io
  * client, and folds the server events into the TanStack Query cache:
@@ -65,7 +65,7 @@ export function useDashboardRealtime(): void {
       const onRead = (payload: ConversationReadPayload) => {
         if (payload?.conversationId) markOutgoingRead(qc, payload.conversationId, userId);
       };
-      // A new in-app notification arrived — refetch so the bell badge, dropdown,
+      // A new in-app notification arrived, so refetch so the bell badge, dropdown,
       // and full feed reconcile against the server (the source of unread truth).
       const onNotification = () => invalidateNotifications(qc);
 

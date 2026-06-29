@@ -2,7 +2,7 @@ import { cn } from '@/lib/utils';
 
 /**
  * Long-form content wrapper (about, legal, blog posts). Styles standard HTML via
- * child selectors so authored content needs no per-element classes — themed to
+ * child selectors so authored content needs no per-element classes, themed to
  * the app palette and dark-mode-aware. (No @tailwindcss/typography dependency.)
  */
 export const proseClass = cn(

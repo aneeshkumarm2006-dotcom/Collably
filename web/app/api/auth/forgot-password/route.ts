@@ -1,5 +1,5 @@
 /**
- * POST /api/auth/forgot-password — start a password reset via backend
+ * POST /api/auth/forgot-password: start a password reset via backend
  * `/auth/forgot-password`. The backend always responds 200 with a generic message
  * (anti-enumeration), optionally including `devResetToken` in non-production; both
  * are passed through verbatim. No cookies are touched.

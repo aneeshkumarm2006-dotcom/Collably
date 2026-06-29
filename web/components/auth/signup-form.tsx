@@ -80,7 +80,7 @@ export function SignupForm({ next }: { next?: string }) {
     }
   }
 
-  // Step 1 — choose a role.
+  // Step 1: choose a role.
   if (!role) {
     return (
       <div>
@@ -120,7 +120,7 @@ export function SignupForm({ next }: { next?: string }) {
     );
   }
 
-  // Step 2 — account details for the chosen role.
+  // Step 2: account details for the chosen role.
   const isBusiness = role === 'business';
   return (
     <div>

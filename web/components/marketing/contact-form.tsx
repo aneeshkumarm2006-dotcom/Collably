@@ -69,7 +69,7 @@ export function ContactForm({ defaultTopic }: { defaultTopic?: ContactValues['to
         </span>
         <h3 className="mt-5 text-xl font-bold text-ink">Message sent</h3>
         <p className="mt-2 max-w-sm text-sm text-muted">
-          Thanks for reaching out, {values.name.split(' ')[0] || 'there'} — we&apos;ll get back to you
+          Thanks for reaching out, {values.name.split(' ')[0] || 'there'}. We&apos;ll get back to you
           at {values.email} as soon as we can.
         </p>
       </div>

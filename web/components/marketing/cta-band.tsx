@@ -15,14 +15,14 @@ export interface CtaBandProps {
 }
 
 /**
- * The full-width brand CTA band used to close marketing pages — brand-blue
+ * The full-width brand CTA band used to close marketing pages: brand-blue
  * background, centered heading + subtext, and up to two buttons.
  */
 export function CtaBand({
   eyebrow,
   title,
   subtitle,
-  primary = { label: "Get started — it's free", href: '/signup' },
+  primary = { label: "Get started, it's free", href: '/signup' },
   secondary = { label: 'Browse campaigns', href: '/explore' },
   className,
 }: CtaBandProps) {

@@ -10,7 +10,7 @@ import {
 /**
  * The deadline/countdown is computed from `Date.now()` (via daysUntil), so we
  * pin "now" with fake timers to make every countdown + urgency assertion
- * deterministic — mirroring tests/unit/format.test.ts.
+ * deterministic: mirroring tests/unit/format.test.ts.
  */
 const NOW = new Date('2026-06-29T12:00:00.000Z');
 
@@ -78,7 +78,7 @@ describe('<CollabCard>', () => {
       const chip = screen.getByText('13 days left');
       expect(chip).toBeInTheDocument();
       // urgency class reflects deadlineUrgency('normal') -> bg-secondary.
-      // (asserting the class token, NOT a computed color — jsdom has no CSS.)
+      // (asserting the class token, NOT a computed color: jsdom has no CSS.)
       expect(chip).toHaveClass('bg-secondary');
       expect(chip.querySelector('svg')).not.toBeNull(); // the Clock icon
     });
@@ -128,10 +128,10 @@ describe('<CollabCard>', () => {
   });
 
   describe('reward', () => {
-    it('renders the reward label, emoji and money value', () => {
-      render(<CollabCard {...makeProps({ reward: REWARD })} />);
+    it('renders the reward label, icon and money value', () => {
+      const { container } = render(<CollabCard {...makeProps({ reward: REWARD })} />);
       expect(screen.getByText('7-course tasting')).toBeInTheDocument();
-      expect(screen.getByText('✨')).toBeInTheDocument(); // Experience emoji
+      expect(container.querySelector('.lucide-sparkles')).toBeTruthy(); // Experience icon
       // formatCurrency(180) -> "$180" (CAD, no fraction digits).
       expect(screen.getByText(/\$180/)).toBeInTheDocument();
     });
@@ -153,13 +153,13 @@ describe('<CollabCard>', () => {
 
   describe('deliverables checklist', () => {
     it('renders each deliverable, checking done items and striking their labels', () => {
-      render(<CollabCard {...makeProps()} />);
+      const { container } = render(<CollabCard {...makeProps()} />);
       const list = screen.getByRole('list');
       const items = within(list).getAllByRole('listitem');
       expect(items).toHaveLength(2);
 
-      // a done deliverable shows the ✓ marker and a struck-through label.
-      expect(screen.getByText('✓')).toBeInTheDocument();
+      // a done deliverable shows the check marker and a struck-through label.
+      expect(container.querySelector('.lucide-check')).toBeTruthy();
       expect(screen.getByText('Post 1 Instagram Reel')).toHaveClass('line-through');
       // a not-done deliverable label is not struck through.
       expect(screen.getByText('Tag @mapleandoak')).not.toHaveClass('line-through');
@@ -179,7 +179,7 @@ describe('<CollabCard>', () => {
   });
 
   describe('actions / Message affordance', () => {
-    // NOTE: the SHARED CollabCard has no `conversationId` prop of its own — it
+    // NOTE: the SHARED CollabCard has no `conversationId` prop of its own: it
     // renders whatever the caller passes via the generic `actions` ReactNode.
     // The conversationId -> "Message" gating lives in the caller
     // (components/creator/creator-collab-card.tsx). These tests mirror that

@@ -22,7 +22,7 @@ import { toast } from '@/lib/toast';
 import { uploadToCloudinary } from '@/lib/upload/cloudinary';
 import { CATEGORIES, PLATFORMS, CONTENT_TYPES, REWARD_TYPES } from '@/lib/constants';
 import type { Category, ContentType, Platform, RewardType } from '@/lib/shared';
-import { categoryEmoji, rewardEmoji } from '@/lib/domain-meta';
+import { categoryIcon, rewardIcon } from '@/lib/domain-meta';
 import {
   type CampaignForm as CampaignFormModel,
   type CampaignFormErrors,
@@ -107,7 +107,7 @@ export function CampaignForm({
   mode: 'create' | 'edit';
   campaignId?: string;
   initial: CampaignFormModel;
-  /** The business is verified — only then can it publish straight to Active. */
+  /** The business is verified; only then can it publish straight to Active. */
   canPublish: boolean;
 }) {
   const router = useRouter();
@@ -155,7 +155,7 @@ export function CampaignForm({
       if (mode === 'create') {
         await create.mutateAsync({ ...payload, status: publish ? 'Active' : 'Draft' });
         if (publish) track('campaign_published', { category: payload.category });
-        toast.success(publish ? 'Campaign published 🎉' : 'Draft saved');
+        toast.success(publish ? 'Campaign published' : 'Draft saved');
       } else {
         await update.mutateAsync({ id: campaignId as string, input: payload });
         toast.success('Campaign updated');
@@ -174,7 +174,7 @@ export function CampaignForm({
     <div className="space-y-5">
       {banner && <ErrorBanner message={banner} />}
 
-      {/* 01 — Basics */}
+      {/* 01: Basics */}
       <Section index={1} title="Basics" description="The headline creators see first.">
         <div className="space-y-1.5">
           <Label htmlFor="title">Campaign title</Label>
@@ -182,7 +182,7 @@ export function CampaignForm({
             id="title"
             value={form.title}
             maxLength={TITLE_MAX}
-            placeholder="e.g. Spring Tasting Menu — Reel Collab"
+            placeholder="e.g. Spring Tasting Menu: Reel Collab"
             aria-invalid={!!errors.title}
             onChange={(e) => patch({ title: e.target.value })}
           />
@@ -196,7 +196,7 @@ export function CampaignForm({
               <SelectCard
                 key={c}
                 label={c}
-                emoji={categoryEmoji(c)}
+                icon={categoryIcon(c)}
                 selected={form.category === c}
                 onClick={() => patch({ category: c })}
               />
@@ -225,12 +225,12 @@ export function CampaignForm({
         </div>
       </Section>
 
-      {/* 02 — Cover image */}
+      {/* 02: Cover image */}
       <Section index={2} title="Cover image" description="A 16:9 image shown on the campaign card and detail page.">
         <CoverUploader value={form.coverImage} onChange={(coverImage) => patch({ coverImage })} />
       </Section>
 
-      {/* 03 — Location */}
+      {/* 03: Location */}
       <Section index={3} title="Location" description="Where the collab happens.">
         <div className="inline-flex rounded-lg border border-hair p-1">
           <button
@@ -274,7 +274,7 @@ export function CampaignForm({
         )}
       </Section>
 
-      {/* 04 — Reward */}
+      {/* 04: Reward */}
       <Section index={4} title="Reward" description="What the creator gets in exchange for content.">
         <Label>Reward type</Label>
         <div className="mt-2 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
@@ -282,7 +282,7 @@ export function CampaignForm({
             <SelectCard
               key={t}
               label={t === 'Cash+Product' ? 'Cash + Product' : t}
-              emoji={rewardEmoji(t)}
+              icon={rewardIcon(t)}
               selected={form.reward.type === t}
               onClick={() => patchReward({ type: t })}
             />
@@ -325,7 +325,7 @@ export function CampaignForm({
         </div>
       </Section>
 
-      {/* 05 — Deliverables */}
+      {/* 05: Deliverables */}
       <Section index={5} title="Deliverables" description="What the creator needs to post.">
         <div className="space-y-4">
           {form.deliverables.map((d, i) => (
@@ -347,7 +347,7 @@ export function CampaignForm({
         )}
       </Section>
 
-      {/* 06 — Settings */}
+      {/* 06: Settings */}
       <Section index={6} title="Settings" description="Deadline and audience requirements.">
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
@@ -377,7 +377,7 @@ export function CampaignForm({
         </div>
       </Section>
 
-      {/* 07 — Tags */}
+      {/* 07: Tags */}
       <Section index={7} title="Tags" description="Help creators discover this campaign.">
         <TagEditor tags={form.tags} onChange={(tags) => patch({ tags })} />
       </Section>
@@ -418,7 +418,7 @@ export function CampaignForm({
   );
 }
 
-/** 16:9 cover image picker — uploads straight to Cloudinary (`campaigns` folder). */
+/** 16:9 cover image picker that uploads straight to Cloudinary (`campaigns` folder). */
 function CoverUploader({
   value,
   onChange,

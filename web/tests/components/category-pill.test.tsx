@@ -4,19 +4,19 @@ import userEvent from '@testing-library/user-event';
 import { CategoryPill } from '@/components/shared/category-pill';
 
 describe('<CategoryPill> (static span)', () => {
-  it('renders the emoji + name for a known category', () => {
+  it('renders the icon + name for a known category', () => {
     const { container } = render(<CategoryPill category="Restaurant" />);
-    // Restaurant → 🍽️
-    expect(screen.getByText('🍽️')).toBeInTheDocument();
+    // Restaurant maps to the UtensilsCrossed icon.
+    expect(container.querySelector('.lucide-utensils-crossed')).toBeTruthy();
     expect(screen.getByText('Restaurant')).toBeInTheDocument();
-    // No onClick → renders a <span>, not a button.
+    // No onClick renders a <span>, not a button.
     expect((container.firstChild as HTMLElement).tagName).toBe('SPAN');
     expect(screen.queryByRole('button')).toBeNull();
   });
 
-  it('falls back to the 🏷️ glyph for an unknown category', () => {
-    render(<CategoryPill category="Quantum Widgets" />);
-    expect(screen.getByText('🏷️')).toBeInTheDocument();
+  it('falls back to the tag icon for an unknown category', () => {
+    const { container } = render(<CategoryPill category="Quantum Widgets" />);
+    expect(container.querySelector('.lucide-tag')).toBeTruthy();
     expect(screen.getByText('Quantum Widgets')).toBeInTheDocument();
   });
 
@@ -27,7 +27,7 @@ describe('<CategoryPill> (static span)', () => {
     expect(count).toHaveClass('text-money');
   });
 
-  it('renders a count of 0 (boundary — typeof number is the gate, not truthiness)', () => {
+  it('renders a count of 0 (boundary: typeof number is the gate, not truthiness)', () => {
     render(<CategoryPill category="Cafe" count={0} />);
     expect(screen.getByText('0')).toBeInTheDocument();
   });
@@ -79,13 +79,13 @@ describe('<CategoryPill> (interactive button)', () => {
 describe('<CategoryPill> dark mode', () => {
   it('renders the same content nested under a .dark wrapper (jsdom has no CSS)', () => {
     // jsdom applies no CSS; the honest assertion is structural stability.
-    render(
+    const { container } = render(
       <div className="dark">
         <CategoryPill category="Travel" count={3} />
       </div>,
     );
     expect(screen.getByText('Travel')).toBeInTheDocument();
-    expect(screen.getByText('✈️')).toBeInTheDocument();
+    expect(container.querySelector('.lucide-plane')).toBeTruthy();
     expect(screen.getByText('3')).toBeInTheDocument();
   });
 });

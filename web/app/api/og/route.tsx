@@ -3,7 +3,7 @@
  * preview for every public page; `lib/seo.ts` builds the URL with `?title=`,
  * `?subtitle=`, and `?eyebrow=` so each page previews with its own copy.
  *
- * Edge runtime — pure rendering, no backend access.
+ * Edge runtime: pure rendering, no backend access.
  */
 import { ImageResponse } from 'next/og';
 

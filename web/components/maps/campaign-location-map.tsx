@@ -13,7 +13,7 @@ import { MapStatePanel } from './map-frame';
  * model (`backend/src/lib/serialize.ts`):
  *  - Authorized viewers (owner / admin / accepted creator) get a precise pin +
  *    street address (`locationPrecise`).
- *  - Everyone else gets the server-fuzzed approximate center + a radius circle —
+ *  - Everyone else gets the server-fuzzed approximate center + a radius circle;
  *    the exact coordinates never reach the client.
  * The page omits this entirely for remote campaigns. Degrades to a text-only
  * card when Maps JS is unconfigured.
@@ -95,7 +95,7 @@ export function CampaignLocationMap({
           {!precise && (
             <p className="mt-0.5 inline-flex items-center gap-1.5 text-[12.5px] text-muted">
               <Lock className="h-3 w-3" />
-              Approximate area shown — the exact address is shared once you’re accepted.
+              Approximate area shown. The exact address is shared once you’re accepted.
             </p>
           )}
         </div>

@@ -132,7 +132,7 @@ function NavLink({
 }
 
 /**
- * DashboardSidebar — always-dark, role-aware nav. Collapsible to an icon rail on
+ * DashboardSidebar: always-dark, role-aware nav. Collapsible to an icon rail on
  * desktop (tooltips on hover); collapses to a bottom tab bar on mobile.
  */
 export function DashboardSidebar({

@@ -34,14 +34,14 @@ describe('<CampaignCard> (full variant)', () => {
     expect(screen.getByText('4')).toBeInTheDocument();
   });
 
-  it('shows the category emoji fallback when there is no cover image', () => {
-    render(<CampaignCard campaign={makeCampaign({ coverImage: null })} />);
-    // Restaurant → 🍽️ appears (emoji fallback inside the cover)
-    expect(screen.getAllByText('🍽️', { exact: false }).length).toBeGreaterThan(0);
+  it('shows the category icon fallback when there is no cover image', () => {
+    const { container } = render(<CampaignCard campaign={makeCampaign({ coverImage: null })} />);
+    // Restaurant maps to the UtensilsCrossed icon (icon fallback inside the cover).
+    expect(container.querySelector('.lucide-utensils-crossed')).toBeTruthy();
   });
 
   it('renders the cover <img> when a cover image is provided', () => {
-    // The cover is decorative (alt="") so it has no "img" a11y role — query the DOM node.
+    // The cover is decorative (alt="") so it has no "img" a11y role: query the DOM node.
     const { container } = render(
       <CampaignCard campaign={makeCampaign({ coverImage: 'https://img/x.jpg' })} />,
     );
@@ -51,7 +51,7 @@ describe('<CampaignCard> (full variant)', () => {
 
   it('paints the application-status overlay', () => {
     render(<CampaignCard campaign={makeCampaign({ applicationStatus: 'accepted' })} />);
-    expect(screen.getByText('✓ Accepted')).toBeInTheDocument();
+    expect(screen.getByText('Accepted')).toBeInTheDocument();
   });
 
   it('shows the "Campaign Closed" badge when closed', () => {

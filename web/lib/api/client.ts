@@ -3,14 +3,14 @@
  *
  * It calls the SAME-ORIGIN proxy (`/api/backend/...`), which forwards each request
  * to the backend with the httpOnly access cookie attached server-side. The JWT
- * therefore never touches client JS — the browser only ever sees same-origin
+ * therefore never touches client JS: the browser only ever sees same-origin
  * requests with its own cookie.
  *
  *   import { clientApi } from '@/lib/api/client';
  *   const { data } = await clientApi.campaigns.list({ q: 'cafe' });
  *
  * For auth specifically, do NOT call `clientApi.auth.login` (it would return the
- * JWT to JS) — Phase 3 adds `/api/auth/*` cookie-setting handlers for that.
+ * JWT to JS); Phase 3 adds `/api/auth/*` cookie-setting handlers for that.
  */
 import { config } from '@/lib/config';
 import { createHttpClient } from './http';

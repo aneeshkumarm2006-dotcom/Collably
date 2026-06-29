@@ -7,7 +7,7 @@ import {
 } from '@/lib/onboarding/business';
 
 // ---------------------------------------------------------------------------
-// emptyBusinessForm — blank shape, optionally seeded with a business name.
+// emptyBusinessForm: blank shape, optionally seeded with a business name.
 // ---------------------------------------------------------------------------
 describe('emptyBusinessForm', () => {
   it('returns a fully-blank form when no name is given', () => {
@@ -46,7 +46,7 @@ describe('emptyBusinessForm', () => {
 });
 
 // ---------------------------------------------------------------------------
-// businessFormFromProfile — prefill from an existing business profile.
+// businessFormFromProfile: prefill from an existing business profile.
 // ---------------------------------------------------------------------------
 describe('businessFormFromProfile', () => {
   it('maps an empty/partial profile to the blank form (defaults applied)', () => {
@@ -109,7 +109,7 @@ describe('businessFormFromProfile', () => {
 });
 
 // ---------------------------------------------------------------------------
-// toBusinessPayload — map form → PUT body, trimming + dropping empties.
+// toBusinessPayload: map form → PUT body, trimming + dropping empties.
 // ---------------------------------------------------------------------------
 describe('toBusinessPayload', () => {
   it('emits only the always-present keys for a minimal form (name + category)', () => {
@@ -200,7 +200,7 @@ describe('toBusinessPayload', () => {
     expect(toBusinessPayload(f).businessName).toBe('');
   });
 
-  it('passes a null category straight through (documents actual behavior — gating is upstream)', () => {
+  it('passes a null category straight through (documents actual behavior: gating is upstream)', () => {
     const f = emptyBusinessForm('Acme');
     // category left as its default null
     const payload = toBusinessPayload(f);

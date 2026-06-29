@@ -1,5 +1,5 @@
 /**
- * POST /api/auth/register — create an account (role: business | creator) via
+ * POST /api/auth/register: create an account (role: business | creator) via
  * backend `/auth/register`, set the session cookies, and return the safe user.
  * New accounts are never onboarded yet, so the client routes them into the
  * onboarding flow.

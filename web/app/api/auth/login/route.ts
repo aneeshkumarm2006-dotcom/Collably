@@ -1,5 +1,5 @@
 /**
- * POST /api/auth/login — email + password → backend `/auth/login`. On success,
+ * POST /api/auth/login: email + password → backend `/auth/login`. On success,
  * stash the access/refresh pair in httpOnly cookies and return the safe session
  * user (no tokens reach client JS). The browser calls this via `AuthProvider.login`.
  */

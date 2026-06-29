@@ -10,7 +10,7 @@ import { applicantView } from '@/lib/business/applicant';
  * count, niche/city/portfolio mapping, and the `profileHref` gate.
  */
 
-// A minimal CreatorProfile — only the fields `applicantView` reads matter; the
+// A minimal CreatorProfile: only the fields `applicantView` reads matter; the
 // rest satisfy the shape so the helper has something well-formed to walk.
 function makeCreator(overrides: Partial<CreatorProfile> = {}): CreatorProfile {
   return {
@@ -32,12 +32,12 @@ function makeCreator(overrides: Partial<CreatorProfile> = {}): CreatorProfile {
 }
 
 // `applicantView` only touches `creator` + `creatorUser`, so a loose partial cast
-// is enough — we never feed the result back into a typed API.
+// is enough: we never feed the result back into a typed API.
 function makeApp(overrides: Partial<PublicApplication> = {}): PublicApplication {
   return { ...overrides } as PublicApplication;
 }
 
-describe('applicantView — name + avatar', () => {
+describe('applicantView: name + avatar', () => {
   it('takes the display name from the joined creatorUser', () => {
     const app = makeApp({ creatorUser: { _id: 'u_1', name: 'Maya Bennett', role: 'creator', createdAt: '2026-01-01T00:00:00.000Z' } });
     expect(applicantView(app).name).toBe('Maya Bennett');
@@ -60,7 +60,7 @@ describe('applicantView — name + avatar', () => {
   });
 });
 
-describe('applicantView — headline handle (largest audience)', () => {
+describe('applicantView: headline handle (largest audience)', () => {
   it('picks the platform with the largest audience across instagram/youtube/tiktok', () => {
     const creator = makeCreator({
       socialHandles: {
@@ -157,7 +157,7 @@ describe('applicantView — headline handle (largest audience)', () => {
   });
 });
 
-describe('applicantView — niche / city / portfolio / profileHref', () => {
+describe('applicantView: niche / city / portfolio / profileHref', () => {
   it('carries niche, city, and maps portfolio items to their imageUrl', () => {
     const creator = makeCreator({
       niche: ['Food', 'Travel'] as CreatorProfile['niche'],

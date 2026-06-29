@@ -1,4 +1,4 @@
-import { Clock } from 'lucide-react';
+import { Check, Clock } from 'lucide-react';
 
 import type { CampaignReward } from '@/lib/shared';
 import { cn } from '@/lib/utils';
@@ -36,7 +36,7 @@ export function CountdownChip({
 }
 
 /**
- * CollabCard — an accepted collaboration in flight: counterparty, deliverables
+ * CollabCard: an accepted collaboration in flight, with counterparty, deliverables
  * checklist, reward, and a deadline countdown. Goes red/overdue when the
  * deadline has passed (or status is Overdue).
  */
@@ -92,7 +92,7 @@ export function CollabCard({
                   d.done ? 'border-success bg-success text-white' : 'border-hair-strong',
                 )}
               >
-                {d.done ? '✓' : ''}
+                {d.done && <Check className="h-3 w-3" />}
               </span>
               <span className={cn(d.done && 'line-through')}>{d.label}</span>
             </li>

@@ -21,7 +21,7 @@ import { refreshSession } from '@/lib/auth/backend';
 import { setAuthCookies, clearAuthCookies } from '@/lib/auth/cookies';
 
 // Always run on the Node runtime (cookies + global fetch interception) and never
-// cache — every proxied call is per-request.
+// cache; every proxied call is per-request.
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
@@ -97,7 +97,7 @@ async function handle(req: NextRequest, ctx: { params: Promise<{ path: string[] 
       setAuthCookies(res, refreshed);
       return res;
     }
-    // Refresh rejected — the session is unrecoverable. Clear it and forward 401.
+    // Refresh rejected: the session is unrecoverable. Clear it and forward 401.
     const res = await passthrough(upstream);
     clearAuthCookies(res);
     return res;

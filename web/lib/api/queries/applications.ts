@@ -64,7 +64,7 @@ export function useSubmitContent() {
   });
 }
 
-/** Business decision (accept/reject) — used by Phase 8; invalidates the lists. */
+/** Business decision (accept/reject), used by Phase 8; invalidates the lists. */
 export function useDecideApplication() {
   const qc = useQueryClient();
   return useMutation({
@@ -84,7 +84,7 @@ export function useDecideApplication() {
   });
 }
 
-/** Business nudges an accepted creator who hasn't submitted yet — used by Phase 8. */
+/** Business nudges an accepted creator who hasn't submitted yet (used by Phase 8). */
 export function useRemindCreator() {
   const qc = useQueryClient();
   return useMutation({
@@ -95,7 +95,7 @@ export function useRemindCreator() {
   });
 }
 
-/** Business verify / request-revision / fail — used by Phase 8. */
+/** Business verify / request-revision / fail (used by Phase 8). */
 export function useVerifySubmission() {
   const qc = useQueryClient();
   return useMutation({

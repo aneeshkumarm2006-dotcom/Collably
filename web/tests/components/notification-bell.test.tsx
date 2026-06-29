@@ -79,7 +79,7 @@ describe('<NotificationBell> badge', () => {
 });
 
 describe('<NotificationBell> dropdown', () => {
-  it('is closed initially — items are not in the DOM', () => {
+  it('is closed initially: items are not in the DOM', () => {
     render(<NotificationBell notifications={makeItems()} onMarkAllRead={vi.fn()} />);
     expect(screen.queryByText('New application received')).not.toBeInTheDocument();
     expect(screen.queryByText('Notifications')).not.toBeInTheDocument();
@@ -178,9 +178,9 @@ describe('<NotificationBell> dropdown', () => {
 });
 
 describe('<NotificationBell> dark mode', () => {
-  it('renders identical content/structure inside a .dark wrapper (jsdom has no CSS — structure only)', async () => {
+  it('renders identical content/structure inside a .dark wrapper (jsdom has no CSS: structure only)', async () => {
     // jsdom applies no CSS, so this only proves the component renders the same
-    // content under a `.dark` ancestor without crashing — the honest extent of
+    // content under a `.dark` ancestor without crashing: the honest extent of
     // jsdom dark-mode coverage.
     const user = userEvent.setup();
     render(

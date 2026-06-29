@@ -35,7 +35,7 @@ const ALL_MISSING = [
   'Add portfolio work',
 ];
 
-describe('creatorProfileCompletion — boundaries', () => {
+describe('creatorProfileCompletion: boundaries', () => {
   it('reports 0% and lists all six sections for a wholly empty profile', () => {
     const result = creatorProfileCompletion(makeCreator());
     expect(result.percent).toBe(0);
@@ -62,7 +62,7 @@ describe('creatorProfileCompletion — boundaries', () => {
   });
 });
 
-describe('creatorProfileCompletion — rounded partial percentages', () => {
+describe('creatorProfileCompletion: rounded partial percentages', () => {
   it('rounds 1 of 6 complete to 17%', () => {
     const result = creatorProfileCompletion(makeCreator({ bio: 'hello' }));
     expect(result.completed).toBe(1);
@@ -99,7 +99,7 @@ describe('creatorProfileCompletion — rounded partial percentages', () => {
   });
 });
 
-describe('creatorProfileCompletion — whitespace-only fields do not count', () => {
+describe('creatorProfileCompletion: whitespace-only fields do not count', () => {
   it('treats a whitespace-only bio as missing', () => {
     const result = creatorProfileCompletion(makeCreator({ bio: '   ' }));
     expect(result.completed).toBe(0);
@@ -112,7 +112,7 @@ describe('creatorProfileCompletion — whitespace-only fields do not count', () 
   });
 });
 
-describe('creatorProfileCompletion — hasAnySocial (Connect a platform)', () => {
+describe('creatorProfileCompletion: hasAnySocial (Connect a platform)', () => {
   it.each([
     ['instagram', { instagram: { handle: 'ig', link: 'https://insta/ig' } }],
     ['youtube', { youtube: { handle: 'yt', link: 'https://yt/yt' } }],
@@ -137,7 +137,7 @@ describe('creatorProfileCompletion — hasAnySocial (Connect a platform)', () =>
   });
 });
 
-describe('creatorProfileCompletion — list fields', () => {
+describe('creatorProfileCompletion: list fields', () => {
   it('counts niche / contentTypes / portfolio as done once non-empty', () => {
     const result = creatorProfileCompletion(
       makeCreator({

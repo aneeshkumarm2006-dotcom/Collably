@@ -3,7 +3,7 @@ import { ArrowDownRight, ArrowUpRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 /**
- * StatCard — dashboard metric tile. Mono number (optionally money-green),
+ * StatCard: dashboard metric tile. Mono number (optionally money-green),
  * a rounded icon chip, and an optional up/down delta.
  */
 export interface StatCardProps {

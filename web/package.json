@@ -2,7 +2,7 @@
   "name": "@collably/web",
   "version": "0.1.0",
   "private": true,
-  "description": "Collably website — one Next.js app serving the marketing site and the full web version of the app (creator + business), over the same backend as mobile.",
+  "description": "Collably website: one Next.js app serving the marketing site and the full web version of the app (creator + business), over the same backend as mobile.",
   "scripts": {
     "dev": "next dev -p 3001",
     "dev:mock": "cross-env NEXT_PUBLIC_USE_MOCKS=true next dev -p 3001",

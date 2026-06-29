@@ -98,7 +98,7 @@ describe('toApiError', () => {
   });
 
   it('uses the network message for status 0', () => {
-    expect(toApiError(0, null).message).toBe('Network error — please check your connection.');
+    expect(toApiError(0, null).message).toBe('Network error. Please check your connection.');
   });
 
   it('uses the generic fallback for an unrecognised body with a non-zero status', () => {

@@ -13,15 +13,14 @@ function makeReward(overrides: Partial<CampaignReward> = {}): CampaignReward {
 }
 
 describe('<RewardPill>', () => {
-  it('renders the reward-type emoji (Product → 🎁)', () => {
-    render(<RewardPill reward={makeReward({ type: 'Product' })} />);
-    // Emoji lives in an aria-hidden span; getByText still finds the text node.
-    expect(screen.getByText('🎁')).toBeInTheDocument();
+  it('renders the reward-type icon (Product maps to the gift icon)', () => {
+    const { container } = render(<RewardPill reward={makeReward({ type: 'Product' })} />);
+    expect(container.querySelector('.lucide-gift')).toBeTruthy();
   });
 
-  it('maps a different reward type to its own emoji (Experience → ✨)', () => {
-    render(<RewardPill reward={makeReward({ type: 'Experience' })} />);
-    expect(screen.getByText('✨')).toBeInTheDocument();
+  it('maps a different reward type to its own icon (Experience maps to sparkles)', () => {
+    const { container } = render(<RewardPill reward={makeReward({ type: 'Experience' })} />);
+    expect(container.querySelector('.lucide-sparkles')).toBeTruthy();
   });
 
   it('uses the description as the label when present', () => {
@@ -79,16 +78,16 @@ describe('<RewardPill>', () => {
     expect(container.firstChild as HTMLElement).toHaveClass('custom-x');
   });
 
-  it('renders the same content inside a dark wrapper (jsdom has no CSS — content stability only)', () => {
+  it('renders the same content inside a dark wrapper (jsdom has no CSS, content stability only)', () => {
     // jsdom does not apply CSS, so dark-mode = "renders the same structure/text
     // without crashing" when nested under a `.dark` ancestor.
-    render(
+    const { container } = render(
       <div className="dark">
         <RewardPill reward={makeReward({ description: 'Spa day', estimatedValue: 180 })} />
       </div>,
     );
     expect(screen.getByText('Spa day')).toBeInTheDocument();
     expect(screen.getByText(/\$180/)).toBeInTheDocument();
-    expect(screen.getByText('🎁')).toBeInTheDocument();
+    expect(container.querySelector('.lucide-gift')).toBeTruthy();
   });
 });

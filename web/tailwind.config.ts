@@ -2,7 +2,7 @@ import type { Config } from 'tailwindcss';
 import tailwindcssAnimate from 'tailwindcss-animate';
 
 /**
- * Collably website theme — the "blend" (Phase 1).
+ * Collably website theme: the "blend" (Phase 1).
  *
  * Colors are driven by CSS variables defined in `app/globals.css` so every
  * utility is theme-aware (flips under `.dark`):
@@ -10,7 +10,7 @@ import tailwindcssAnimate from 'tailwindcss-animate';
  *   • design-reference "blend" tokens use hex/rgba  → `var(--token)`
  *
  * Radii follow the APP's rounded scale (6/8/12/16/22/28), NOT the reference's
- * tight 2–12px editorial scale. Shadows are neutral ink (no colored glow).
+ * tight 2-12px editorial scale. Shadows are neutral ink (no colored glow).
  */
 const config: Config = {
   darkMode: 'class',
@@ -72,7 +72,7 @@ const config: Config = {
         warn: { DEFAULT: 'var(--warning)', soft: 'var(--warning-bg)' },
         danger: { DEFAULT: 'var(--error)', soft: 'var(--error-bg)' },
         info: { DEFAULT: 'var(--info)', soft: 'var(--info-bg)' },
-        // Always-dark chrome (sidebar / hero / footer) — same in light + dark.
+        // Always-dark chrome (sidebar / hero / footer): same in light + dark.
         dark: {
           sidebar: 'var(--dark-sidebar)',
           panel: 'var(--dark-panel)',
@@ -80,7 +80,7 @@ const config: Config = {
         },
       },
       borderRadius: {
-        // App's rounded scale (fixed px, per the Phase 1 token table) — NOT the
+        // App's rounded scale (fixed px, per the Phase 1 token table), NOT the
         // shadcn calc() convention. shadcn primitives that use rounded-md/-lg/-sm
         // pick up these app values automatically.
         xs: '6px',
