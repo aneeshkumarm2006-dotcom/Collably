@@ -67,33 +67,33 @@ export default async function LandingPage() {
       <JsonLd data={[organizationJsonLd(), websiteJsonLd(), faqPageJsonLd(GENERAL_FAQS)]} />
 
       {/* ===== Hero ===== */}
-      <header className="relative overflow-hidden bg-dark-sidebar text-white">
+      <header className="relative overflow-hidden bg-page text-ink">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0"
           style={{
             background:
-              'radial-gradient(900px 520px at 82% 8%, rgba(24,119,242,0.32), transparent 60%)',
+              'radial-gradient(900px 520px at 82% 8%, rgba(24,119,242,0.12), transparent 60%)',
           }}
         />
         <Container className="relative py-16 sm:py-24">
           <div className="grid items-center gap-14 lg:grid-cols-[1.08fr_0.92fr]">
             <div>
-              <SectionLabel onDark>The local collab marketplace</SectionLabel>
+              <SectionLabel>The local collab marketplace</SectionLabel>
               <h1 className="mt-6 text-balance text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
                 Real perks from real local spots, for the creators who{' '}
                 <span className="text-brand-secondary">show up.</span>
               </h1>
-              <p className="mt-6 max-w-xl text-pretty text-lg leading-relaxed text-white/70">
+              <p className="mt-6 max-w-xl text-pretty text-lg leading-relaxed text-muted">
                 The marketplace where creators earn real rewards and brands get content that actually
                 converts, with no agencies and no follower gatekeeping.
               </p>
               <HeroCta />
-              <div className="mt-8 flex flex-wrap items-center gap-x-4 gap-y-2 font-mono text-[13px] text-white/55">
+              <div className="mt-8 flex flex-wrap items-center gap-x-4 gap-y-2 font-mono text-[13px] text-muted">
                 <span>Free to join</span>
-                <span className="h-1 w-1 rounded-full bg-white/25" />
+                <span className="h-1 w-1 rounded-full bg-hair-strong" />
                 <span>No follower minimums</span>
-                <span className="h-1 w-1 rounded-full bg-white/25" />
+                <span className="h-1 w-1 rounded-full bg-hair-strong" />
                 <span>
                   <b className="font-semibold text-money">8,500+</b> creators
                 </span>
@@ -103,7 +103,7 @@ export default async function LandingPage() {
             {/* Live offers stack */}
             {heroCampaigns.length > 0 && (
               <div className="flex flex-col gap-4">
-                <div className="flex items-baseline justify-between font-mono text-xs uppercase tracking-[0.14em] text-white/55">
+                <div className="flex items-baseline justify-between font-mono text-xs uppercase tracking-[0.14em] text-muted">
                   <span>Live offers near you</span>
                   <span className="inline-flex items-center gap-2 text-money">
                     <span className="h-1.5 w-1.5 rounded-full bg-money" /> Open now
