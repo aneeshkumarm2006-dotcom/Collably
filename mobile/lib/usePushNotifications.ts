@@ -32,6 +32,7 @@ import Constants, { ExecutionEnvironment } from 'expo-constants';
 
 import { registerForPushNotifications } from './notifications';
 import { resolveDeepLink } from './deepLink';
+import { CELEBRATION_TYPES, celebrateForNotification } from './celebration';
 import { useAuthStore } from '@/store/authStore';
 import { useNotificationStore } from '@/store/notificationStore';
 
@@ -83,7 +84,11 @@ export function usePushNotifications(ready: boolean): void {
     const id = lastResponse.notification.request.identifier;
     if (handledId.current === id) return;
 
-    const data = lastResponse.notification.request.content.data as { deepLinkPath?: unknown };
+    const data = lastResponse.notification.request.content.data as {
+      deepLinkPath?: unknown;
+      type?: unknown;
+      notificationId?: unknown;
+    };
     const path = typeof data?.deepLinkPath === 'string' ? data.deepLinkPath : null;
     if (!path) return;
 
@@ -91,5 +96,16 @@ export function usePushNotifications(ready: boolean): void {
     handledId.current = id;
     void useNotificationStore.getState().refresh();
     router.push(resolveDeepLink(path, role));
+
+    // A tapped verification push (app was backgrounded/closed) also celebrates.
+    // The shared helper dedupes against the socket/replay paths by notification id.
+    if (typeof data?.type === 'string' && CELEBRATION_TYPES.has(data.type)) {
+      const notificationId =
+        typeof data.notificationId === 'string' ? data.notificationId : undefined;
+      void celebrateForNotification(
+        notificationId,
+        lastResponse.notification.request.content.body ?? undefined,
+      );
+    }
   }, [ready, status, role, lastResponse, router]);
 }

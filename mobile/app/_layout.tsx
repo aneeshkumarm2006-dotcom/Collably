@@ -34,11 +34,13 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { ToastHost } from '@/components/ui';
+import { CelebrationModal } from '@/components/shared/CelebrationModal';
 import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
 import { configureNotificationHandler } from '@/lib/notifications';
 import { usePushNotifications } from '@/lib/usePushNotifications';
 import { useChatSocket } from '@/lib/useChatSocket';
+import { useNotificationSocket } from '@/lib/useNotificationSocket';
 
 // Keep the native splash visible until fonts + session are ready.
 void SplashScreen.preventAutoHideAsync();
@@ -84,6 +86,7 @@ export default function RootLayout() {
   useAuthGate(ready);
   usePushNotifications(ready);
   useChatSocket(ready);
+  useNotificationSocket(ready);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -101,6 +104,8 @@ export default function RootLayout() {
             </Stack>
             {/* App-wide overlay: network-error toasts (raised from anywhere via lib/toast). */}
             <ToastHost />
+            {/* App-wide overlay: the "Hurray" confetti popup on approval/verify. */}
+            <CelebrationModal />
           </BottomSheetModalProvider>
         </ThemeProvider>
       </SafeAreaProvider>

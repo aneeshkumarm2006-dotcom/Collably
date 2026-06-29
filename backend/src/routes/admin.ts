@@ -41,6 +41,7 @@ import {
   toPublicCampaign,
   toPublicReport,
 } from '../lib/serialize';
+import { notifyCreatorVerified, notifyBusinessVerified } from '../lib/triggers';
 
 const router = Router();
 
@@ -348,9 +349,18 @@ router.patch(
     const data = businessPatchSchema.parse(req.body);
     const profile = await BusinessProfile.findById(id);
     if (!profile) throw new AppError(404, 'Business profile not found');
+    const wasVerified = profile.isVerified;
     if (data.isVerified !== undefined) profile.isVerified = data.isVerified;
     if (data.isSuspended !== undefined) profile.isSuspended = data.isSuspended;
     await profile.save();
+
+    // First-time approval → notify the owner (push + in-app + live socket).
+    if (data.isVerified === true && !wasVerified) {
+      void notifyBusinessVerified({
+        businessUserId: String(profile.userId),
+        businessName: profile.businessName,
+      });
+    }
     res.status(200).json({ profile: toPublicBusinessProfile(profile) });
   }),
 );
@@ -402,9 +412,15 @@ router.patch(
     const data = creatorPatchSchema.parse(req.body);
     const profile = await CreatorProfile.findById(id);
     if (!profile) throw new AppError(404, 'Creator profile not found');
+    const wasVerified = profile.isVerified;
     if (data.isVerified !== undefined) profile.isVerified = data.isVerified;
     if (data.isSuspended !== undefined) profile.isSuspended = data.isSuspended;
     await profile.save();
+
+    // First-time approval → notify the creator (push + in-app + live socket).
+    if (data.isVerified === true && !wasVerified) {
+      void notifyCreatorVerified({ creatorUserId: String(profile.userId) });
+    }
     res.status(200).json({ profile: toPublicCreatorProfile(profile) });
   }),
 );

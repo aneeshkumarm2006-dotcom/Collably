@@ -14,11 +14,11 @@
  * a downed provider can't break an accept/reject/submit flow.
  */
 import { env } from '../lib/env';
+import { emitToUser } from '../lib/realtime';
 import { User, type UserDoc } from '../models/User';
 import { Notification, type NotificationDoc } from '../models/Notification';
 import type { NotificationType } from '../../../shared/types/Notification';
 import { sendEmail, type EmailContent, type SendEmailResult } from './resend';
-import { emitToUser } from '../lib/realtime';
 import { toPublicNotification } from '../lib/serialize';
 
 const EXPO_PUSH_ENDPOINT = 'https://exp.host/--/api/v2/push/send';
@@ -182,9 +182,11 @@ export async function notify(opts: NotifyOptions): Promise<NotifyResult> {
     deepLinkPath: opts.deepLinkPath,
   });
 
-  // Fan the new notification out over the socket so the web bell/feed update
-  // live (no-op when realtime is off, e.g. workers/scripts). The in-app doc is
-  // already persisted, so a missed socket delivery still surfaces on next fetch.
+  // Real-time fan-out — push the new notification to the recipient's connected
+  // sockets so the web bell/feed and the mobile bell badge update live (and
+  // approval celebrations fire), with no refresh. No-op when realtime is off or
+  // they're offline; the in-app doc is already persisted, so a missed delivery
+  // still surfaces on next fetch.
   emitToUser(String(user._id), 'notification:new', {
     notification: toPublicNotification(notification),
   });

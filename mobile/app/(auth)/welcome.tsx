@@ -56,12 +56,44 @@ const SLIDES: Slide[] = [
   },
 ];
 
+/**
+ * Business-voiced pitch — shown when someone taps the "Business" tile so brands
+ * feel spoken to (ROI / reach / trust), not pitched the creator story.
+ */
+const BUSINESS_SLIDES: Slide[] = [
+  {
+    category: 'Restaurant',
+    img: '1552566626-52f8b828add9',
+    eyebrow: 'REACH LOCALS',
+    title: 'Get seen by your neighbourhood',
+    body: 'Local creators post to the exact audience that walks past your door — real reach, no ad spend.',
+  },
+  {
+    category: 'Salon & Spa',
+    img: '1560066984-138dadb4c035',
+    eyebrow: 'PERKS, NOT CASH',
+    title: 'Pay in what you already make',
+    body: 'Comp a meal, a service, a product. Creators collab for perks, so your marketing budget stays in-house.',
+  },
+  {
+    category: 'Fashion',
+    img: '1441986300917-64674bd600d8',
+    eyebrow: 'VERIFIED CREATORS',
+    title: 'Work with creators you can trust',
+    body: 'Every creator’s reach is verified, so you know exactly who you’re collabing with before you say yes.',
+  },
+];
+
 export default function WelcomeScreen() {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const continueAsGuest = useAuthStore((s) => s.continueAsGuest);
   const [index, setIndex] = useState(0);
+  // 'choose' = role-pick landing (creator-voiced carousel); 'business' = the
+  // brand pitch, branched in when someone taps the Business tile.
+  const [mode, setMode] = useState<'choose' | 'business'>('choose');
+  const slides = mode === 'business' ? BUSINESS_SLIDES : SLIDES;
 
   // The dark photo at the top needs light status-bar icons; restore the theme
   // default on the way out so the auth forms read correctly.
@@ -82,15 +114,24 @@ export default function WelcomeScreen() {
   // always advances from wherever the user last landed (indexRef), so manual
   // swipes never leave it stuck — the carousel keeps playing on its own.
   useEffect(() => {
-    if (carouselH === 0 || width === 0 || SLIDES.length < 2) return;
+    if (carouselH === 0 || width === 0 || slides.length < 2) return;
     const id = setInterval(() => {
-      const next = (indexRef.current + 1) % SLIDES.length;
+      const next = (indexRef.current + 1) % slides.length;
       indexRef.current = next;
       setIndex(next);
       scrollRef.current?.scrollTo({ x: next * width, animated: true });
     }, 3500);
     return () => clearInterval(id);
-  }, [carouselH, width]);
+  }, [carouselH, width, mode, slides.length]);
+
+  // Switch the carousel's audience and snap back to the first slide so the new
+  // pitch always opens on slide 1 (otherwise it inherits the old scroll offset).
+  const switchMode = (next: 'choose' | 'business') => {
+    setMode(next);
+    indexRef.current = 0;
+    setIndex(0);
+    scrollRef.current?.scrollTo({ x: 0, animated: false });
+  };
 
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const i = Math.round(e.nativeEvent.contentOffset.x / width);
@@ -128,7 +169,7 @@ export default function WelcomeScreen() {
             }}
             scrollEventThrottle={16}
           >
-            {SLIDES.map((s) => (
+            {slides.map((s) => (
               <View key={s.eyebrow} style={{ width, height: carouselH }}>
                 {/* Each slide scrolls vertically so its image + copy are always
                     reachable, however short the screen. */}
@@ -169,7 +210,7 @@ export default function WelcomeScreen() {
       {/* ── Dots + role-pick CTAs (always pinned + visible) ── */}
       <View style={{ paddingHorizontal: 28, paddingTop: 8, paddingBottom: insets.bottom + 18 }}>
         <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 7, marginBottom: 20 }}>
-          {SLIDES.map((s, d) => (
+          {slides.map((s, d) => (
             <View
               key={s.eyebrow}
               style={{
@@ -182,30 +223,59 @@ export default function WelcomeScreen() {
           ))}
         </View>
 
-        <Text style={{ fontSize: 12.5, color: colors.text3, textAlign: 'center', marginBottom: 12 }}>How do you want to start?</Text>
+        {mode === 'choose' ? (
+          <>
+            <Text style={{ fontSize: 12.5, color: colors.text3, textAlign: 'center', marginBottom: 12 }}>How do you want to start?</Text>
 
-        <View style={{ flexDirection: 'row', gap: 12 }}>
-          <RoleTile
-            variant="secondary"
-            icon="briefcase"
-            title="Business"
-            subtitle="Post campaigns"
-            onPress={() => router.push({ pathname: '/(auth)/signup', params: { role: 'business' } })}
-          />
-          <RoleTile
-            variant="primary"
-            icon="sparkles"
-            title="Creator"
-            subtitle="Find collabs"
-            onPress={() => router.push({ pathname: '/(auth)/signup', params: { role: 'creator' } })}
-          />
-        </View>
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <RoleTile
+                variant="secondary"
+                icon="briefcase"
+                title="Business"
+                subtitle="Post campaigns"
+                onPress={() => switchMode('business')}
+              />
+              <RoleTile
+                variant="primary"
+                icon="sparkles"
+                title="Creator"
+                subtitle="Find collabs"
+                onPress={() => router.push({ pathname: '/(auth)/signup', params: { role: 'creator' } })}
+              />
+            </View>
 
-        <View style={{ marginTop: 14, alignItems: 'center' }}>
-          <Text style={{ fontSize: 14, fontWeight: '700', color: colors.brandGreenText }} onPress={browseAsGuest}>
-            Browse campaigns
-          </Text>
-        </View>
+            <View style={{ marginTop: 14, alignItems: 'center' }}>
+              <Text style={{ fontSize: 14, fontWeight: '700', color: colors.brandGreenText }} onPress={browseAsGuest}>
+                Browse campaigns
+              </Text>
+            </View>
+          </>
+        ) : (
+          <>
+            <Text style={{ fontSize: 12.5, color: colors.text3, textAlign: 'center', marginBottom: 12 }}>Ready to find creators?</Text>
+
+            <Pressable
+              onPress={() => router.push({ pathname: '/(auth)/signup', params: { role: 'business' } })}
+              style={({ pressed }) => [pressed && { transform: [{ scale: 0.98 }], opacity: 0.96 }]}
+            >
+              <LinearGradient
+                colors={[colors.brandGreen, colors.brandGreenDeep]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={{ height: 56, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+              >
+                <Icon name="briefcase" size={19} color="#fff" />
+                <Text style={{ fontSize: 16.5, fontWeight: '800', letterSpacing: -0.3, color: '#fff' }}>Join as Business</Text>
+              </LinearGradient>
+            </Pressable>
+
+            <View style={{ marginTop: 14, alignItems: 'center' }}>
+              <Text style={{ fontSize: 14, fontWeight: '700', color: colors.brandGreenText }} onPress={() => switchMode('choose')}>
+                ← I’m a creator
+              </Text>
+            </View>
+          </>
+        )}
 
         <View style={{ marginTop: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
           <Text style={{ fontSize: 14, color: colors.text2 }}>Already have an account? </Text>

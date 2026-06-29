@@ -140,6 +140,47 @@ export function notifySubmissionVerified(opts: {
   );
 }
 
+/**
+ * Creator verified by an admin → creator (push + in-app). The mobile app turns
+ * this type into the celebratory "you're verified" moment, so the copy is upbeat.
+ * No email template yet — push + in-app cover the §9.2 channels for now.
+ */
+export function notifyCreatorVerified(opts: {
+  creatorUserId: string;
+  creatorName?: string;
+}): Promise<void> {
+  const who = opts.creatorName ? `, ${opts.creatorName}` : '';
+  return safeNotify('creator_verified', () =>
+    notify({
+      recipient: opts.creatorUserId,
+      type: 'creator_verified',
+      message: `You're verified${who}! Your creator profile is live — you can now apply to campaigns.`,
+      deepLinkPath: '/notifications',
+      push: { title: "You're verified! 🎉", body: 'Your creator profile is live. Start applying to campaigns.' },
+    }),
+  );
+}
+
+/**
+ * Business verified by an admin → business (push + in-app). Mirrors
+ * {@link notifyCreatorVerified}; unlocks publishing campaigns.
+ */
+export function notifyBusinessVerified(opts: {
+  businessUserId: string;
+  businessName?: string;
+}): Promise<void> {
+  const who = opts.businessName ? `, ${opts.businessName}` : '';
+  return safeNotify('business_verified', () =>
+    notify({
+      recipient: opts.businessUserId,
+      type: 'business_verified',
+      message: `You're verified${who}! You can now publish campaigns and start collaborating with creators.`,
+      deepLinkPath: '/notifications',
+      push: { title: "You're verified! 🎉", body: 'You can now publish campaigns and find creators.' },
+    }),
+  );
+}
+
 /** Revision requested → creator (push + email). */
 export function notifyRevisionRequested(opts: {
   creatorUserId: string;

@@ -16,6 +16,8 @@ export const NOTIFICATION_TYPES = [
   'revision_requested',
   'campaign_expiring',
   'new_message',
+  'creator_verified',
+  'business_verified',
 ] as const;
 
 export type KnownNotificationType = (typeof NOTIFICATION_TYPES)[number];

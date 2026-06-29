@@ -10,6 +10,7 @@ export { TagChip, type TagChipProps } from './TagChip';
 export { Avatar, type AvatarProps } from './Avatar';
 export { RemoteImage, BLURHASH } from './RemoteImage';
 export { ToastHost } from './Toast';
+export { Confetti } from './Confetti';
 export { BottomSheet, type BottomSheetProps, type BottomSheetRef } from './BottomSheet';
 export { StatCard, type StatCardProps, type StatCardTone } from './StatCard';
 export { EmptyState, type EmptyStateProps } from './EmptyState';
