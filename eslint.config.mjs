@@ -10,6 +10,8 @@ export default tseslint.config(
       '**/dist/**',
       '**/build/**',
       '**/.expo/**',
+      '**/.next/**',
+      '**/next-env.d.ts',
       '**/web-build/**',
       '**/android/**',
       '**/ios/**',

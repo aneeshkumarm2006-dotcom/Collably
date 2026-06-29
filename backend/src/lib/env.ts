@@ -29,6 +29,15 @@ export const env = {
   /** "*" or a comma-separated allowlist of origins. */
   corsOrigin: str('CORS_ORIGIN', '*'),
 
+  /**
+   * Public base URL of the Collably website (e.g. `https://collably.app`), no
+   * trailing slash. When set, transactional emails that point at a user-facing
+   * screen (currently the password reset) link to the **web** app instead of the
+   * mobile `collably://` deep link. Leave unset to preserve the mobile deep-link
+   * behavior (e.g. before the website is deployed).
+   */
+  webAppUrl: str('WEB_APP_URL').replace(/\/+$/, ''),
+
   jwtSecret: str('JWT_SECRET'),
   /** Access-token lifetime (e.g. "15m", "7d"). */
   jwtExpiresIn: str('JWT_EXPIRES_IN', '7d'),

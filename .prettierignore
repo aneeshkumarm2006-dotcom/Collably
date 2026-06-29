@@ -2,6 +2,8 @@ node_modules
 dist
 build
 .expo
+.next
+next-env.d.ts
 web-build
 android
 ios

@@ -161,9 +161,23 @@ export function accountCreatedEmail(p: { name: string }): EmailContent {
   });
 }
 
-/** Password reset — raw token deep-links into the reset screen (PRD §8.2). */
+/**
+ * Password reset CTA link. Prefers the **web** reset route
+ * (`<WEB_APP_URL>/reset-password/<token>`) when `WEB_APP_URL` is configured —
+ * the website is the canonical reset surface (it auto-logs-in on success). Falls
+ * back to the mobile `collably://reset-password?token=` deep link otherwise, so
+ * the flow keeps working before the website is deployed.
+ */
+function passwordResetUrl(token: string): string {
+  if (env.webAppUrl) {
+    return `${env.webAppUrl}/reset-password/${encodeURIComponent(token)}`;
+  }
+  return `${BRAND.scheme}reset-password?token=${encodeURIComponent(token)}`;
+}
+
+/** Password reset — raw token links into the reset screen (PRD §8.2). */
 export function passwordResetEmail(p: { name: string; token: string }): EmailContent {
-  const url = `${BRAND.scheme}reset-password?token=${encodeURIComponent(p.token)}`;
+  const url = passwordResetUrl(p.token);
   return layout({
     heading: 'Reset your password',
     bodyHtml: `Hi ${esc(

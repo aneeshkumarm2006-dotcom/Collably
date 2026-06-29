@@ -18,6 +18,8 @@ import { User, type UserDoc } from '../models/User';
 import { Notification, type NotificationDoc } from '../models/Notification';
 import type { NotificationType } from '../../../shared/types/Notification';
 import { sendEmail, type EmailContent, type SendEmailResult } from './resend';
+import { emitToUser } from '../lib/realtime';
+import { toPublicNotification } from '../lib/serialize';
 
 const EXPO_PUSH_ENDPOINT = 'https://exp.host/--/api/v2/push/send';
 /** Expo accepts at most 100 messages per request. */
@@ -178,6 +180,13 @@ export async function notify(opts: NotifyOptions): Promise<NotifyResult> {
     type: opts.type,
     message: opts.message,
     deepLinkPath: opts.deepLinkPath,
+  });
+
+  // Fan the new notification out over the socket so the web bell/feed update
+  // live (no-op when realtime is off, e.g. workers/scripts). The in-app doc is
+  // already persisted, so a missed socket delivery still surfaces on next fetch.
+  emitToUser(String(user._id), 'notification:new', {
+    notification: toPublicNotification(notification),
   });
 
   const respectPrefs = opts.respectPrefs ?? true;
