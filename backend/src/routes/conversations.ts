@@ -157,11 +157,16 @@ router.post(
     const senderIsBusiness = c.businessUserId.toString() === senderUserId.toString();
     const recipientUserId = senderIsBusiness ? c.creatorUserId : c.businessUserId;
 
+    // If the recipient is connected, the message:new below reaches their device
+    // now → it's delivered (WhatsApp ✓✓ grey). Otherwise it stays "sent" (✓) until
+    // they reconnect (see the delivery catch-up in lib/realtime on socket connect).
+    const recipientOnline = isUserOnline(recipientUserId.toString());
     const message = await Message.create({
       conversationId: c._id,
       senderUserId,
       senderRole: req.user!.role,
       body,
+      ...(recipientOnline ? { deliveredAt: new Date() } : {}),
     });
 
     // Update the thread preview + bump the recipient's unread counter.

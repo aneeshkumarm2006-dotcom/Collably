@@ -18,6 +18,8 @@ import { Server as SocketIOServer } from 'socket.io';
 import { verifyToken } from './jwt';
 import { corsOrigins } from './env';
 import { User } from '../models/User';
+import { Conversation } from '../models/Conversation';
+import { Message } from '../models/Message';
 import type { UserRole } from '../../../shared/constants/statuses';
 
 interface SocketAuthData {
@@ -76,6 +78,10 @@ export function initRealtime(httpServer: HttpServer): SocketIOServer {
     const { userId } = socket.data as SocketAuthData;
     void socket.join(userRoom(userId));
 
+    // Now that this user is connected, flip any messages waiting for them from
+    // sent → delivered and let the senders' ticks update live (WhatsApp ✓✓).
+    void markIncomingDelivered(userId);
+
     // Typing relay. The client already knows the other participant's user id
     // (from the conversation), so no DB lookup is needed here.
     socket.on(
@@ -93,6 +99,34 @@ export function initRealtime(httpServer: HttpServer): SocketIOServer {
 
   io = server;
   return server;
+}
+
+/**
+ * On (re)connect, flip every message addressed to this user from sent → delivered
+ * and notify each sender so their ticks update live. Best-effort — never throws.
+ */
+async function markIncomingDelivered(userId: string): Promise<void> {
+  try {
+    const convos = await Conversation.find({ participantUserIds: userId }).select(
+      '_id businessUserId creatorUserId',
+    );
+    const now = new Date();
+    for (const c of convos) {
+      const res = await Message.updateMany(
+        { conversationId: c._id, senderUserId: { $ne: userId }, deliveredAt: { $exists: false } },
+        { $set: { deliveredAt: now } },
+      );
+      if (res.modifiedCount > 0) {
+        const senderUserId =
+          c.businessUserId.toString() === userId ? c.creatorUserId : c.businessUserId;
+        emitToUser(senderUserId.toString(), 'conversation:delivered', {
+          conversationId: c._id.toString(),
+        });
+      }
+    }
+  } catch (err) {
+    console.error('[realtime] delivery catch-up failed:', err instanceof Error ? err.message : err);
+  }
 }
 
 /** Emit an event to every socket of a given user. No-op if realtime is off. */

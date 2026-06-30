@@ -352,6 +352,7 @@ export function toPublicMessage(m: MessageDoc): Message {
     senderUserId: refId(m.senderUserId as Ref<unknown>),
     senderRole: m.senderRole,
     body: m.body,
+    deliveredAt: iso(m.deliveredAt),
     readAt: iso(m.readAt),
     createdAt: m.createdAt.toISOString(),
   };

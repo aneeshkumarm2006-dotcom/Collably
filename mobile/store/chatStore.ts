@@ -48,6 +48,7 @@ type ChatState = {
   // Socket-driven.
   onMessageNew: (conversationId: string, message: Message) => void;
   onConversationRead: (conversationId: string) => void;
+  onConversationDelivered: (conversationId: string) => void;
 
   reset: () => void;
 };
@@ -184,6 +185,21 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const now = new Date().toISOString();
       const next = list.map((m) =>
         m.senderUserId === myId && !m.readAt ? { ...m, readAt: now } : m,
+      );
+      return { messages: { ...s.messages, [conversationId]: next } };
+    });
+  },
+
+  onConversationDelivered: (conversationId) => {
+    const myId = useAuthStore.getState().user?._id;
+    if (!myId) return;
+    // The recipient came online — stamp our undelivered sent messages as delivered.
+    set((s) => {
+      const list = s.messages[conversationId];
+      if (!list) return {};
+      const now = new Date().toISOString();
+      const next = list.map((m) =>
+        m.senderUserId === myId && !m.deliveredAt && !m.readAt ? { ...m, deliveredAt: now } : m,
       );
       return { messages: { ...s.messages, [conversationId]: next } };
     });

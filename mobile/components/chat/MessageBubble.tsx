@@ -46,8 +46,9 @@ export function MessageBubble({
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, alignSelf: 'flex-end', marginTop: 1 }}>
           <Text style={{ fontSize: 10.5, color: mine ? p.metaOut : p.metaIn }}>{shortTime(message.createdAt)}</Text>
           {mine ? (
+            // ✓ sent · ✓✓ delivered (grey) · ✓✓ read (blue) — WhatsApp-style.
             <Text style={{ fontSize: 11, fontWeight: '700', color: message.readAt ? p.tickOutRead : p.tickOut }}>
-              {message.readAt ? '✓✓' : '✓'}
+              {message.readAt || message.deliveredAt ? '✓✓' : '✓'}
             </Text>
           ) : null}
         </View>

@@ -31,12 +31,16 @@ export function useChatSocket(ready: boolean): void {
     const onRead = (payload: { conversationId: string }) => {
       if (payload?.conversationId) useChatStore.getState().onConversationRead(payload.conversationId);
     };
+    const onDelivered = (payload: { conversationId: string }) => {
+      if (payload?.conversationId) useChatStore.getState().onConversationDelivered(payload.conversationId);
+    };
     const onNewConversation = () => {
       void useChatStore.getState().loadConversations();
     };
 
     socket.on('message:new', onMessage);
     socket.on('conversation:read', onRead);
+    socket.on('conversation:delivered', onDelivered);
     socket.on('conversation:new', onNewConversation);
 
     // Prime the conversation list + unread badge on (re)connect.
@@ -45,6 +49,7 @@ export function useChatSocket(ready: boolean): void {
     return () => {
       socket.off('message:new', onMessage);
       socket.off('conversation:read', onRead);
+      socket.off('conversation:delivered', onDelivered);
       socket.off('conversation:new', onNewConversation);
     };
   }, [ready, status]);

@@ -11,7 +11,9 @@ export interface Message {
   senderUserId: ID; // ref: User
   senderRole: UserRole;
   body: string;
-  /** Set once the recipient has read the message. */
+  /** Set once the message has reached the recipient's device (WhatsApp ✓✓ grey). */
+  deliveredAt?: ISODateString;
+  /** Set once the recipient has opened the thread (WhatsApp ✓✓ blue). */
   readAt?: ISODateString;
   createdAt: ISODateString;
 }

@@ -7,6 +7,7 @@ export interface MessageDoc extends Document<Types.ObjectId> {
   senderUserId: Types.ObjectId;
   senderRole: UserRole;
   body: string;
+  deliveredAt?: Date;
   readAt?: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -23,6 +24,7 @@ const messageSchema = new Schema<MessageDoc>(
     senderUserId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     senderRole: { type: String, enum: [...USER_ROLES], required: true },
     body: { type: String, required: true, trim: true, maxlength: 4000 },
+    deliveredAt: { type: Date },
     readAt: { type: Date },
   },
   { timestamps: true },

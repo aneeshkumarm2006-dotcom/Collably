@@ -14,9 +14,12 @@ import { useChatPalette } from './chatTheme';
 export function ChatComposer({
   onSend,
   onTyping,
+  bottomInset = 0,
 }: {
   onSend: (body: string) => void;
   onTyping?: (typing: boolean) => void;
+  /** Extra bottom padding (home-indicator clearance when the keyboard is down). */
+  bottomInset?: number;
 }) {
   const p = useChatPalette();
   const { colors } = p;
@@ -38,7 +41,7 @@ export function ChatComposer({
         gap: 8,
         paddingHorizontal: 10,
         paddingTop: 8,
-        paddingBottom: 8,
+        paddingBottom: 8 + bottomInset,
         backgroundColor: p.chatBg,
       }}
     >

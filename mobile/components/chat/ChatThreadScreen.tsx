@@ -9,6 +9,7 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Text,
@@ -48,8 +49,22 @@ export function ChatThreadScreen() {
   const [typingFromOther, setTypingFromOther] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+  const [kbVisible, setKbVisible] = useState(false);
 
   const otherUserId = conv?.otherParticipant?._id;
+
+  // Track the keyboard so the composer only adds home-indicator clearance when the
+  // keyboard is down (no awkward gap above the keyboard while typing).
+  useEffect(() => {
+    const showEvt = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvt = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const show = Keyboard.addListener(showEvt, () => setKbVisible(true));
+    const hide = Keyboard.addListener(hideEvt, () => setKbVisible(false));
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
 
   // Initial load: resolve the thread (store, else fetch) + first page of messages.
   useEffect(() => {
@@ -154,7 +169,13 @@ export function ChatThreadScreen() {
   const subtitle = typingFromOther ? 'typing…' : conv?.campaignTitle;
 
   return (
-    <View style={{ flex: 1, backgroundColor: pal.chatBg }}>
+    // The KeyboardAvoidingView wraps the WHOLE screen (header included) so its top
+    // is the window top → keyboardVerticalOffset is 0 and the composer always lifts
+    // to sit right above the keyboard, on every device.
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: pal.chatBg }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <Header title={title} subtitle={subtitle} onBack={() => router.back()} variant="card" />
 
       {/* collab-context strip — reminds you what this thread is about */}
@@ -170,13 +191,10 @@ export function ChatThreadScreen() {
       {error && messages.length === 0 ? (
         <ErrorState body={error} onRetry={() => setReloadKey((k) => k + 1)} />
       ) : (
-        <KeyboardAvoidingView
-          style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          keyboardVerticalOffset={insets.top + 8}
-        >
+        <View style={{ flex: 1 }}>
           <FlatList
             data={messages}
+            style={{ flex: 1 }}
             inverted
             keyExtractor={(m) => m._id}
             renderItem={({ item, index }) => {
@@ -202,10 +220,10 @@ export function ChatThreadScreen() {
             }
             ListEmptyComponent={loading ? <ActivityIndicator size="small" color={colors.text3} style={{ marginTop: 40 }} /> : null}
           />
-          <ChatComposer onSend={send} onTyping={emitTyping} />
-        </KeyboardAvoidingView>
+          <ChatComposer onSend={send} onTyping={emitTyping} bottomInset={kbVisible ? 0 : insets.bottom} />
+        </View>
       )}
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
