@@ -9,7 +9,7 @@ import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Header, NotificationBell } from '@/components/shared';
 import { ApplicationCard } from '@/components/creator';
-import { Button, EmptyState, ErrorState, SkeletonCard } from '@/components/ui';
+import { Button, EmptyState, ErrorState, SkeletonCard, StaggerItem } from '@/components/ui';
 import { useTheme } from '@/components/ThemeProvider';
 import { api } from '@/lib/api';
 import { useFetch } from '@/lib/useFetch';
@@ -59,9 +59,10 @@ export default function CollabsScreen() {
         <FlatList
           data={items}
           keyExtractor={(item) => item._id}
-          renderItem={({ item }) => {
+          renderItem={({ item, index }) => {
             const submitted = !!item.submittedAt;
             return (
+              <StaggerItem index={index}>
               <ApplicationCard
                 application={item}
                 campaign={item.campaign ?? FALLBACK_CAMPAIGN}
@@ -98,6 +99,7 @@ export default function CollabsScreen() {
                   </View>
                 }
               />
+              </StaggerItem>
             );
           }}
           contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 24, gap: 14, flexGrow: 1 }}

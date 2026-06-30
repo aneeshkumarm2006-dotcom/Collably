@@ -231,6 +231,7 @@ export default function ExploreScreen() {
           items={items}
           total={total}
           bottomInset={insets.bottom}
+          fitToResults={Boolean(debouncedSearch) || activeFilters > 0}
           onOpen={(id) => router.push({ pathname: '/(creator)/campaign/[id]', params: { id } })}
         />
       ) : (

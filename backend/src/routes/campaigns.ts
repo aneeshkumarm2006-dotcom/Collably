@@ -245,11 +245,22 @@ async function applyGeocoding(
         if (r.formatted) loc.address = r.formatted;
         if (!loc.placeId && r.placeId) loc.placeId = r.placeId;
       }
-    } else if (!loc.coordinates && loc.address) {
-      const r = await forwardGeocode(loc.address);
-      if (r) {
-        loc.coordinates = { lat: r.lat, lng: r.lng };
-        if (!loc.placeId && r.placeId) loc.placeId = r.placeId;
+    } else if (!loc.coordinates) {
+      // Forward-geocode the precise address when the business gave one, else fall
+      // back to the coarse city/state/country so a city-only campaign still gets
+      // an (approximate) map pin instead of being invisible on the discovery map.
+      const query =
+        loc.address?.trim() ||
+        [loc.city, loc.state, loc.country]
+          .map((s) => s?.trim())
+          .filter(Boolean)
+          .join(', ');
+      if (query) {
+        const r = await forwardGeocode(query);
+        if (r) {
+          loc.coordinates = { lat: r.lat, lng: r.lng };
+          if (!loc.placeId && r.placeId) loc.placeId = r.placeId;
+        }
       }
     }
   } catch {
@@ -337,7 +348,9 @@ router.get(
 
     if (q.q) {
       const rx = { $regex: escapeRegex(q.q), $options: 'i' };
-      filter.$or = [{ title: rx }, { description: rx }];
+      // Match the query against the city too, so searching a place ("Toronto")
+      // surfaces campaigns there — not only ones with the word in their title.
+      filter.$or = [{ title: rx }, { description: rx }, { 'location.city': rx }];
     }
 
     const total = await Campaign.countDocuments(filter);

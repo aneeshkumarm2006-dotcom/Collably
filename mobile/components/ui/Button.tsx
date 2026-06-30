@@ -5,9 +5,9 @@
  * money, danger). Supports leading/trailing icons, three sizes, full-width `block`,
  * and a `loading` spinner. Colors come from `useTheme()` so light/dark stay in sync.
  */
-import { useState } from 'react';
-import { ActivityIndicator, Pressable, Text, type PressableProps, type ViewStyle } from 'react-native';
+import { ActivityIndicator, Text, type PressableProps, type ViewStyle } from 'react-native';
 import { useTheme } from '@/components/ThemeProvider';
+import { PressableScale } from './PressableScale';
 import { Icon, type IconName } from './Icon';
 
 export type ButtonVariant = 'solid' | 'outline' | 'tonal' | 'ghost' | 'success' | 'money' | 'danger';
@@ -56,11 +56,9 @@ export function Button({
   };
   const v = variants[variant];
   const isDisabled = disabled || loading;
-  const [pressed, setPressed] = useState(false);
 
-  // NativeWind v4's `cssInterop` silently DROPS a function-form `style` on core
-  // components (it rendered the CTA as unstyled stacked text). So we track press
-  // via state and pass a plain static array `style`, which it resolves correctly.
+  // Static (non-function) style array — NativeWind v4 drops function-form styles
+  // on core components. Press feedback (spring scale) is handled by PressableScale.
   const base: ViewStyle = {
     flexDirection: 'row',
     alignItems: 'center',
@@ -77,12 +75,10 @@ export function Button({
   };
 
   return (
-    <Pressable
+    <PressableScale
       onPress={isDisabled ? undefined : onPress}
-      onPressIn={() => setPressed(true)}
-      onPressOut={() => setPressed(false)}
       disabled={isDisabled}
-      style={[base, { opacity: isDisabled ? 0.45 : pressed ? 0.85 : 1 }]}
+      style={[base, { opacity: isDisabled ? 0.45 : 1 }]}
     >
       {loading ? (
         <ActivityIndicator size="small" color={v.fg} />
@@ -93,6 +89,6 @@ export function Button({
           {iconRight && <Icon name={iconRight} size={fontSize + 1} color={v.fg} strokeWidth={2.1} />}
         </>
       )}
-    </Pressable>
+    </PressableScale>
   );
 }

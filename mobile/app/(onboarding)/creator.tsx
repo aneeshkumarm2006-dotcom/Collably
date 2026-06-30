@@ -553,8 +553,10 @@ export default function CreatorOnboardingScreen({ initialIndex = 0 }: { initialI
   }
 }
 
-/** Platform connector card — brand badge header + inputs, with a Verified chip
- *  once a handle + link are present. */
+/** Platform connector card — brand badge header + inputs, with an "In progress"
+ *  chip once a handle + link are present. We don't actually verify the platform
+ *  here (ownership/reach checks are admin-side / future scope), so the chip only
+ *  signals "added, pending review" — never claims the account is verified. */
 function SocialCard({
   icon,
   badge,
@@ -595,9 +597,9 @@ function SocialCard({
           <Text style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', marginTop: 1 }}>{sub}</Text>
         </View>
         {complete ? (
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999, backgroundColor: 'rgba(22,199,154,0.18)', borderWidth: 1, borderColor: 'rgba(22,199,154,0.4)' }}>
-            <Icon name="checkcircle" size={13} color="#3BE0AE" strokeWidth={2.2} />
-            <Text style={{ fontSize: 11.5, fontWeight: '800', color: '#3BE0AE' }}>Verified</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999, backgroundColor: 'rgba(255,193,94,0.16)', borderWidth: 1, borderColor: 'rgba(255,193,94,0.42)' }}>
+            <Icon name="clock" size={13} color="#FFC15E" strokeWidth={2.2} />
+            <Text style={{ fontSize: 11.5, fontWeight: '800', color: '#FFC15E' }}>In progress</Text>
           </View>
         ) : null}
       </View>

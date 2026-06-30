@@ -133,9 +133,14 @@ export type ExploreMapProps = {
   total?: number;
   /** Bottom inset so the mini card clears the tab bar. */
   bottomInset?: number;
+  /**
+   * When true (a search / filter is active) the map frames the result pins instead
+   * of sitting on the user's location — so searching a place actually shows it.
+   */
+  fitToResults?: boolean;
 };
 
-export function ExploreMap({ items, onOpen, total, bottomInset = 0 }: ExploreMapProps) {
+export function ExploreMap({ items, onOpen, total, bottomInset = 0, fitToResults = false }: ExploreMapProps) {
   const { colors } = useTheme();
 
   const pins = useMemo<Pinned[]>(() => {
@@ -184,6 +189,13 @@ export function ExploreMap({ items, onOpen, total, bottomInset = 0 }: ExploreMap
       500,
     );
   };
+
+  // When a search / filter is active, frame the result pins so the searched
+  // location is what you see — otherwise the map would stay on the user's GPS.
+  useEffect(() => {
+    if (!fitToResults || pins.length === 0) return;
+    mapRef.current?.animateToRegion(fitRegion(pins.map((p) => p.point)), 500);
+  }, [fitToResults, pins]);
 
   const clusters = useMemo(() => clusterPins(pins, region), [pins, region]);
   const selected = useMemo(

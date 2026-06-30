@@ -5,6 +5,7 @@
  * rains over a centered card with the headline + message and a single dismiss CTA.
  */
 import { Modal, Text, View } from 'react-native';
+import Reanimated, { FadeIn, FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import { Pressable } from '@/components/ui/SafePressable';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Confetti, Icon } from '@/components/ui';
@@ -15,6 +16,9 @@ export function CelebrationModal() {
   const { colors } = useTheme();
   const current = useCelebrationStore((s) => s.current);
   const dismiss = useCelebrationStore((s) => s.dismiss);
+  const reduced = useReducedMotion();
+  // The card lands with a spring (rise + settle); reduce-motion gets a plain fade.
+  const cardEnter = reduced ? FadeIn.duration(220) : FadeInDown.springify().damping(16).stiffness(190).mass(0.9);
 
   return (
     <Modal visible={!!current} transparent animationType="fade" onRequestClose={dismiss} statusBarTranslucent>
@@ -22,7 +26,8 @@ export function CelebrationModal() {
         {/* Confetti rains over the whole screen, above the scrim, below the card taps. */}
         {current ? <Confetti /> : null}
 
-        <View
+        <Reanimated.View
+          entering={cardEnter}
           style={{
             width: '100%',
             maxWidth: 360,
@@ -73,7 +78,7 @@ export function CelebrationModal() {
               <Text style={{ fontSize: 16, fontWeight: '800', letterSpacing: -0.3, color: '#fff' }}>Let’s go</Text>
             </LinearGradient>
           </Pressable>
-        </View>
+        </Reanimated.View>
       </View>
     </Modal>
   );

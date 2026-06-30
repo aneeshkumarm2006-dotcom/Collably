@@ -38,6 +38,31 @@ export interface CampaignCardProps {
   variant?: 'full' | 'compact';
   href?: string;
   className?: string;
+  /**
+   * Render as non-navigating eye-candy (no Link), e.g. the decorative previews on
+   * the auth pages — so Next never prefetches a dead `/campaign/<fake-id>` (404).
+   */
+  decorative?: boolean;
+}
+
+/** Wrapper that links to the campaign, unless `decorative` (then a plain div). */
+function CardShell({
+  decorative,
+  href,
+  className,
+  children,
+}: {
+  decorative?: boolean;
+  href: string;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  if (decorative) return <div className={className}>{children}</div>;
+  return (
+    <Link href={href} className={className}>
+      {children}
+    </Link>
+  );
 }
 
 function Chip({ children }: { children: React.ReactNode }) {
@@ -110,7 +135,7 @@ function Cover({ campaign, compact }: { campaign: CampaignCardData; compact?: bo
   );
 }
 
-export function CampaignCard({ campaign, variant = 'full', href, className }: CampaignCardProps) {
+export function CampaignCard({ campaign, variant = 'full', href, className, decorative }: CampaignCardProps) {
   const link = href ?? `/campaign/${campaign.id}`;
   const overlay = campaign.applicationStatus
     ? APPLIED_OVERLAY[campaign.applicationStatus]
@@ -119,7 +144,8 @@ export function CampaignCard({ campaign, variant = 'full', href, className }: Ca
 
   if (variant === 'compact') {
     return (
-      <Link
+      <CardShell
+        decorative={decorative}
         href={link}
         className={cn(
           'group flex items-center gap-3.5 rounded-lg border border-hair bg-card p-3 shadow-xs transition-shadow hover:shadow-card',
@@ -137,12 +163,13 @@ export function CampaignCard({ campaign, variant = 'full', href, className }: Ca
           </h3>
           <RewardPill reward={campaign.reward} />
         </div>
-      </Link>
+      </CardShell>
     );
   }
 
   return (
-    <Link
+    <CardShell
+      decorative={decorative}
       href={link}
       className={cn(
         'group relative flex flex-col overflow-hidden rounded-lg border border-hair bg-card shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:border-hair-strong hover:shadow-card-hover',
@@ -208,6 +235,6 @@ export function CampaignCard({ campaign, variant = 'full', href, className }: Ca
           )}
         </div>
       </div>
-    </Link>
+    </CardShell>
   );
 }

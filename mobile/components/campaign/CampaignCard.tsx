@@ -9,7 +9,7 @@
  * Pass `applicationStatus` to show the viewer's own application state in the corner.
  */
 import { Text, View } from 'react-native';
-import { Pressable } from '@/components/ui/SafePressable';
+import { PressableScale } from '@/components/ui/PressableScale';
 import { useTheme } from '@/components/ThemeProvider';
 import { formatCountdown, formatCompactNumber } from '@/lib/utils';
 import type { Campaign } from '@/types';
@@ -60,9 +60,9 @@ export function CampaignCard({ campaign, businessName, applicationStatus, compac
 
   if (compact) {
     return (
-      <Pressable
+      <PressableScale
         onPress={onPress}
-        style={({ pressed }) => ({
+        style={{
           flexDirection: 'row',
           gap: 12,
           alignItems: 'center',
@@ -71,9 +71,8 @@ export function CampaignCard({ campaign, businessName, applicationStatus, compac
           borderColor: colors.hair,
           borderRadius: 16,
           padding: 10,
-          opacity: pressed ? 0.9 : 1,
           ...shadows.card,
-        })}
+        }}
       >
         <CoverImage src={campaign.coverImage} category={campaign.category} radius={11} style={{ width: 62, height: 62 }} />
         <View style={{ flex: 1, minWidth: 0 }}>
@@ -89,22 +88,21 @@ export function CampaignCard({ campaign, businessName, applicationStatus, compac
           </View>
         </View>
         <Icon name="chevR" size={18} color={colors.text3} />
-      </Pressable>
+      </PressableScale>
     );
   }
 
   return (
-    <Pressable
+    <PressableScale
       onPress={onPress}
-      style={({ pressed }) => ({
+      style={{
         backgroundColor: colors.card,
         borderWidth: 1,
         borderColor: colors.hair,
         borderRadius: 18,
         overflow: 'hidden',
-        opacity: pressed ? 0.95 : 1,
         ...shadows.card,
-      })}
+      }}
     >
       <CoverImage src={campaign.coverImage} category={campaign.category} style={{ aspectRatio: 16 / 10 }}>
         {/* category chip */}
@@ -211,7 +209,7 @@ export function CampaignCard({ campaign, businessName, applicationStatus, compac
           </Text>
         </View>
       </View>
-    </Pressable>
+    </PressableScale>
   );
 }
 

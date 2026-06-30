@@ -85,10 +85,10 @@ export function AuthLayout({ children, tagline, subtitle, proof }: AuthLayoutPro
         {/* Floating campaign previews */}
         <div aria-hidden className="pointer-events-none absolute inset-0 hidden xl:block">
           <div className="absolute -right-10 top-28 w-[280px] rotate-[3deg] opacity-95 shadow-2xl">
-            <CampaignCard campaign={PREVIEW_CAMPAIGNS[0]} />
+            <CampaignCard campaign={PREVIEW_CAMPAIGNS[0]} decorative />
           </div>
           <div className="absolute right-16 top-[420px] w-[250px] -rotate-2 opacity-95 shadow-2xl">
-            <CampaignCard campaign={PREVIEW_CAMPAIGNS[1]} variant="compact" />
+            <CampaignCard campaign={PREVIEW_CAMPAIGNS[1]} variant="compact" decorative />
           </div>
         </div>
 

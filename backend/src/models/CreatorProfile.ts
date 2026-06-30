@@ -68,6 +68,7 @@ const creatorProfileSchema = new Schema<CreatorProfileDoc>(
       },
     },
     contentTypes: { type: [{ type: String, enum: [...CONTENT_TYPES] }], default: [] },
+    isUGCOnly: { type: Boolean, default: false },
     portfolio: { type: [portfolioItemSchema], default: [] },
     totalCollabsCompleted: { type: Number, default: 0, min: 0 },
     totalRewardsEarned: { type: Number, default: 0, min: 0 },

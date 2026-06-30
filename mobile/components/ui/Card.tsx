@@ -4,7 +4,7 @@
  * (adds press feedback); otherwise it's a plain `View`.
  */
 import { View, type PressableProps, type ViewProps, type ViewStyle } from 'react-native';
-import { Pressable } from '@/components/ui/SafePressable';
+import { PressableScale } from '@/components/ui/PressableScale';
 import { useTheme } from '@/components/ThemeProvider';
 
 export type CardProps = {
@@ -35,13 +35,9 @@ export function Card({ children, onPress, padding = 16, elevated, sunken, style,
 
   if (onPress) {
     return (
-      <Pressable
-        onPress={onPress}
-        style={({ pressed }) => [base, { opacity: pressed ? 0.9 : 1 }]}
-        {...rest}
-      >
+      <PressableScale onPress={onPress} style={base} {...rest}>
         {children}
-      </Pressable>
+      </PressableScale>
     );
   }
 

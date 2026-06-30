@@ -60,11 +60,15 @@ export function LevelStreakCard({ profile }: { profile: CreatorProfile | null })
   const { colors, shadows } = useTheme();
   const completed = profile?.totalCollabsCompleted ?? 0;
   const earned = profile?.totalRewardsEarned ?? 0;
-  const xp = completed * 120 + Math.round(earned / 8) + 250;
+  // XP is a gamified view of REAL activity (completed collabs + earnings) — no
+  // fabricated base, so a brand-new creator honestly starts at 0 XP / Level 1.
+  const xp = completed * 120 + Math.round(earned / 8);
   const level = Math.floor(xp / 1000) + 1;
   const xpInLevel = xp % 1000;
   const progress = xpInLevel / 1000;
-  const streak = (completed % 6) + 2;
+  // No real streak tracking yet (would need a backend lastActiveAt + consecutive-
+  // day counter), so we don't invent one — the flame shows only a genuine streak.
+  const streak = 0;
 
   const fill = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -96,11 +100,13 @@ export function LevelStreakCard({ profile }: { profile: CreatorProfile | null })
               {xpInLevel} / 1000 XP
             </Text>
           </View>
-          {/* streak */}
-          <View style={{ alignItems: 'center', backgroundColor: colors.cardSunk, borderRadius: 12, paddingHorizontal: 11, paddingVertical: 7 }}>
-            <Text style={{ fontSize: 17 }}>🔥</Text>
-            <Text style={{ fontSize: 11, fontWeight: '800', color: colors.text, marginTop: 1 }}>{streak}-day</Text>
-          </View>
+          {/* streak — only shown when there's a real one */}
+          {streak > 0 ? (
+            <View style={{ alignItems: 'center', backgroundColor: colors.cardSunk, borderRadius: 12, paddingHorizontal: 11, paddingVertical: 7 }}>
+              <Text style={{ fontSize: 17 }}>🔥</Text>
+              <Text style={{ fontSize: 11, fontWeight: '800', color: colors.text, marginTop: 1 }}>{streak}-day</Text>
+            </View>
+          ) : null}
         </View>
         {/* xp bar */}
         <View style={{ height: 8, borderRadius: 4, backgroundColor: colors.cardSunk, marginTop: 13, overflow: 'hidden' }}>
@@ -148,13 +154,13 @@ export function PremiumEarningsCard({
               ${Math.round(animated).toLocaleString('en-US')}
             </Text>
           </View>
-          <View style={{ alignItems: 'flex-end', gap: 4 }}>
-            <Sparkline data={history} color={colors.brandGreenText} />
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: colors.brandGreenSoft, paddingHorizontal: 7, paddingVertical: 2, borderRadius: 7 }}>
-              <Icon name="chevU" size={11} color={colors.brandGreenText} strokeWidth={2.6} />
-              <Text style={{ fontSize: 11, fontWeight: '800', color: colors.brandGreenText }}>18%</Text>
+          {/* Trend sparkline only once there are real earnings — no fabricated
+              "+18%" on a $0 account. */}
+          {earned > 0 ? (
+            <View style={{ alignItems: 'flex-end', gap: 4 }}>
+              <Sparkline data={history} color={colors.brandGreenText} />
             </View>
-          </View>
+          ) : null}
         </View>
         <View style={{ flexDirection: 'row', marginTop: 14, paddingTop: 13, borderTopWidth: 1, borderTopColor: colors.hair }}>
           {([[pending, 'Applied'], [active, 'Active'], [completed, 'Done']] as const).map(([v, l], i) => (
