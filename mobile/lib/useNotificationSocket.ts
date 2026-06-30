@@ -5,7 +5,7 @@
  * trigger, so the bell badge ticks live — no manual refresh — while the app is
  * open. Approval/verification events additionally fire the celebratory popup.
  */
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { useNotificationStore } from '@/store/notificationStore';
 import { CELEBRATION_TYPES, celebrateForNotification, replayMissedCelebration } from './celebration';
@@ -24,13 +24,22 @@ type IncomingNotification = {
 
 export function useNotificationSocket(ready: boolean): void {
   const status = useAuthStore((s) => s.status);
+  // Replay at most once per authenticated session — the effect can re-run on
+  // ready/status churn or socket reconnects, and we don't want a fetch each time.
+  const replayed = useRef(false);
 
   useEffect(() => {
-    if (!ready || status !== 'authenticated') return;
+    if (!ready || status !== 'authenticated') {
+      replayed.current = false; // next sign-in replays once
+      return;
+    }
 
     // Catch up on a verification approved while we were disconnected — Socket.io
     // doesn't queue events for offline clients, so the live path below can miss it.
-    void replayMissedCelebration();
+    if (!replayed.current) {
+      replayed.current = true;
+      void replayMissedCelebration();
+    }
 
     const socket = connectSocket();
     if (!socket) return;

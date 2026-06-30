@@ -5,9 +5,15 @@
  * can each own a mode-specific footer while staying visually identical.
  */
 import { type ReactNode } from 'react';
-import { Text, View } from 'react-native';
+import { Linking, Text, View } from 'react-native';
 import { useTheme } from '@/components/ThemeProvider';
 import { Icon } from '@/components/ui';
+
+// Both stores require a reachable privacy policy (the app collects accounts,
+// push tokens, location, photos). These must be live, hosted pages before
+// submission — update if the marketing domain changes.
+const TERMS_URL = 'https://collably.app/terms';
+const PRIVACY_URL = 'https://collably.app/privacy';
 
 export type AuthFooterProps = {
   /** Optional social-auth node (e.g. the Google button), shown under a divider. */
@@ -39,8 +45,20 @@ export function AuthFooter({ social, showTerms }: AuthFooterProps) {
       {showTerms ? (
         <Text style={{ textAlign: 'center', fontSize: 11.5, color: colors.text3, lineHeight: 17, marginTop: 8, marginHorizontal: 12 }}>
           By creating an account you agree to our{' '}
-          <Text style={{ color: colors.text2, fontWeight: '600' }}>Terms</Text> &{' '}
-          <Text style={{ color: colors.text2, fontWeight: '600' }}>Privacy Policy</Text>.
+          <Text
+            style={{ color: colors.text2, fontWeight: '600' }}
+            onPress={() => void Linking.openURL(TERMS_URL)}
+          >
+            Terms
+          </Text>{' '}
+          &{' '}
+          <Text
+            style={{ color: colors.text2, fontWeight: '600' }}
+            onPress={() => void Linking.openURL(PRIVACY_URL)}
+          >
+            Privacy Policy
+          </Text>
+          .
         </Text>
       ) : null}
     </>

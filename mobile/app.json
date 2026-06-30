@@ -50,7 +50,6 @@
         }
       ],
       "permissions": [
-        "android.permission.RECORD_AUDIO",
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.ACCESS_COARSE_LOCATION"
       ]
@@ -86,7 +85,8 @@
       [
         "expo-notifications",
         {
-          "color": "#1877F2"
+          "color": "#1877F2",
+          "icon": "./assets/images/android-icon-monochrome.png"
         }
       ]
     ],

@@ -11,6 +11,7 @@ import { View, useWindowDimensions } from 'react-native';
 import Reanimated, {
   Easing,
   useAnimatedStyle,
+  useReducedMotion,
   useSharedValue,
   withDelay,
   withTiming,
@@ -23,6 +24,10 @@ const CONFETTI_COUNT = 22;
 
 export function Confetti() {
   const { width, height } = useWindowDimensions();
+  const reduced = useReducedMotion();
+  // Honour the OS "Reduce Motion" setting — skip the falling-confetti animation
+  // entirely (the celebration card/message still shows around it).
+  if (reduced) return null;
   return (
     <View pointerEvents="none" style={[ABS_FILL, { overflow: 'hidden' }]}>
       {Array.from({ length: CONFETTI_COUNT }).map((_, i) => (

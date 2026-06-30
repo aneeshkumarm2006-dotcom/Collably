@@ -46,7 +46,11 @@ export function getSocket(): Socket | null {
 /** Tear the socket down (sign-out). */
 export function disconnectSocket(): void {
   if (!socket) return;
-  socket.removeAllListeners();
+  // Don't `removeAllListeners()` — multiple consumers (chat + notifications)
+  // share this singleton and each removes its own handlers in its effect
+  // cleanup. Wiping them all here would strip a sibling's listener (e.g. the
+  // notification celebration) mid-session. Disconnecting + nulling drops the
+  // instance and its handlers; the next connectSocket() makes a fresh one.
   socket.disconnect();
   socket = null;
 }

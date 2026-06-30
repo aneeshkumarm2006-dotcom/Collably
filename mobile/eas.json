@@ -33,7 +33,7 @@
     "production": {
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://api.collably.app/api",
+        "EXPO_PUBLIC_API_URL": "https://collably-0q2s.onrender.com/api",
         "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "915621087618-iq9nijp78a04tveb1o0cqdcl4uvl60qf.apps.googleusercontent.com",
         "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "915621087618-ddf00j1gfc4386et5j98uifq9d1rrrlk.apps.googleusercontent.com",
         "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "915621087618-qbgvt9tl1m9jeh75hkfr92gf6a0hguu8.apps.googleusercontent.com",
