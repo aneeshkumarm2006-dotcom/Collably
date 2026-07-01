@@ -302,7 +302,7 @@ export function QuestMarker({ point, value, label, selected, onPress, identifier
   const tier = rewardTier(value);
   // Key includes title so the snapshot re-freezes when the cloud appears/changes.
   const { tracksViewChanges, onLayout } = useMarkerSnapshot(
-    `${tier.key}|${label ?? ''}|${selected ? 1 : 0}|${selected ? title ?? '' : ''}`,
+    `card|${title ?? ''}|${label ?? ''}|${selected ? 1 : 0}`,
   );
   if (!Marker) return null;
 
@@ -372,25 +372,39 @@ export function QuestMarker({ point, value, label, selected, onPress, identifier
           </>
         ) : null}
 
-        {/* Clean location pin — a simple dot; the collab's details live in the card. */}
+        {/* Small collab card marker — sits at the location; tap to select/open. */}
         <View
           style={{
-            width: selected ? 26 : 18,
-            height: selected ? 26 : 18,
-            borderRadius: selected ? 13 : 9,
-            backgroundColor: '#0C831F',
-            borderWidth: 3,
-            borderColor: '#FFFFFF',
-            alignItems: 'center',
-            justifyContent: 'center',
+            maxWidth: 160,
+            backgroundColor: '#FFFFFF',
+            borderRadius: 11,
+            paddingHorizontal: 10,
+            paddingVertical: 7,
+            borderWidth: selected ? 2 : 1,
+            borderColor: selected ? '#0C831F' : 'rgba(0,0,0,0.06)',
             shadowColor: '#000',
-            shadowOpacity: 0.3,
-            shadowRadius: 4,
-            shadowOffset: { width: 0, height: 2 },
-            elevation: 6,
+            shadowOpacity: 0.22,
+            shadowRadius: 7,
+            shadowOffset: { width: 0, height: 3 },
+            elevation: 7,
+            transform: [{ scale: selected ? 1.04 : 1 }],
           }}
         >
-          {selected ? <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#FFFFFF' }} /> : null}
+          {title ? (
+            <Text
+              numberOfLines={1}
+              allowFontScaling={false}
+              style={{ fontSize: 11.5, fontWeight: '800', color: '#1C1E21', includeFontPadding: false, maxWidth: 140 }}
+            >
+              {title}
+            </Text>
+          ) : null}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 2 }}>
+            <Icon name="gift" size={11} color="#0C831F" strokeWidth={2.2} />
+            <Text allowFontScaling={false} style={{ fontSize: 12, fontWeight: '800', color: '#0C831F', includeFontPadding: false }}>
+              {label || 'Collab'}
+            </Text>
+          </View>
         </View>
       </View>
     </Marker>
