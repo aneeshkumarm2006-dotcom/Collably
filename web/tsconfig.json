@@ -1,0 +1,46 @@
+{
+  "//": "Extends the monorepo base (app/tsconfig.base.json) and layers the Next.js + DOM options on top. Path aliases: @/* → this app; @shared/* → the canonical monorepo shared/ package.",
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "ES2022"
+    ],
+    "allowJs": true,
+    "noEmit": true,
+    "declaration": false,
+    "jsx": "preserve",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": [
+        "./*"
+      ],
+      "@shared/*": [
+        "../shared/*"
+      ]
+    }
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".next-mock/types/**/*.ts",
+    ".next-prod/types/**/*.ts",
+    ".next/types/**/*.ts",
+    "next-env.d.ts",
+    ".next-e2e/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "tests",
+    "e2e",
+    "vitest.config.ts",
+    "vitest.setup.ts",
+    "playwright.config.ts"
+  ]
+}

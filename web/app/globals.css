@@ -1,0 +1,202 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * ============================================================
+ * Collably — Design System tokens (Phase 1, the "blend")
+ * ============================================================
+ * Two coordinated token layers, both themed for light + dark:
+ *
+ *  1. shadcn/ui semantic tokens — HSL CHANNELS (no hsl() wrapper) so Tailwind
+ *     can compose opacity, e.g. `bg-primary/50`. Consumed in tailwind.config.ts
+ *     as `hsl(var(--background))`. These drive every generated shadcn primitive.
+ *     Values = the app palette (Meta-blue `#1877F2`, FB-grey surfaces, FB-green).
+ *
+ *  2. "Blend" tokens — the design reference's token NAMES (`--brand-primary`,
+ *     `--money`, `--surface-*`, `--text-*`, `--success`, `--dark-sidebar`, …)
+ *     mapped to APP COLORS as HEX/RGBA. They re-skin the reference component
+ *     anatomy (assets/styles.css) onto the app palette and are consumed via
+ *     `var(--token)` in tailwind.config.ts + component classes.
+ *
+ * The hairline `--border` is shared: it is BOTH shadcn's border channel AND the
+ * design's hairline token (same value), so there is one source of truth for it.
+ */
+
+@layer base {
+  :root {
+    /* --- shadcn/ui semantic tokens (HSL channels) — LIGHT --- */
+    --background: 216 20% 95%; /* surface-base / page #F0F2F5 */
+    --foreground: 216 8% 12%; /* text-primary / ink #1C1E21 */
+    --card: 0 0% 100%; /* surface-card #FFFFFF */
+    --card-foreground: 216 8% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 216 8% 12%;
+    --primary: 214 89% 52%; /* brand Meta-blue #1877F2 */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 216 14% 93%; /* surface-muted #EBEDF0 */
+    --secondary-foreground: 216 8% 12%;
+    --muted: 216 14% 93%; /* surface-muted #EBEDF0 */
+    --muted-foreground: 220 3% 41%; /* text-secondary #65676B */
+    --accent: 218 100% 95%; /* brand-soft #E7F0FF */
+    --accent-foreground: 214 89% 52%; /* brand */
+    --destructive: 358 95% 60%; /* error #FA383E */
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 10% 87%; /* hairline #DADDE1 (shared with blend `--border`) */
+    --input: 220 7% 82%; /* border-strong #CED0D4 (inputs read stronger) */
+    --ring: 214 89% 52%; /* brand focus ring */
+    --radius: 0.75rem; /* 12px — app "md" radius */
+
+    /* --- Blend tokens (design-reference names → app colors) — LIGHT --- */
+    --brand-primary: #1877f2;
+    --brand-secondary: #2d88ff;
+    --brand-soft: #e7f0ff;
+    --money: #31a24c;
+    --money-soft: #e3f1e6;
+
+    --surface-base: #f0f2f5;
+    --surface-card: #ffffff;
+    --surface-elev: #f7f8fa;
+    --surface-muted: #ebedf0;
+    --surface-hover: #e7f0ff;
+
+    --text-primary: #1c1e21;
+    --text-secondary: #65676b;
+    --text-muted: #8a8d91;
+
+    --border-strong: #ced0d4;
+
+    --success: #31a24c;
+    --success-bg: #e3f1e6;
+    --warning: #f3a608;
+    --warning-bg: #fcf1da;
+    --error: #fa383e;
+    --error-bg: #fde7e8;
+    --info: #1877f2;
+    --info-bg: #e7f0ff;
+
+    /* Dark "chrome" — always-dark surfaces (sidebar/hero/footer), even in light mode */
+    --dark-sidebar: #18191a;
+    --dark-panel: #242526;
+    --dark-border: #3a3b3c;
+
+    /* Neutral ink shadows (no colored glow) — mirrors admin `boxShadow.card` */
+    --shadow-xs: 0 1px 2px rgba(19, 26, 46, 0.05);
+    --shadow-sm: 0 1px 3px rgba(19, 26, 46, 0.07), 0 1px 2px rgba(19, 26, 46, 0.04);
+    --shadow-card: 0 1px 2px rgba(19, 26, 46, 0.05), 0 10px 30px rgba(19, 26, 46, 0.06);
+    --shadow-card-hover: 0 14px 32px rgba(19, 26, 46, 0.12), 0 2px 8px rgba(19, 26, 46, 0.06);
+    --shadow-md: 0 6px 18px rgba(19, 26, 46, 0.09), 0 2px 5px rgba(19, 26, 46, 0.05);
+    --shadow-dropdown: 0 8px 28px rgba(19, 26, 46, 0.14), 0 1px 4px rgba(19, 26, 46, 0.07);
+    --shadow-modal: 0 24px 64px rgba(19, 26, 46, 0.24), 0 4px 16px rgba(19, 26, 46, 0.12);
+
+    --navbar-h: 64px;
+  }
+
+  .dark {
+    /* --- shadcn/ui semantic tokens (HSL channels) — DARK --- */
+    --background: 210 4% 10%; /* #18191A FB dark bg */
+    --foreground: 223 15% 91%; /* #E4E6EB */
+    --card: 210 3% 15%; /* #242526 */
+    --card-foreground: 223 15% 91%;
+    --popover: 210 3% 15%;
+    --popover-foreground: 223 15% 91%;
+    --primary: 214 100% 59%; /* #2D88FF brand (dark) */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 3% 20%;
+    --secondary-foreground: 223 15% 91%;
+    --muted: 210 3% 20%;
+    --muted-foreground: 218 5% 71%; /* #B0B3B8 */
+    --accent: 210 4% 22%;
+    --accent-foreground: 223 15% 91%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 210 2% 23%; /* #3A3B3C */
+    --input: 210 2% 23%;
+    --ring: 214 100% 59%;
+
+    /* --- Blend tokens — DARK --- */
+    --brand-primary: #2d88ff;
+    --brand-secondary: #56a0ff;
+    --brand-soft: rgba(45, 136, 255, 0.16);
+    --money: #45bd62;
+    --money-soft: rgba(69, 189, 98, 0.18);
+
+    --surface-base: #18191a;
+    --surface-card: #242526;
+    --surface-elev: #2a2b2d;
+    --surface-muted: #3a3b3c;
+    --surface-hover: rgba(45, 136, 255, 0.16);
+
+    --text-primary: #e4e6eb;
+    --text-secondary: #b0b3b8;
+    --text-muted: #8a8d91;
+
+    --border-strong: #4e4f50;
+
+    --success: #45bd62;
+    --success-bg: rgba(69, 189, 98, 0.18);
+    --warning: #e7a53c;
+    --warning-bg: rgba(231, 165, 60, 0.18);
+    --error: #ff5c5c;
+    --error-bg: rgba(255, 92, 92, 0.16);
+    --info: #2d88ff;
+    --info-bg: rgba(45, 136, 255, 0.16);
+
+    /* Dark chrome — deepen so the always-dark sidebar still reads against the dark page */
+    --dark-sidebar: #0e0f10;
+    --dark-panel: #1c1d1f;
+    --dark-border: #2a2b2d;
+
+    /* Shadows on dark read through the border + a touch more black */
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.45), 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px rgba(0, 0, 0, 0.45);
+    --shadow-card-hover: 0 14px 32px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.5), 0 2px 5px rgba(0, 0, 0, 0.35);
+    --shadow-dropdown: 0 8px 28px rgba(0, 0, 0, 0.55), 0 1px 4px rgba(0, 0, 0, 0.4);
+    --shadow-modal: 0 24px 64px rgba(0, 0, 0, 0.7), 0 4px 16px rgba(0, 0, 0, 0.5);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-page font-sans text-ink antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  /* Visible, branded keyboard focus everywhere (Phase 12 a11y baseline). */
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: var(--brand-soft);
+    color: var(--brand-primary);
+  }
+  /* Mono numerals: tabular figures so stats/countdowns don't jitter. */
+  .font-mono {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Onboarding celebration confetti — falls + spins, then fades. Neutralized for
+ * reduced-motion users by the media block below. */
+@keyframes confetti-fall {
+  to {
+    transform: translateY(110vh) rotate(540deg);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

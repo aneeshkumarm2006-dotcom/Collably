@@ -1,0 +1,2 @@
+# Route group: auth pages — Phase 4.
+# /login, /signup, /forgot-password, /reset-password/[token].
