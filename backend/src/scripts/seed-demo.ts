@@ -168,6 +168,8 @@ async function main(): Promise<void> {
     ],
     deadline: at(12),
     minFollowers: 0,
+    maxCreators: 3,
+    acceptedCount: 1, // prem is seeded as accepted below → 2 spots left
     status: 'Active',
     tags: ['tech', 'unboxing', 'headphones', 'hyderabad'],
     coverImage: img('1505740420928-5e560c06d30e'),
@@ -186,6 +188,7 @@ async function main(): Promise<void> {
     deliverables: [{ platform: 'Instagram', contentType: 'Reel', quantity: 1 }],
     deadline: at(20),
     minFollowers: 0,
+    maxCreators: 3,
     status: 'Active',
     tags: ['tech', 'smartwatch', 'review', 'warangal'],
     coverImage: img('1523275335684-37898b6baf30'),

@@ -41,6 +41,10 @@ export interface CampaignDoc extends Document<Types.ObjectId> {
   }[];
   deadline?: Date;
   minFollowers: number;
+  /** Cap on accepted creators; the campaign auto-closes once it's reached. */
+  maxCreators: number;
+  /** How many creators have been accepted so far (atomically incremented). */
+  acceptedCount: number;
   status: CampaignStatus;
   tags: string[];
   coverImage?: string | null;
@@ -89,6 +93,8 @@ const campaignSchema = new Schema<CampaignDoc>(
     deliverables: { type: [deliverableSchema], default: [] },
     deadline: { type: Date },
     minFollowers: { type: Number, default: 0, min: 0 },
+    maxCreators: { type: Number, default: 1, min: 1 },
+    acceptedCount: { type: Number, default: 0, min: 0 },
     status: { type: String, enum: [...CAMPAIGN_STATUSES], default: 'Draft', index: true },
     tags: { type: [String], default: [] },
     coverImage: { type: String, default: null },

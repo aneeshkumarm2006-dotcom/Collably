@@ -86,6 +86,7 @@ const campaignCreateSchema = z.object({
   deliverables: z.array(deliverableSchema).max(20).default([]),
   deadline: z.coerce.date().optional(),
   minFollowers: z.coerce.number().int().min(0).default(0),
+  maxCreators: z.coerce.number().int().min(1).max(1000).default(1),
   tags: z.array(z.string().trim().max(40)).max(30).default([]),
   coverImage: z.string().trim().max(2048).nullable().optional(),
   // On create a business may save a Draft or Publish straight to Active.

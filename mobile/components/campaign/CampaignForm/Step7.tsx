@@ -42,6 +42,8 @@ function toPreview(f: CampaignFormState): Campaign {
     deliverables: f.deliverables,
     deadline: f.deadline ?? new Date().toISOString(),
     minFollowers: f.minFollowers,
+    maxCreators: f.maxCreators,
+    acceptedCount: 0,
     status: 'Draft',
     tags: f.tags,
     coverImage: f.coverImage,

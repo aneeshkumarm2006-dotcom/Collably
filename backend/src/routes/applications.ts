@@ -202,17 +202,31 @@ router.patch(
     }
 
     if (status === 'Accepted') {
-      // No fixed capacity: a business approves as many applicants as it wants.
-      // The first approval auto-closes the campaign — hidden from discovery and no
-      // new applications — while the business keeps approving people who already
-      // applied. Approvals are allowed while the campaign is Active or Closed.
+      // Campaigns have a creator cap (`maxCreators`). Approvals are allowed while a
+      // campaign is Active or Closed-but-not-full; only Draft/Completed are hard no.
       const campaign = await Campaign.findById(app.campaignId);
-      if (!campaign || (campaign.status !== 'Active' && campaign.status !== 'Closed')) {
+      if (!campaign || campaign.status === 'Draft' || campaign.status === 'Completed') {
         throw new AppError(409, 'This campaign is no longer accepting approvals');
       }
-      if (campaign.status === 'Active') {
-        campaign.status = 'Closed';
-        await campaign.save();
+      // Atomically claim a spot — increments ONLY while acceptedCount < maxCreators,
+      // so concurrent approvals can never push past the cap. `$ifNull` covers older
+      // campaigns created before these fields existed. `null` means it was full.
+      const claimed = await Campaign.findOneAndUpdate(
+        {
+          _id: campaign._id,
+          $expr: { $lt: [{ $ifNull: ['$acceptedCount', 0] }, { $ifNull: ['$maxCreators', 1] }] },
+        },
+        { $inc: { acceptedCount: 1 } },
+        { new: true },
+      );
+      if (!claimed) {
+        throw new AppError(409, 'This campaign is full — all creator spots are taken.');
+      }
+      // Auto-close once the cap is reached: drops it from discovery + blocks new
+      // applications (approving an already-applied creator still worked above).
+      if (claimed.acceptedCount >= (claimed.maxCreators ?? 1) && claimed.status === 'Active') {
+        claimed.status = 'Closed';
+        await claimed.save();
       }
 
       app.status = 'Accepted';

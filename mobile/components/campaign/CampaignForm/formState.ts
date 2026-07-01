@@ -22,6 +22,8 @@ export type CampaignFormState = {
   deliverables: CampaignDeliverable[];
   deadline: string | null; // ISO string
   minFollowers: number;
+  /** Max creators to accept before the campaign auto-closes (default 1). */
+  maxCreators: number;
   tags: string[];
 };
 
@@ -38,6 +40,7 @@ export function emptyCampaignForm(): CampaignFormState {
     deliverables: [{ platform: 'Instagram', contentType: 'Reel', quantity: 1 }],
     deadline: null,
     minFollowers: 0,
+    maxCreators: 1,
     tags: [],
   };
 }
@@ -61,6 +64,7 @@ export function fromCampaign(c: Campaign): CampaignFormState {
       : [{ platform: 'Instagram', contentType: 'Reel', quantity: 1 }],
     deadline: c.deadline ?? null,
     minFollowers: c.minFollowers,
+    maxCreators: c.maxCreators ?? 1,
     tags: [...c.tags],
   };
 }
@@ -139,6 +143,7 @@ export function toCampaignPayload(f: CampaignFormState) {
     deliverables: f.deliverables,
     deadline: f.deadline,
     minFollowers: f.minFollowers,
+    maxCreators: f.maxCreators,
     tags: f.tags,
   };
 }

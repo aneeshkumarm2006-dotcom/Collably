@@ -62,6 +62,12 @@ export interface Campaign extends Timestamped {
   deliverables: CampaignDeliverable[];
   deadline: ISODateString;
   minFollowers: number;
+  /** Max creators that can be accepted before the campaign auto-closes. */
+  maxCreators: number;
+  /** How many creators have been accepted so far. */
+  acceptedCount: number;
+  /** Derived (server-computed): `maxCreators - acceptedCount`, clamped to ≥ 0. */
+  spotsLeft?: number;
   status: CampaignStatus;
   tags: string[];
   coverImage?: string | null;

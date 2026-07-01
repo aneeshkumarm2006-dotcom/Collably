@@ -204,9 +204,22 @@ export function CampaignCard({ campaign, businessName, applicationStatus, compac
           <Text style={{ fontSize: 12.5, fontWeight: '600', color: colors.accent }}>
             {formatCompactNumber(campaign.applicationsCount)} applied
           </Text>
-          <Text style={{ fontSize: 10.5, color: colors.text3, marginTop: 1 }}>
-            {campaign.status === 'Active' ? 'Open' : campaign.status}
-          </Text>
+          {typeof campaign.spotsLeft === 'number' && campaign.status === 'Active' ? (
+            <Text
+              style={{
+                fontSize: 10.5,
+                fontWeight: '700',
+                color: campaign.spotsLeft > 0 ? colors.brandGreenText : colors.text3,
+                marginTop: 1,
+              }}
+            >
+              {campaign.spotsLeft > 0 ? `${campaign.spotsLeft} spot${campaign.spotsLeft === 1 ? '' : 's'} left` : 'Full'}
+            </Text>
+          ) : (
+            <Text style={{ fontSize: 10.5, color: colors.text3, marginTop: 1 }}>
+              {campaign.status === 'Active' ? 'Open' : campaign.status}
+            </Text>
+          )}
         </View>
       </View>
     </PressableScale>

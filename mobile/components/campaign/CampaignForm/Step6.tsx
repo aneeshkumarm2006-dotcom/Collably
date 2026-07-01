@@ -112,6 +112,18 @@ export function Step6({ value, patch }: CampaignStepProps) {
         />
       </Field>
 
+      <Field label="How many creators?" hint="How many creators to accept before the campaign auto-closes.">
+        <TextField
+          value={value.maxCreators ? String(value.maxCreators) : ''}
+          onChangeText={(t) => {
+            const n = parseInt(t.replace(/[^0-9]/g, ''), 10);
+            patch({ maxCreators: Number.isFinite(n) && n >= 1 ? n : 1 });
+          }}
+          placeholder="e.g. 3"
+          keyboardType="numeric"
+        />
+      </Field>
+
       <Field label="Tags" hint="Up to 10. Help creators find this campaign in search.">
         <TextField
           value={tagDraft}
