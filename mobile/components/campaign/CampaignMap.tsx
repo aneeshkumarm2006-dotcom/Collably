@@ -306,7 +306,8 @@ export function QuestMarker({ point, value, label, selected, onPress, identifier
   );
   if (!Marker) return null;
 
-  const showCloud = selected && (title || label);
+  // The collab's details now live in the bottom result card, so no map callout.
+  const showCloud = false;
 
   return (
     <Marker
@@ -316,7 +317,7 @@ export function QuestMarker({ point, value, label, selected, onPress, identifier
       // Keep the selected marker live so its cloud (async text) renders fully;
       // unselected markers stay frozen via the snapshot for performance.
       tracksViewChanges={selected ? true : tracksViewChanges}
-      anchor={{ x: 0.5, y: 1 }}
+      anchor={{ x: 0.5, y: 0.5 }}
     >
       {/* Outer column: cloud callout (when selected) sits above, pin tip at the coord. */}
       <View onLayout={onLayout} style={{ alignItems: 'center' }}>
@@ -371,32 +372,25 @@ export function QuestMarker({ point, value, label, selected, onPress, identifier
           </>
         ) : null}
 
-        {/* the rarity gem pin */}
+        {/* Clean location pin — a simple dot; the collab's details live in the card. */}
         <View
           style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 4,
-            paddingHorizontal: label ? 9 : 7,
-            paddingVertical: 5,
-            borderRadius: 13,
-            backgroundColor: tier.color,
-            borderWidth: selected ? 2.5 : 1.5,
+            width: selected ? 26 : 18,
+            height: selected ? 26 : 18,
+            borderRadius: selected ? 13 : 9,
+            backgroundColor: '#0C831F',
+            borderWidth: 3,
             borderColor: '#FFFFFF',
-            shadowColor: tier.color,
-            shadowOpacity: 0.7,
-            shadowRadius: selected ? 9 : 6,
-            shadowOffset: { width: 0, height: 0 },
-            elevation: selected ? 8 : 5,
-            transform: [{ scale: selected ? 1.12 : 1 }],
+            alignItems: 'center',
+            justifyContent: 'center',
+            shadowColor: '#000',
+            shadowOpacity: 0.3,
+            shadowRadius: 4,
+            shadowOffset: { width: 0, height: 2 },
+            elevation: 6,
           }}
         >
-          <Icon name={tier.icon} size={13} color="#FFFFFF" strokeWidth={2.4} />
-          {label ? (
-            <Text numberOfLines={1} allowFontScaling={false} style={{ fontSize: 12.5, fontWeight: '800', color: '#FFFFFF', includeFontPadding: false }}>
-              {label}
-            </Text>
-          ) : null}
+          {selected ? <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#FFFFFF' }} /> : null}
         </View>
       </View>
     </Marker>
