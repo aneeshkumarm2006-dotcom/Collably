@@ -123,7 +123,18 @@ export default function CreatorHomeScreen() {
   const earned = data?.profile?.totalRewardsEarned ?? 0;
 
   const hero = campaigns.find((c) => c.isFeatured) ?? campaigns[0];
-  const fresh = campaigns.filter((c) => c._id !== hero?._id).slice(0, 5);
+  // "Fresh for you in {city}" — float the creator's own city to the top so the
+  // heading is honest, but keep the rest as a fallback so the feed is never empty.
+  const myCity = data?.profile?.location?.city?.toLowerCase();
+  const fresh = campaigns
+    .filter((c) => c._id !== hero?._id)
+    .sort((a, b) => {
+      if (!myCity) return 0;
+      const am = a.location?.city?.toLowerCase() === myCity ? 1 : 0;
+      const bm = b.location?.city?.toLowerCase() === myCity ? 1 : 0;
+      return bm - am;
+    })
+    .slice(0, 5);
 
   // Category tiles: distinct categories present in the recommended feed, with counts.
   const catCounts = new Map<Category, number>();
@@ -131,6 +142,8 @@ export default function CreatorHomeScreen() {
   const cats = [...catCounts.entries()].slice(0, 8);
 
   const goExplore = () => router.push('/(creator)/(tabs)/explore');
+  const goCategory = (category: Category) =>
+    router.push({ pathname: '/(creator)/(tabs)/explore', params: { category } });
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -184,7 +197,7 @@ export default function CreatorHomeScreen() {
               contentContainerStyle={{ gap: 13, paddingHorizontal: 20, paddingBottom: 6 }}
             >
               {cats.map(([cat, count]) => (
-                <CategoryCard key={cat} category={cat} count={count} icon={CATEGORY_ICON[cat]} onPress={goExplore} />
+                <CategoryCard key={cat} category={cat} count={count} icon={CATEGORY_ICON[cat]} onPress={() => goCategory(cat)} />
               ))}
             </ScrollView>
           </View>
@@ -202,6 +215,11 @@ export default function CreatorHomeScreen() {
         <NearbyCollabsCard
           count={campaigns.filter((c) => !c.isRemote).length || campaigns.length}
           city={city}
+          values={campaigns
+            .filter((c) => !c.isRemote)
+            .map((c) => c.reward?.estimatedValue)
+            .filter((v): v is number => typeof v === 'number' && v > 0)
+            .slice(0, 3)}
           onPress={goExplore}
         />
 

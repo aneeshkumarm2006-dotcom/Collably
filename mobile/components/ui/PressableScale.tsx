@@ -7,10 +7,13 @@
  * Honours the OS "Reduce Motion" setting: it drops the scale spring and keeps a
  * subtle opacity dim, so motion-sensitive users still get clear press feedback.
  *
- * Styles are passed as static objects/arrays (never the function form), so we
- * sidestep the NativeWind Pressable gotcha and can animate the node directly.
+ * IMPORTANT: the touch `Pressable` is kept STYLE-LESS. NativeWind v4's cssInterop
+ * mangles/drops the `style` on a core Pressable (esp. when wrapped by Reanimated's
+ * `createAnimatedComponent`), which stripped Card/Button layout and made text
+ * overflow everywhere. So the visual style + scale live on a plain inner
+ * `Reanimated.View` (NativeWind-safe), and the Pressable just handles touches.
  */
-import { forwardRef } from 'react';
+import { forwardRef, type ReactNode } from 'react';
 import { Pressable, type PressableProps, type StyleProp, type View, type ViewStyle } from 'react-native';
 import Reanimated, {
   useAnimatedStyle,
@@ -21,12 +24,11 @@ import Reanimated, {
 } from 'react-native-reanimated';
 import { PRESS_SCALE, PRESS_SPRING } from '@/lib/motion';
 
-const AnimatedPressable = Reanimated.createAnimatedComponent(Pressable);
-
-export type PressableScaleProps = Omit<PressableProps, 'style'> & {
+export type PressableScaleProps = Omit<PressableProps, 'style' | 'children'> & {
   style?: StyleProp<ViewStyle>;
   /** Scale target while pressed. Default 0.97. */
   scaleTo?: number;
+  children?: ReactNode;
 };
 
 export const PressableScale = forwardRef<View, PressableScaleProps>(function PressableScale(
@@ -45,9 +47,8 @@ export const PressableScale = forwardRef<View, PressableScaleProps>(function Pre
   );
 
   return (
-    <AnimatedPressable
+    <Pressable
       ref={ref}
-      style={[style, animatedStyle]}
       onPressIn={(e) => {
         if (reduced) opacity.value = withTiming(0.85, { duration: 90 });
         else scale.value = withSpring(scaleTo, PRESS_SPRING);
@@ -60,7 +61,7 @@ export const PressableScale = forwardRef<View, PressableScaleProps>(function Pre
       }}
       {...rest}
     >
-      {children}
-    </AnimatedPressable>
+      <Reanimated.View style={[style, animatedStyle]}>{children}</Reanimated.View>
+    </Pressable>
   );
 });

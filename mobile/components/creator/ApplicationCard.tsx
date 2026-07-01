@@ -54,9 +54,11 @@ export function ApplicationCard({ application, campaign, businessName, onPress, 
             </Text>
           )}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 7 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 1, minWidth: 0 }}>
               <Icon name="gift" size={14} color={colors.money} strokeWidth={1.7} />
-              <Text style={{ fontSize: 12.5, fontWeight: '600', color: colors.text }}>{formatReward(campaign.reward)}</Text>
+              <Text numberOfLines={1} style={{ flexShrink: 1, fontSize: 12.5, fontWeight: '600', color: colors.text }}>
+                {formatReward(campaign.reward)}
+              </Text>
             </View>
             {showCountdown && (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>

@@ -34,6 +34,9 @@ import { forwardGeocode, isGeocodingConfigured } from '../services';
 
 const PASSWORD = 'Password';
 const img = (id: string) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=900&q=80`;
+/** Face-cropped, square, high-quality avatar — stays sharp in the circular frame. */
+const face = (id: string) =>
+  `https://images.unsplash.com/photo-${id}?auto=format&fit=facearea&facepad=3&w=600&h=600&q=90`;
 const at = (days: number) => new Date(Date.now() + days * 24 * 60 * 60 * 1000);
 const info = (m: string) => console.log(m);
 
@@ -89,7 +92,7 @@ async function main(): Promise<void> {
     email: 'prem@gmail.com',
     passwordHash,
     role: 'creator',
-    avatar: img('1500648767791-00dcc994a43e'),
+    avatar: face('1500648767791-00dcc994a43e'),
     isVerified: true,
     isOnboarded: true,
   } as any);

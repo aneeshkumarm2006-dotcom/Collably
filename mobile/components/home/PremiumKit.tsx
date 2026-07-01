@@ -13,7 +13,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { CoverImage } from '@/components/campaign';
 import { Icon, type IconName } from '@/components/ui';
 import { useTheme } from '@/components/ThemeProvider';
-import { formatReward } from '@/lib/utils';
+import { formatReward, formatCompactNumber } from '@/lib/utils';
 import { Press } from './HomeKit';
 import type { Campaign, BusinessProfile, CreatorProfile } from '@/types';
 import type { Category } from '@/constants';
@@ -253,46 +253,108 @@ export function MatchedRail({
   );
 }
 
-// ── 4) Nearby collabs (map preview) ──────────────────────────────────────────────
-export function NearbyCollabsCard({ count, city, onPress }: { count: number; city?: string; onPress?: () => void }) {
+// ── 4) Nearby collabs (premium map preview) ──────────────────────────────────────
+/** Fixed anchor spots for the reward bubbles within the preview. */
+const NEARBY_SPOTS = [
+  { top: 24, left: 30 },
+  { top: 30, right: 34 },
+  { top: 74, left: 108 },
+] as const;
+
+export function NearbyCollabsCard({
+  count,
+  city,
+  values = [],
+  onPress,
+}: {
+  count: number;
+  city?: string;
+  values?: number[];
+  onPress?: () => void;
+}) {
   const { colors, shadows, isDark } = useTheme();
-  // Decorative pin positions (within the 100×120 preview), brand-colored.
-  const pins = [
-    { x: 40, y: 34 }, { x: 96, y: 56 }, { x: 150, y: 30 }, { x: 210, y: 64 }, { x: 130, y: 92 },
-  ];
+
+  // Gentle radar pulse on the "you" radius ring.
+  const pulse = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.timing(pulse, { toValue: 1, duration: 2400, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [pulse]);
+  const ringScale = pulse.interpolate({ inputRange: [0, 1], outputRange: [0.5, 2] });
+  const ringOpacity = pulse.interpolate({ inputRange: [0, 0.12, 1], outputRange: [0, 0.45, 0] });
+
+  const mapBg = isDark ? (['#0E1B2E', '#13273F'] as const) : (['#E9F1FB', '#D7E7F3'] as const);
+  const bubbles = (values.length ? values : [0, 0, 0]).slice(0, 3);
+
   return (
     <View style={{ paddingHorizontal: 20, marginTop: 26 }}>
-      <Press onPress={onPress} style={{ borderRadius: 20, overflow: 'hidden', borderWidth: 1, borderColor: colors.hair, ...shadows.card }}>
-        <View style={{ height: 132, backgroundColor: colors.cardSunk }}>
-          {/* faux map: subtle road lines + pins */}
-          <Svg width="100%" height={132} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
-            <Line x1="0" y1="46" x2="300" y2="78" stroke={colors.hair} strokeWidth={6} />
-            <Line x1="70" y1="0" x2="120" y2="132" stroke={colors.hair} strokeWidth={6} />
-            <Line x1="180" y1="0" x2="230" y2="132" stroke={colors.hair} strokeWidth={5} />
-            {pins.map((p, i) => (
-              <Circle key={i} cx={p.x} cy={p.y} r={i === 2 ? 8 : 6} fill={colors.brandGreen} stroke="#fff" strokeWidth={2} />
-            ))}
+      <Press onPress={onPress} style={{ borderRadius: 22, overflow: 'hidden', borderWidth: 1, borderColor: colors.hair, ...shadows.card }}>
+        <View style={{ height: 176 }}>
+          <LinearGradient colors={mapBg} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
+
+          {/* faint street grid for map texture */}
+          <Svg width="100%" height={176} style={{ position: 'absolute', top: 0, left: 0 }}>
+            <Line x1="0" y1="54" x2="380" y2="94" stroke={colors.hair} strokeWidth={11} opacity={0.55} />
+            <Line x1="96" y1="0" x2="156" y2="176" stroke={colors.hair} strokeWidth={9} opacity={0.5} />
+            <Line x1="268" y1="0" x2="320" y2="176" stroke={colors.hair} strokeWidth={7} opacity={0.4} />
           </Svg>
+
+          {/* central "you" marker with a pulsing radius ring */}
+          <View style={{ position: 'absolute', top: 56, left: 0, right: 0, alignItems: 'center' }}>
+            <Animated.View style={{ position: 'absolute', width: 66, height: 66, borderRadius: 33, borderWidth: 2, borderColor: colors.brandGreen, opacity: ringOpacity, transform: [{ scale: ringScale }] }} />
+            <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: colors.brandGreen, borderWidth: 3, borderColor: '#fff', shadowColor: colors.brandGreen, shadowOpacity: 0.5, shadowRadius: 6 }} />
+          </View>
+
+          {/* reward-value bubbles (match the Explore map's price bubbles) */}
+          {bubbles.map((v, i) => (
+            <View
+              key={i}
+              style={{
+                position: 'absolute',
+                ...NEARBY_SPOTS[i],
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 3,
+                backgroundColor: colors.card,
+                paddingHorizontal: 9,
+                paddingVertical: 5,
+                borderRadius: 999,
+                shadowColor: '#000',
+                shadowOpacity: 0.16,
+                shadowRadius: 6,
+                shadowOffset: { width: 0, height: 3 },
+                elevation: 3,
+              }}
+            >
+              <Icon name="mappin" size={11} color={colors.brandGreenText} strokeWidth={2.6} />
+              <Text style={{ fontSize: 12, fontWeight: '800', color: colors.text }}>{v ? `$${formatCompactNumber(v)}` : 'Collab'}</Text>
+            </View>
+          ))}
+
+          {/* bottom scrim so the label reads over the map */}
           <LinearGradient
-            colors={['transparent', isDark ? 'rgba(0,0,0,0.55)' : 'rgba(255,255,255,0.7)']}
-            start={{ x: 0, y: 0 }}
+            colors={['transparent', isDark ? 'rgba(6,10,18,0.85)' : 'rgba(255,255,255,0.92)']}
+            start={{ x: 0, y: 0.25 }}
             end={{ x: 0, y: 1 }}
             style={{ position: 'absolute', left: 0, right: 0, bottom: 0, top: 0 }}
             pointerEvents="none"
           />
-          <View style={{ position: 'absolute', left: 14, right: 14, bottom: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <View>
+          <View style={{ position: 'absolute', left: 16, right: 16, bottom: 14, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 10 }}>
+            <View style={{ flex: 1, minWidth: 0 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <Icon name="mappin" size={16} color={colors.brandGreenText} strokeWidth={2.2} />
-                <Text style={{ fontSize: 15, fontWeight: '800', color: colors.text, letterSpacing: -0.3 }}>Collabs near you</Text>
+                <Text style={{ fontSize: 15.5, fontWeight: '800', color: colors.text, letterSpacing: -0.3 }}>Collabs near you</Text>
               </View>
-              <Text style={{ fontSize: 12.5, color: colors.text2, marginTop: 2 }}>
+              <Text numberOfLines={1} style={{ fontSize: 12.5, color: colors.text2, marginTop: 2 }}>
                 {count} within 5 km{city ? ` · ${city}` : ''}
               </Text>
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.brandGreen, paddingHorizontal: 13, paddingVertical: 8, borderRadius: 12 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.brandGreen, paddingHorizontal: 14, paddingVertical: 9, borderRadius: 13, shadowColor: colors.brandGreen, shadowOpacity: 0.4, shadowRadius: 8, shadowOffset: { width: 0, height: 3 } }}>
               <Text style={{ fontSize: 13, fontWeight: '800', color: '#fff' }}>Open map</Text>
-              <Icon name="arrowR" size={14} color="#fff" />
+              <Icon name="arrowR" size={14} color="#fff" strokeWidth={2.4} />
             </View>
           </View>
         </View>

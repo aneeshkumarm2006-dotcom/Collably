@@ -1,8 +1,8 @@
 /**
- * Creator profile tab (PRD §7.3). The creator's own profile: a tappable avatar
- * (change → Cloudinary), identity + lifetime stats, bio, niches, socials, content
- * types, and the portfolio grid. Edit opens the full edit form; the gear opens
- * Settings.
+ * Creator profile tab (PRD §7.3) — the creator's own profile, redesigned as a
+ * premium hero: a gradient banner with the overlapping avatar, identity + a
+ * reach/earnings stat strip, then bio, niches, content types, verified socials,
+ * and the portfolio grid. Edit opens the full form; the gear opens Settings.
  */
 import { useCallback, useState } from 'react';
 import { RefreshControl, ScrollView, Text, View } from 'react-native';
@@ -13,11 +13,7 @@ import { Header } from '@/components/shared';
 import { PortfolioGrid } from '@/components/creator';
 import {
   Avatar,
-  Badge,
-  Button,
-  Card,
   Icon,
-  StatCard,
   TagChip,
   EmptyState,
   ErrorState,
@@ -33,7 +29,7 @@ import { useAuthStore } from '@/store/authStore';
 import type { CreatorProfile, PublicUser } from '@/types';
 
 export default function CreatorProfileScreen() {
-  const { colors } = useTheme();
+  const { colors, shadows } = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user);
@@ -68,6 +64,14 @@ export default function CreatorProfileScreen() {
     }
   };
 
+  const social = data?.socialHandles;
+  // Headline reach: followers/subscribers across every connected platform.
+  const reach =
+    (social?.instagram?.followerCount ?? 0) +
+    (social?.youtube?.subscriberCount ?? 0) +
+    (social?.tiktok?.followerCount ?? 0);
+  const locationLabel = [data?.location?.city, data?.location?.state].filter(Boolean).join(', ');
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Header
@@ -89,56 +93,89 @@ export default function CreatorProfileScreen() {
         <ErrorState body={error} onRetry={reload} />
       ) : (
         <ScrollView
-          contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 24, gap: 18 }}
+          contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 24, gap: 16 }}
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={loading} onRefresh={reload} tintColor={colors.accent} />}
         >
-          {/* Identity */}
-          <Card>
-            <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
-              <Pressable onPress={changeAvatar} style={{ opacity: avatarBusy ? 0.6 : 1 }}>
-                <Avatar src={user?.avatar} name={user?.name} size={66} />
-                <View
-                  style={{
-                    position: 'absolute',
-                    right: -2,
-                    bottom: -2,
-                    width: 26,
-                    height: 26,
-                    borderRadius: 13,
-                    backgroundColor: colors.accent,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderWidth: 2,
-                    borderColor: colors.card,
-                  }}
+          {/* ── Hero ── */}
+          <View style={{ borderRadius: 22, overflow: 'hidden', backgroundColor: colors.card, borderWidth: 1, borderColor: colors.hair, ...shadows.card }}>
+            <View style={{ height: 96, backgroundColor: colors.accent }} />
+            <View style={{ paddingHorizontal: 18, paddingBottom: 18 }}>
+              {/* avatar (overlapping the banner) + Edit */}
+              <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginTop: -46 }}>
+                <Pressable onPress={changeAvatar} style={{ opacity: avatarBusy ? 0.6 : 1 }}>
+                  <View style={{ borderRadius: 999, borderWidth: 4, borderColor: colors.card }}>
+                    <Avatar src={user?.avatar} name={user?.name} size={88} />
+                  </View>
+                  <View
+                    style={{
+                      position: 'absolute',
+                      right: 0,
+                      bottom: 0,
+                      width: 28,
+                      height: 28,
+                      borderRadius: 14,
+                      backgroundColor: colors.accent,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderWidth: 2,
+                      borderColor: colors.card,
+                    }}
+                  >
+                    <Icon name="camera" size={13} color="#fff" />
+                  </View>
+                </Pressable>
+
+                <Pressable
+                  onPress={() => router.push('/(creator)/profile/edit')}
+                  style={({ pressed }) => [
+                    { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 15, paddingVertical: 9, borderRadius: 999, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.hairStrong, marginBottom: 4 },
+                    pressed && { opacity: 0.65 },
+                  ]}
                 >
-                  <Icon name="camera" size={13} color="#fff" />
-                </View>
-              </Pressable>
-              <View style={{ flex: 1, minWidth: 0 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <Text numberOfLines={1} style={{ fontSize: 19, fontWeight: '800', color: colors.text, letterSpacing: -0.3 }}>
-                    {user?.name ?? 'Creator'}
-                  </Text>
-                  {data?.isVerified && <Icon name="badge" size={16} color={colors.accent} />}
-                </View>
-                <Text numberOfLines={1} style={{ fontSize: 13, color: colors.text2, marginTop: 1 }}>
+                  <Icon name="edit" size={14} color={colors.text} />
+                  <Text style={{ fontSize: 13.5, fontWeight: '700', color: colors.text }}>Edit</Text>
+                </Pressable>
+              </View>
+
+              {/* name + verified */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12 }}>
+                <Text numberOfLines={1} style={{ flexShrink: 1, fontSize: 22, fontWeight: '800', color: colors.text, letterSpacing: -0.5 }}>
+                  {user?.name ?? 'Creator'}
+                </Text>
+                {data?.isVerified && <Icon name="badge" size={18} color={colors.accent} />}
+              </View>
+
+              {/* location · email */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 4 }}>
+                {!!locationLabel && (
+                  <>
+                    <Icon name="mappin" size={14} color={colors.text3} strokeWidth={2} />
+                    <Text style={{ fontSize: 13, color: colors.text2 }}>{locationLabel}</Text>
+                    <Text style={{ fontSize: 13, color: colors.text3 }}>·</Text>
+                  </>
+                )}
+                <Text numberOfLines={1} style={{ flexShrink: 1, fontSize: 13, color: colors.text2 }}>
                   {user?.email}
                 </Text>
-                <View style={{ flexDirection: 'row', gap: 6, marginTop: 8 }}>
-                  {data?.isUGCOnly && <Badge tone="accent" label="UGC creator" />}
-                  {!!data?.location?.city && <Badge tone="muted" label={data.location.city} />}
+              </View>
+
+              {/* niche + UGC tags */}
+              {(data?.niche?.length || data?.isUGCOnly) ? (
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 12 }}>
+                  {data?.isUGCOnly && <Pill label="UGC creator" tone="accent" colors={colors} />}
+                  {data?.niche?.map((n) => <Pill key={n} label={n} colors={colors} />)}
                 </View>
+              ) : null}
+
+              {/* stat strip */}
+              <View style={{ flexDirection: 'row', marginTop: 16, paddingTop: 14, borderTopWidth: 1, borderTopColor: colors.hair }}>
+                <Stat value={String(data?.totalCollabsCompleted ?? 0)} label="Collabs" colors={colors} />
+                <Stat value={formatCompactNumber(reach)} label="Reach" colors={colors} divider />
+                <Stat value={`$${formatCompactNumber(data?.totalRewardsEarned ?? 0)}`} label="Earned" colors={colors} divider />
               </View>
             </View>
-
-            <View style={{ marginTop: 16 }}>
-              <Button block variant="outline" icon="edit" onPress={() => router.push('/(creator)/profile/edit')}>
-                Edit profile
-              </Button>
-            </View>
-          </Card>
+          </View>
 
           {/* Verification status: under review until an admin approves. */}
           {data && !data.isVerified && (
@@ -156,26 +193,13 @@ export default function CreatorProfileScreen() {
             >
               <Icon name="clock" size={20} color={colors.warn} />
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 14, fontWeight: '800', color: colors.text }}>
-                  Profile under review
-                </Text>
+                <Text style={{ fontSize: 14, fontWeight: '800', color: colors.text }}>Profile under review</Text>
                 <Text style={{ fontSize: 13, color: colors.text2, marginTop: 2, lineHeight: 18 }}>
-                  You can explore campaigns, but you can&apos;t apply until an admin verifies your
-                  account.
+                  You can explore campaigns, but you can&apos;t apply until an admin verifies your account.
                 </Text>
               </View>
             </View>
           )}
-
-          {/* Stats */}
-          <View style={{ flexDirection: 'row', gap: 12 }}>
-            <View style={{ flex: 1 }}>
-              <StatCard icon="checkcircle" value={data?.totalCollabsCompleted ?? 0} label="Collabs done" tone="success" />
-            </View>
-            <View style={{ flex: 1 }}>
-              <StatCard icon="gift" value={`$${formatCompactNumber(data?.totalRewardsEarned ?? 0)}`} label="Earned" tone="money" />
-            </View>
-          </View>
 
           {/* Bio */}
           {data?.bio ? (
@@ -184,59 +208,38 @@ export default function CreatorProfileScreen() {
             </Section>
           ) : null}
 
-          {/* Niches */}
-          {data && data.niche.length > 0 && (
-            <Section title="Niches" colors={colors}>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                {data.niche.map((n) => (
-                  <TagChip key={n} label={n} small />
-                ))}
-              </View>
-            </Section>
-          )}
-
-          {/* Socials */}
-          {data && hasSocials(data) && (
+          {/* Social reach — only platforms with a real handle. */}
+          {social && (social.instagram?.handle || social.youtube?.handle || social.tiktok?.handle) && (
             <Section title="Social reach" colors={colors}>
-              <Card padding={0}>
-                {data.socialHandles.instagram && (
+              <View style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.hair, borderRadius: 14, overflow: 'hidden' }}>
+                {social.instagram?.handle && (
                   <SocialRow
                     icon="instagram"
-                    handle={data.socialHandles.instagram.handle}
-                    count={
-                      data.socialHandles.instagram.followerCount != null
-                        ? `${formatCompactNumber(data.socialHandles.instagram.followerCount)} followers`
-                        : ''
-                    }
+                    handle={social.instagram.handle}
+                    count={social.instagram.followerCount != null ? `${formatCompactNumber(social.instagram.followerCount)} followers` : ''}
                     colors={colors}
                     first
                   />
                 )}
-                {data.socialHandles.youtube && (
+                {social.youtube?.handle && (
                   <SocialRow
                     icon="youtube"
-                    handle={data.socialHandles.youtube.handle}
-                    count={
-                      data.socialHandles.youtube.subscriberCount != null
-                        ? `${formatCompactNumber(data.socialHandles.youtube.subscriberCount)} subscribers`
-                        : ''
-                    }
+                    handle={social.youtube.handle}
+                    count={social.youtube.subscriberCount != null ? `${formatCompactNumber(social.youtube.subscriberCount)} subscribers` : ''}
                     colors={colors}
+                    first={!social.instagram?.handle}
                   />
                 )}
-                {data.socialHandles.tiktok && (
+                {social.tiktok?.handle && (
                   <SocialRow
                     icon="play"
-                    handle={data.socialHandles.tiktok.handle}
-                    count={
-                      data.socialHandles.tiktok.followerCount != null
-                        ? `${formatCompactNumber(data.socialHandles.tiktok.followerCount)} followers`
-                        : ''
-                    }
+                    handle={social.tiktok.handle}
+                    count={social.tiktok.followerCount != null ? `${formatCompactNumber(social.tiktok.followerCount)} followers` : ''}
                     colors={colors}
+                    first={!social.instagram?.handle && !social.youtube?.handle}
                   />
                 )}
-              </Card>
+              </View>
             </Section>
           )}
 
@@ -272,8 +275,41 @@ export default function CreatorProfileScreen() {
   );
 }
 
-function hasSocials(p: CreatorProfile): boolean {
-  return !!(p.socialHandles.instagram || p.socialHandles.youtube || p.socialHandles.tiktok);
+/** Small pill used for niches / UGC in the hero. */
+function Pill({ label, tone, colors }: { label: string; tone?: 'accent'; colors: ReturnType<typeof useTheme>['colors'] }) {
+  const accent = tone === 'accent';
+  return (
+    <View
+      style={{
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 999,
+        backgroundColor: accent ? colors.accentSoft : colors.cardSunk,
+      }}
+    >
+      <Text style={{ fontSize: 12, fontWeight: '700', color: accent ? colors.accent : colors.text2 }}>{label}</Text>
+    </View>
+  );
+}
+
+/** One column of the hero stat strip. */
+function Stat({
+  value,
+  label,
+  colors,
+  divider,
+}: {
+  value: string;
+  label: string;
+  colors: ReturnType<typeof useTheme>['colors'];
+  divider?: boolean;
+}) {
+  return (
+    <View style={{ flex: 1, alignItems: 'center', borderLeftWidth: divider ? 1 : 0, borderLeftColor: colors.hair }}>
+      <Text style={{ fontSize: 19, fontWeight: '800', color: colors.text, letterSpacing: -0.4 }}>{value}</Text>
+      <Text style={{ fontSize: 12, color: colors.text2, marginTop: 2 }}>{label}</Text>
+    </View>
+  );
 }
 
 function Section({ title, colors, children }: { title: string; colors: ReturnType<typeof useTheme>['colors']; children: React.ReactNode }) {
@@ -311,7 +347,7 @@ function SocialRow({
       }}
     >
       <Icon name={icon} size={20} color={colors.text2} />
-      <Text style={{ flex: 1, fontSize: 14, fontWeight: '600', color: colors.text }}>{handle}</Text>
+      <Text numberOfLines={1} style={{ flex: 1, fontSize: 14, fontWeight: '600', color: colors.text }}>{handle}</Text>
       <Text style={{ fontSize: 13, color: colors.text2 }}>{count}</Text>
     </View>
   );

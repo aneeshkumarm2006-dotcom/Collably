@@ -31,6 +31,7 @@ import { Pressable } from '@/components/ui/SafePressable';
 import { CampaignCard } from './CampaignCard';
 import { useTheme } from '@/components/ThemeProvider';
 import { formatCompactNumber } from '@/lib/utils';
+import Reanimated, { FadeInDown, FadeOutDown } from 'react-native-reanimated';
 import type RNMapView from 'react-native-maps';
 import type { Region } from 'react-native-maps';
 import type { GeoPoint } from '@/types';
@@ -156,6 +157,9 @@ export function ExploreMap({ items, onOpen, total, bottomInset = 0, fitToResults
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [userPoint, setUserPoint] = useState<GeoPoint | null>(null);
   const mapRef = useRef<RNMapView>(null);
+  // Read the latest `fitToResults` inside the async mount effect without re-running it.
+  const fitToResultsRef = useRef(fitToResults);
+  fitToResultsRef.current = fitToResults;
 
   // Ask for location once, then center the discovery map on the user so they see
   // the collabs/brands around them (not a world view).
@@ -169,10 +173,15 @@ export function ExploreMap({ items, onOpen, total, bottomInset = 0, fitToResults
         if (!active) return;
         const p: GeoPoint = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         setUserPoint(p);
-        mapRef.current?.animateToRegion(
-          { latitude: p.lat, longitude: p.lng, latitudeDelta: 0.25, longitudeDelta: 0.25 },
-          600,
-        );
+        // Don't yank the camera to the user's GPS when a search/filter is active —
+        // the fit-to-results effect owns it then (otherwise this async location,
+        // which resolves later, snaps the map back off the searched result).
+        if (!fitToResultsRef.current) {
+          mapRef.current?.animateToRegion(
+            { latitude: p.lat, longitude: p.lng, latitudeDelta: 0.25, longitudeDelta: 0.25 },
+            600,
+          );
+        }
       } catch {
         /* permission denied / unavailable — fall back to the campaign-fit region */
       }
@@ -328,9 +337,12 @@ export function ExploreMap({ items, onOpen, total, bottomInset = 0, fitToResults
         </Pressable>
       ) : null}
 
-      {/* Tap-through mini card. */}
+      {/* Tap-through mini card — springs up when a pin is tapped; tap it to open. */}
       {selected ? (
-        <View
+        <Reanimated.View
+          key={selected._id}
+          entering={FadeInDown.springify().damping(18).stiffness(220)}
+          exiting={FadeOutDown.duration(150)}
           style={{
             position: 'absolute',
             left: 12,
@@ -344,7 +356,7 @@ export function ExploreMap({ items, onOpen, total, bottomInset = 0, fitToResults
             compact
             onPress={() => onOpen(selected._id)}
           />
-        </View>
+        </Reanimated.View>
       ) : null}
     </View>
   );

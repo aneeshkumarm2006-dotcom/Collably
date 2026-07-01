@@ -9,7 +9,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, TextInput, View, Text } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Header, NotificationBell } from '@/components/shared';
 import {
@@ -36,6 +36,7 @@ import { useTheme } from '@/components/ThemeProvider';
 import { useAuthStore } from '@/store/authStore';
 import { api, isApiError } from '@/lib/api';
 import type { Campaign, BusinessProfile } from '@/types';
+import type { Category } from '@/constants';
 
 type CampaignWithBusiness = Campaign & { business?: BusinessProfile };
 type CampaignPage = {
@@ -58,6 +59,12 @@ export default function ExploreScreen() {
   const [filters, setFilters] = useState<CampaignFilters>({});
   const [sort, setSort] = useState<CampaignSort>(isGuest ? 'recent' : 'relevance');
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
+
+  // Pre-apply a category filter when arriving from a "Browse by category" tile on Home.
+  const { category: categoryParam } = useLocalSearchParams<{ category?: string }>();
+  useEffect(() => {
+    if (categoryParam) setFilters((f) => ({ ...f, category: categoryParam as Category }));
+  }, [categoryParam]);
 
   const [items, setItems] = useState<CampaignWithBusiness[]>([]);
   const [page, setPage] = useState(1);
