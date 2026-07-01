@@ -11,7 +11,7 @@
  * enabled.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Platform, Text, View } from 'react-native';
+import { FlatList, Platform, Text, View, useWindowDimensions } from 'react-native';
 import * as Location from 'expo-location';
 import {
   MapView,
@@ -160,6 +160,8 @@ export function ExploreMap({ items, onOpen, total, bottomInset = 0, fitToResults
   // Read the latest `fitToResults` inside the async mount effect without re-running it.
   const fitToResultsRef = useRef(fitToResults);
   fitToResultsRef.current = fitToResults;
+  const { width } = useWindowDimensions();
+  const cardListRef = useRef<FlatList<Pinned>>(null);
 
   // Ask for location once, then center the discovery map on the user so they see
   // the collabs/brands around them (not a world view).
@@ -207,13 +209,13 @@ export function ExploreMap({ items, onOpen, total, bottomInset = 0, fitToResults
   }, [fitToResults, pins]);
 
   const clusters = useMemo(() => clusterPins(pins, region), [pins, region]);
-  const selected = useMemo(
-    () => pins.find((p) => p.id === selectedId)?.campaign ?? null,
-    [pins, selectedId],
-  );
   // The universe to report: the server total when it exceeds what's loaded, else
   // the loaded count. `pins.length` is how many of those are actually on the map.
   const loadedTotal = typeof total === 'number' && total > items.length ? total : items.length;
+  // A pinned collab shows a result-card carousel at the bottom; it auto-sizes so a
+  // single result is near-full-width and multiple cards peek to signal "swipe".
+  const showCards = pins.length > 0;
+  const cardW = pins.length <= 1 ? width - 24 : Math.round(width * 0.82);
 
   if (!MAPS_AVAILABLE) {
     return (
@@ -277,6 +279,8 @@ export function ExploreMap({ items, onOpen, total, bottomInset = 0, fitToResults
               selected={cl.pin.id === selectedId}
               onPress={() => {
                 setSelectedId(cl.pin.id);
+                const idx = pins.findIndex((p) => p.id === cl.pin.id);
+                if (idx >= 0) cardListRef.current?.scrollToIndex({ index: idx, animated: true });
                 zoomTo(cl.point);
               }}
             />
@@ -307,17 +311,17 @@ export function ExploreMap({ items, onOpen, total, bottomInset = 0, fitToResults
       ) : null}
 
       {/* Rarity legend HUD (hidden while a quest card is open). */}
-      {!selected && pins.length > 0 ? <QuestLegend bottomInset={bottomInset} /> : null}
+      {!showCards ? <QuestLegend bottomInset={bottomInset} /> : null}
 
-      {/* Recenter-on-me button. */}
-      {userPoint && !selected ? (
+      {/* Recenter-on-me button (sits above the card carousel when it's showing). */}
+      {userPoint ? (
         <Pressable
           onPress={recenter}
           accessibilityLabel="Center on my location"
           style={{
             position: 'absolute',
             right: 12,
-            bottom: bottomInset + 12,
+            bottom: showCards ? bottomInset + 130 : bottomInset + 12,
             width: 46,
             height: 46,
             borderRadius: 23,
@@ -337,24 +341,47 @@ export function ExploreMap({ items, onOpen, total, bottomInset = 0, fitToResults
         </Pressable>
       ) : null}
 
-      {/* Tap-through mini card — springs up when a pin is tapped; tap it to open. */}
-      {selected ? (
+      {/* Result-card carousel — one card per pinned collab. Auto-sizes to the count,
+          taps open the collab, and swiping pans the map to that card's pin. */}
+      {showCards ? (
         <Reanimated.View
-          key={selected._id}
           entering={FadeInDown.springify().damping(18).stiffness(220)}
           exiting={FadeOutDown.duration(150)}
-          style={{
-            position: 'absolute',
-            left: 12,
-            right: 12,
-            bottom: bottomInset + 12,
-          }}
+          style={{ position: 'absolute', left: 0, right: 0, bottom: bottomInset + 12 }}
         >
-          <CampaignCard
-            campaign={selected}
-            businessName={selected.business?.businessName}
-            compact
-            onPress={() => onOpen(selected._id)}
+          <FlatList
+            ref={cardListRef}
+            data={pins}
+            keyExtractor={(p) => p.id}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            snapToInterval={cardW + 12}
+            decelerationRate="fast"
+            contentContainerStyle={{ paddingHorizontal: 12 }}
+            ItemSeparatorComponent={() => <View style={{ width: 12 }} />}
+            getItemLayout={(_, index) => ({ length: cardW + 12, offset: (cardW + 12) * index, index })}
+            onScrollToIndexFailed={() => undefined}
+            onMomentumScrollEnd={(e) => {
+              const idx = Math.round(e.nativeEvent.contentOffset.x / (cardW + 12));
+              const p = pins[idx];
+              if (p) {
+                setSelectedId(p.id);
+                mapRef.current?.animateToRegion(
+                  { latitude: p.point.lat, longitude: p.point.lng, latitudeDelta: 0.06, longitudeDelta: 0.06 },
+                  350,
+                );
+              }
+            }}
+            renderItem={({ item }) => (
+              <View style={{ width: cardW }}>
+                <CampaignCard
+                  campaign={item.campaign}
+                  businessName={item.campaign.business?.businessName}
+                  compact
+                  onPress={() => onOpen(item.campaign._id)}
+                />
+              </View>
+            )}
           />
         </Reanimated.View>
       ) : null}
