@@ -8,11 +8,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit -p tsconfig.json",
-    "dev:web": "npm --prefix web run dev",
-    "build:web": "npm --prefix web run build",
-    "lint:web": "npm --prefix web run lint",
-    "typecheck:web": "npm --prefix web run typecheck"
+    "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
