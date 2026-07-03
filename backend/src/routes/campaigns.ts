@@ -412,6 +412,14 @@ router.post(
     const data = campaignCreateSchema.parse(req.body);
     const profile = await requireBusinessProfile(req.user!._id);
 
+    // Suspended businesses are frozen: no creating or publishing campaigns.
+    if (profile.isSuspended) {
+      throw new AppError(
+        403,
+        'Your business account is suspended and cannot create campaigns. Contact support.',
+      );
+    }
+
     // Publishing (status Active) requires a verified business. An unverified
     // ("under review") business may still save the campaign as a Draft.
     if (data.status === 'Active' && !profile.isVerified) {
@@ -522,9 +530,17 @@ router.patch(
     const campaign = await findCampaignOr404(id);
     await assertOwnerOrAdmin(campaign, req);
 
-    // Publishing (→ Active) requires a verified business; an admin may force it.
+    // Publishing (→ Active) requires a verified, non-suspended business; an admin may force it.
     if (status === 'Active' && req.user!.role !== 'admin') {
-      const business = await BusinessProfile.findById(campaign.businessId).select('isVerified');
+      const business = await BusinessProfile.findById(campaign.businessId).select(
+        'isVerified isSuspended',
+      );
+      if (business?.isSuspended) {
+        throw new AppError(
+          403,
+          'Your business account is suspended and cannot publish campaigns. Contact support.',
+        );
+      }
       if (!business?.isVerified) {
         throw new AppError(
           403,
@@ -578,6 +594,14 @@ router.post(
 
     const creator = await CreatorProfile.findOne({ userId: req.user!._id });
     if (!creator) throw new AppError(404, 'Create your creator profile before applying');
+
+    // Suspended creators are frozen: they can browse but not apply.
+    if (creator.isSuspended) {
+      throw new AppError(
+        403,
+        'Your creator account is suspended and cannot apply to campaigns. Contact support.',
+      );
+    }
 
     // Admin approval gate: an unverified ("under review") creator can browse but
     // not apply until an admin verifies them.

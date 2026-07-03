@@ -10,7 +10,8 @@
  * other changes. Address search additionally requires the server-side Geocoding key.
  */
 import { useEffect, useRef, useState } from 'react';
-import { ScrollView, Text, TextInput, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
+import { TextInput } from '@/components/ui/SafeTextInput';
 import { Field, SwitchRow } from './fields';
 import { AutocompleteField, Button, Icon } from '@/components/ui';
 import {

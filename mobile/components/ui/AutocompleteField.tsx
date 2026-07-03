@@ -7,7 +7,8 @@
  * overlay, so it never gets clipped by the onboarding ScrollView / card.
  */
 import { useState } from 'react';
-import { Text, TextInput, View } from 'react-native';
+import { Text, View } from 'react-native';
+import { TextInput } from '@/components/ui/SafeTextInput';
 import { Pressable } from '@/components/ui/SafePressable';
 import { useTheme } from '@/components/ThemeProvider';
 import { Icon, type IconName } from './Icon';

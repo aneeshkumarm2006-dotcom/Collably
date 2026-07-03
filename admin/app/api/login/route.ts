@@ -1,7 +1,25 @@
+import { createHash, timingSafeEqual } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { SESSION_COOKIE, SESSION_MAX_AGE, createSessionToken } from '@/lib/session';
+import { clientIp, isLocked, registerFailure, clearAttempts } from '@/lib/rate-limit';
+
+/** Constant-time password compare — hash both to a fixed 32 bytes so the compare
+ * is length-independent and never leaks timing about the real password. */
+function passwordMatches(candidate: string, expected: string): boolean {
+  const a = createHash('sha256').update(candidate).digest();
+  const b = createHash('sha256').update(expected).digest();
+  return timingSafeEqual(a, b);
+}
 
 export async function POST(req: Request) {
+  const ip = clientIp(req);
+  if (isLocked(ip)) {
+    return NextResponse.json(
+      { error: 'Too many attempts. Try again in a few minutes.' },
+      { status: 429 },
+    );
+  }
+
   let password = '';
   try {
     const body = (await req.json()) as { password?: unknown };
@@ -17,10 +35,12 @@ export async function POST(req: Request) {
       { status: 500 },
     );
   }
-  if (password.length === 0 || password !== expected) {
+  if (password.length === 0 || !passwordMatches(password, expected)) {
+    registerFailure(ip);
     return NextResponse.json({ error: 'Incorrect password.' }, { status: 401 });
   }
 
+  clearAttempts(ip);
   const token = await createSessionToken();
   const res = NextResponse.json({ ok: true });
   res.cookies.set(SESSION_COOKIE, token, {

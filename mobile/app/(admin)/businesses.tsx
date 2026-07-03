@@ -9,7 +9,8 @@
  *   PATCH /api/admin/businesses/:id   { isVerified | isSuspended }
  */
 import { useEffect, useState } from 'react';
-import { Alert, FlatList, Pressable, RefreshControl, Text, TextInput, View } from 'react-native';
+import { Alert, FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
+import { TextInput } from '@/components/ui/SafeTextInput';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Header, SwipeableRow, type SwipeAction } from '@/components/shared';

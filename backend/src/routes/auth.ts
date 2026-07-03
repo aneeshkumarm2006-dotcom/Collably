@@ -182,10 +182,13 @@ router.post(
       ...passwordResetEmail({ name: user.name, token: rawToken }),
     });
 
-    // In non-production, also surface the raw token so the flow is testable
-    // before a real Resend domain is verified.
-    if (!env.isProd) {
-      console.log(`[auth] password reset token for ${email}: ${rawToken}`);
+    // Opt-in debug aid (never in production): surface the raw token so the flow
+    // is testable before a real Resend domain is verified. Gated behind an
+    // explicit flag AND non-prod, so an unset/misconfigured NODE_ENV alone can
+    // never hand a reset token to an arbitrary caller (account-takeover vector).
+    if (env.exposeDevResetToken && !env.isProd) {
+      // Surface the token in the RESPONSE only — never log it: a raw reset token
+      // plus the email in server logs is a stored account-takeover credential.
       res.status(200).json({ ...generic, devResetToken: rawToken });
       return;
     }

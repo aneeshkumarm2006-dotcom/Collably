@@ -5,8 +5,9 @@
  * body to `onSend`.
  */
 import { useState } from 'react';
-import { TextInput, View } from 'react-native';
+import { View } from 'react-native';
 import { Pressable } from '@/components/ui/SafePressable';
+import { TextInput } from '@/components/ui/SafeTextInput';
 import { Icon } from '@/components/ui';
 import { showToast } from '@/lib/toast';
 import { useChatPalette } from './chatTheme';

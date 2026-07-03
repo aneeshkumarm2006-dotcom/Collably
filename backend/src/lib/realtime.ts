@@ -82,17 +82,32 @@ export function initRealtime(httpServer: HttpServer): SocketIOServer {
     // sent → delivered and let the senders' ticks update live (WhatsApp ✓✓).
     void markIncomingDelivered(userId);
 
-    // Typing relay. The client already knows the other participant's user id
-    // (from the conversation), so no DB lookup is needed here.
+    // Typing relay. Server-authoritative: verify the sender is a participant of
+    // the conversation and derive the recipient as the OTHER participant — never
+    // trust a client-supplied `toUserId` (which could target an arbitrary user).
     socket.on(
       'typing',
       (payload: { conversationId?: string; toUserId?: string; isTyping?: boolean }) => {
-        if (!payload?.conversationId || !payload.toUserId) return;
-        emitToUser(payload.toUserId, 'typing', {
-          conversationId: payload.conversationId,
-          fromUserId: userId,
-          isTyping: Boolean(payload.isTyping),
-        });
+        if (!payload?.conversationId) return;
+        void (async () => {
+          try {
+            const convo = await Conversation.findById(payload.conversationId).select(
+              'businessUserId creatorUserId',
+            );
+            if (!convo) return;
+            const business = convo.businessUserId.toString();
+            const creator = convo.creatorUserId.toString();
+            if (userId !== business && userId !== creator) return; // not a participant → drop
+            const toUserId = userId === business ? creator : business;
+            emitToUser(toUserId, 'typing', {
+              conversationId: payload.conversationId,
+              fromUserId: userId,
+              isTyping: Boolean(payload.isTyping),
+            });
+          } catch {
+            /* typing is best-effort — never throw */
+          }
+        })();
       },
     );
   });

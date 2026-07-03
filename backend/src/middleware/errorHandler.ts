@@ -20,9 +20,10 @@ export class AppError extends Error {
   }
 }
 
-/** 404 fallback for unmatched routes — runs after all real routes. */
-export const notFound: RequestHandler = (req, _res, next) => {
-  next(new AppError(404, `Route not found: ${req.method} ${req.originalUrl}`));
+/** 404 fallback for unmatched routes — runs after all real routes. Deliberately
+ * static: echoing the method/URL back is a needless reflection of caller input. */
+export const notFound: RequestHandler = (_req, _res, next) => {
+  next(new AppError(404, 'Route not found'));
 };
 
 /**

@@ -25,8 +25,13 @@ router.post(
   authenticate,
   asyncHandler(async (req, res) => {
     const { folder, publicId, tags } = signSchema.parse(req.body);
+    // Namespace any caller-chosen publicId under the caller's own user id.
+    // Folders are shared across all users and signed Cloudinary uploads overwrite
+    // by default, so an un-namespaced id would let one user replace another's
+    // asset (e.g. their avatar) by guessing its public_id.
+    const scopedPublicId = publicId ? `u_${req.user!._id}/${publicId}` : undefined;
     // Throws a clean 500 via the central handler if Cloudinary is unconfigured.
-    const params = createSignedUpload({ folder, publicId, tags });
+    const params = createSignedUpload({ folder, publicId: scopedPublicId, tags });
     res.status(200).json(params);
   }),
 );

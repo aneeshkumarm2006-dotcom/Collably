@@ -61,6 +61,7 @@ function escapeRegex(input: string): string {
  * profile.
  */
 function publicUserOf(ref: unknown): ReturnType<typeof toPublicUser> | null {
+  // Device push tokens never ship in any payload — `toPublicUser` omits them.
   return ref && typeof ref === 'object' && 'name' in ref ? toPublicUser(ref as UserDoc) : null;
 }
 

@@ -10,7 +10,8 @@
  * reduce-motion.
  */
 import { useEffect, useState } from 'react';
-import { ScrollView, Text, TextInput, View, useWindowDimensions, type KeyboardTypeOptions, type ViewStyle } from 'react-native';
+import { ScrollView, Text, View, useWindowDimensions, type KeyboardTypeOptions, type ViewStyle } from 'react-native';
+import { TextInput } from '@/components/ui/SafeTextInput';
 import Reanimated, {
   Easing,
   Extrapolation,

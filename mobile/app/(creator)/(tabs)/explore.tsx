@@ -8,9 +8,11 @@
  * login on the detail screen.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, TextInput, View, Text } from 'react-native';
+import { FlatList, Pressable, RefreshControl, View, Text } from 'react-native';
+import { TextInput } from '@/components/ui/SafeTextInput';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { Header, NotificationBell } from '@/components/shared';
 import {
   CampaignCard,
@@ -52,6 +54,10 @@ export default function ExploreScreen() {
   const { colors } = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  // The bottom tab bar overlays the screen, so the map's floating overlays (card
+  // carousel, recenter FAB, legend) must clear the FULL tab-bar height — not just
+  // the home-indicator inset — or their lower half hides behind the bar.
+  const tabBarHeight = useBottomTabBarHeight();
   const isGuest = useAuthStore((s) => s.isGuest);
 
   const [search, setSearch] = useState('');
@@ -237,7 +243,7 @@ export default function ExploreScreen() {
         <ExploreMap
           items={items}
           total={total}
-          bottomInset={insets.bottom}
+          bottomInset={tabBarHeight}
           fitToResults={Boolean(debouncedSearch) || activeFilters > 0}
           onOpen={(id) => router.push({ pathname: '/(creator)/campaign/[id]', params: { id } })}
         />

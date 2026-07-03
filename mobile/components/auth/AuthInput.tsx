@@ -8,8 +8,9 @@
  * the eye toggle). `error` turns the border red and shows the message below.
  */
 import { forwardRef, useState } from 'react';
-import { Text, TextInput, View, type TextInputProps } from 'react-native';
+import { Text, View, type TextInput as RNTextInput, type TextInputProps } from 'react-native';
 import { Pressable } from '@/components/ui/SafePressable';
+import { TextInput } from '@/components/ui/SafeTextInput';
 import { useTheme } from '@/components/ThemeProvider';
 import { Icon, type IconName } from '@/components/ui';
 
@@ -32,7 +33,7 @@ export type AuthInputProps = {
   maxLength?: number;
 };
 
-export const AuthInput = forwardRef<TextInput, AuthInputProps>(function AuthInput(
+export const AuthInput = forwardRef<RNTextInput, AuthInputProps>(function AuthInput(
   {
     label,
     value,

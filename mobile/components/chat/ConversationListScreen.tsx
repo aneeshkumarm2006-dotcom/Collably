@@ -4,7 +4,8 @@
  * `useChatSocket`; pulling refreshes from the server.
  */
 import { useCallback, useMemo, useState } from 'react';
-import { FlatList, RefreshControl, Text, TextInput, View } from 'react-native';
+import { FlatList, RefreshControl, Text, View } from 'react-native';
+import { TextInput } from '@/components/ui/SafeTextInput';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Pressable } from '@/components/ui/SafePressable';

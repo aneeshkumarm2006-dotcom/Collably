@@ -63,7 +63,9 @@ export function toPublicUser(user: UserDoc): PublicUser {
     isVerified: user.isVerified,
     isOnboarded: user.isOnboarded,
     isBanned: user.isBanned,
-    pushToken: user.pushToken ?? null,
+    // `pushToken` is deliberately NOT serialized — it's a device credential
+    // (lets the holder push notifications to that device). The client only ever
+    // WRITES it via POST /push/register; no consumer needs to read it back.
     notificationPrefs: {
       push: user.notificationPrefs?.push !== false,
       email: user.notificationPrefs?.email !== false,

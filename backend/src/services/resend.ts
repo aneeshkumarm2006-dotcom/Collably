@@ -45,6 +45,14 @@ export function isResendConfigured(): boolean {
   return Boolean(env.resend.apiKey && env.resend.from);
 }
 
+/** Mask an email for logs — keep the first char + domain, hide the rest of the
+ * local-part so recipient PII doesn't accumulate in server logs. */
+function maskEmail(email: string): string {
+  const at = email.indexOf('@');
+  if (at <= 0) return '***';
+  return `${email[0]}***${email.slice(at)}`;
+}
+
 /**
  * Send one email via Resend. Never throws — returns `{ sent: false, reason }`
  * when skipped (unconfigured) or on transport/API error, so callers can treat
@@ -53,7 +61,7 @@ export function isResendConfigured(): boolean {
 export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult> {
   if (!isResendConfigured()) {
     const reason = 'Resend is not configured (RESEND_API_KEY / RESEND_FROM unset)';
-    if (!env.isProd) console.warn(`[resend] skipped → ${input.to}: ${reason}`);
+    if (!env.isProd) console.warn(`[resend] skipped → ${maskEmail(input.to)}: ${reason}`);
     return { sent: false, reason };
   }
 
@@ -76,7 +84,7 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
     if (!res.ok) {
       const body = await res.text().catch(() => '');
       const reason = `Resend responded ${res.status}: ${body.slice(0, 200)}`;
-      console.error(`[resend] failed → ${input.to}: ${reason}`);
+      console.error(`[resend] failed → ${maskEmail(input.to)}: ${reason}`);
       return { sent: false, reason };
     }
 
@@ -84,7 +92,7 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
     return { sent: true, id: data.id };
   } catch (err) {
     const reason = err instanceof Error ? err.message : 'unknown transport error';
-    console.error(`[resend] error → ${input.to}: ${reason}`);
+    console.error(`[resend] error → ${maskEmail(input.to)}: ${reason}`);
     return { sent: false, reason };
   }
 }

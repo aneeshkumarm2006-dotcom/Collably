@@ -17,6 +17,8 @@ import type { PublicUser } from '@/types';
 import type { UserRole } from '@/constants';
 import { api } from '@/lib/api';
 import { loadTokens, setTokens, clearTokens, forceSignOut, onSignOut } from '@/lib/auth';
+import { useNotificationStore } from '@/store/notificationStore';
+import { useCelebrationStore } from '@/store/celebrationStore';
 
 /** Coarse auth state used to gate navigation in the root layout. */
 export type AuthStatus = 'loading' | 'authenticated' | 'guest' | 'unauthenticated';
@@ -119,7 +121,9 @@ export const useAuthStore = create<AuthState>((set) => ({
 }));
 
 // When the session is invalidated anywhere (failed refresh in lib/api, or an
-// explicit signOut), reset the store to logged-out exactly once.
+// explicit signOut), reset the store to logged-out exactly once. Also clear the
+// other user-scoped stores so nothing from user A (unread bell badge, a pending
+// "Hurray" popup) bleeds into user B's session. (Chat is reset by useChatSocket.)
 onSignOut(() => {
   useAuthStore.setState({
     status: 'unauthenticated',
@@ -128,4 +132,6 @@ onSignOut(() => {
     isGuest: false,
     approved: false,
   });
+  useNotificationStore.getState().clear();
+  useCelebrationStore.getState().dismiss();
 });

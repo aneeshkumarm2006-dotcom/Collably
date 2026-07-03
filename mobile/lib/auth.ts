@@ -21,10 +21,17 @@ const REFRESH_KEY = 'collably.refreshToken';
  * function". On web we fall back to `localStorage` so the app boots during
  * development. (localStorage is NOT encrypted; web is a dev convenience, the real
  * targets are native where tokens stay in the secure enclave.)
+ *
+ * The fallback is DEV-ONLY: a production web build refuses to persist tokens in
+ * localStorage (any XSS would read them). If web ever becomes a real target,
+ * switch its auth to httpOnly cookies first.
  */
+const webStorageAllowed = () => Platform.OS === 'web' && __DEV__;
+
 const secureStorage = {
   getItem(key: string): Promise<string | null> {
     if (Platform.OS === 'web') {
+      if (!webStorageAllowed()) return Promise.resolve(null);
       try {
         return Promise.resolve(globalThis.localStorage?.getItem(key) ?? null);
       } catch {
@@ -35,6 +42,7 @@ const secureStorage = {
   },
   setItem(key: string, value: string): Promise<void> {
     if (Platform.OS === 'web') {
+      if (!webStorageAllowed()) return Promise.resolve(); // prod web: in-memory only
       try {
         globalThis.localStorage?.setItem(key, value);
       } catch {

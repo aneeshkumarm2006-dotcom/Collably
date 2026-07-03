@@ -17,6 +17,13 @@ function int(key: string, fallback: number): number {
   return Number.isNaN(n) ? fallback : n;
 }
 
+/** Read a boolean env var ("true"/"1" ⇒ true) with a default. */
+function bool(key: string, fallback: boolean): boolean {
+  const v = process.env[key];
+  if (v === undefined || v === '') return fallback;
+  return v === 'true' || v === '1';
+}
+
 /**
  * Centralised, typed view of the environment. Import this instead of reading
  * `process.env` directly so every consumer sees the same parsed values.
@@ -51,6 +58,13 @@ export const env = {
   jwtRefreshExpiresIn: str('JWT_REFRESH_EXPIRES_IN', '30d'),
   /** How long a password-reset token stays valid, in minutes. */
   passwordResetTtlMinutes: int('PASSWORD_RESET_TTL_MINUTES', 60),
+  /**
+   * Debug aid: when `true` AND not production, `POST /forgot-password` returns the
+   * raw reset token in the response so the flow is testable before a real email
+   * domain is verified. Off by default and requires an explicit opt-in, so a
+   * misconfigured/unset `NODE_ENV` can never leak reset tokens to callers.
+   */
+  exposeDevResetToken: bool('EXPOSE_DEV_RESET_TOKEN', false),
 
   mongodbUri: str('MONGODB_URI'),
 
@@ -122,17 +136,27 @@ export function corsOrigins(): true | string[] {
  */
 export function assertSecureConfig(): void {
   const problems: string[] = [];
+  // Reject the .env.example placeholders outright — they're long enough to pass
+  // the length check but are publicly known, which makes tokens forgeable.
+  const placeholder = /change-?me|your[-_]|example|placeholder/i;
   if (env.jwtSecret.length < 32) problems.push('JWT_SECRET must be set and at least 32 characters.');
+  else if (placeholder.test(env.jwtSecret)) problems.push('JWT_SECRET is a known placeholder — generate a real secret (openssl rand -hex 32).');
   if (!process.env.JWT_REFRESH_SECRET) {
     problems.push('JWT_REFRESH_SECRET is not set (refresh secret is currently derived from JWT_SECRET — set a separate value).');
+  }
+  if (env.adminApiKey && (env.adminApiKey.length < 24 || placeholder.test(env.adminApiKey))) {
+    problems.push('ADMIN_API_KEY is weak or a placeholder — it grants full admin access; generate a real value (openssl rand -hex 32).');
   }
   if (env.corsOrigin === '*') problems.push('CORS_ORIGIN is "*" — set an explicit allowlist.');
 
   if (problems.length === 0) return;
-  // Warn loudly (in prod logs too) but DO NOT crash the server — these are
-  // config hardening items, and failing to boot a live API is worse. Fix the
-  // env in the host dashboard, then this goes quiet.
-  const where = env.isProd ? 'PRODUCTION' : 'dev';
+  const msg = `insecure config — fix in host env vars:\n  - ${problems.join('\n  - ')}`;
+  // Fail CLOSED in production: refuse to boot with a weak JWT secret or wildcard
+  // CORS rather than run a live API insecurely. In dev, warn only so local work
+  // isn't blocked.
+  if (env.isProd) {
+    throw new Error(`[env] ⚠ ${msg}`);
+  }
   // eslint-disable-next-line no-console
-  console.warn(`[env] ⚠ insecure config (${where}) — fix in host env vars:\n  - ${problems.join('\n  - ')}`);
+  console.warn(`[env] ⚠ (dev) ${msg}`);
 }

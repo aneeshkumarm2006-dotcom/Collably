@@ -172,9 +172,15 @@ export function ChatThreadScreen() {
     // The KeyboardAvoidingView wraps the WHOLE screen (header included) so its top
     // is the window top → keyboardVerticalOffset is 0 and the composer always lifts
     // to sit right above the keyboard, on every device.
+    //
+    // Android needs an explicit behavior: under Expo SDK 54's mandatory edge-to-edge
+    // the window no longer auto-resizes for the keyboard (the old `adjustResize`
+    // no-ops), so without this the composer stays pinned behind the keyboard and you
+    // type blind. `height` shrinks the container by the keyboard height, lifting the
+    // composer above it. iOS keeps `padding`.
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: pal.chatBg }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <Header title={title} subtitle={subtitle} onBack={() => router.back()} variant="card" />
 

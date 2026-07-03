@@ -6,8 +6,9 @@
  * is business-scoped (campaigns + applications cascade server-side).
  */
 import { useRef, useState } from 'react';
-import { ScrollView, Text, TextInput, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { Pressable } from '@/components/ui/SafePressable';
+import { TextInput } from '@/components/ui/SafeTextInput';
 import { useRouter } from 'expo-router';
 import { Header, ThemeModeRow } from '@/components/shared';
 import { Button, Card, Icon, SwitchRow, BottomSheet, type BottomSheetRef, type IconName } from '@/components/ui';

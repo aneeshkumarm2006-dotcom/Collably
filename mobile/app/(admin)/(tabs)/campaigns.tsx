@@ -10,7 +10,8 @@
  *   DELETE /api/admin/campaigns/:id
  */
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, FlatList, Pressable, RefreshControl, ScrollView, TextInput, View } from 'react-native';
+import { Alert, FlatList, Pressable, RefreshControl, ScrollView, View } from 'react-native';
+import { TextInput } from '@/components/ui/SafeTextInput';
 import { useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Header, SwipeableRow, type SwipeAction } from '@/components/shared';

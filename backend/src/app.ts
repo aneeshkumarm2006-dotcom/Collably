@@ -12,9 +12,25 @@ import { errorHandler, notFound } from './middleware/errorHandler';
 export function createApp(): Express {
   const app = express();
 
+  // Don't advertise the framework.
+  app.disable('x-powered-by');
+
   // Trust the first proxy hop (Render/Railway sit behind a load balancer) so
   // req.ip / secure cookies + rate-limit IP keying behave correctly in production.
   app.set('trust proxy', 1);
+
+  // Security response headers (equivalent to the subset of `helmet` that matters
+  // for a JSON API — set inline to avoid adding a dependency). This is an API that
+  // returns JSON and renders no HTML, so `default-src 'none'` is safe and locks the
+  // response down completely if anything ever tries to load it as a document.
+  app.use((_req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('Referrer-Policy', 'no-referrer');
+    res.setHeader('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none'");
+    res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains');
+    next();
+  });
 
   // CORS — never combine a wildcard reflect-any origin with credentials (that
   // lets any site make credentialed cross-origin calls). Credentials are only

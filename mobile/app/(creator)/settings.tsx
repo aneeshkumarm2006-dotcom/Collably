@@ -5,8 +5,9 @@
  * credential changes use confirmation sheets; destructive actions confirm first.
  */
 import { useRef, useState } from 'react';
-import { ScrollView, Text, TextInput, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { Pressable } from '@/components/ui/SafePressable';
+import { TextInput } from '@/components/ui/SafeTextInput';
 import { useRouter } from 'expo-router';
 import { Header, ThemeModeRow } from '@/components/shared';
 import {

@@ -8,10 +8,18 @@
  */
 module.exports = function (api) {
   api.cache(true);
+  // Strip console.* from release bundles (keep error/warn for crash triage).
+  // Android logs are world-readable via `adb logcat`, so a stray debug
+  // console.log(response) would otherwise leak user data from shipped builds.
+  const plugins = [];
+  if (process.env.NODE_ENV === 'production' || process.env.BABEL_ENV === 'production') {
+    plugins.push(['transform-remove-console', { exclude: ['error', 'warn'] }]);
+  }
   return {
     presets: [
       ['babel-preset-expo', { jsxImportSource: 'nativewind' }],
       'nativewind/babel',
     ],
+    plugins,
   };
 };
