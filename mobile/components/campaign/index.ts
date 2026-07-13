@@ -22,6 +22,14 @@ export {
   type CampaignMapProps,
 } from './CampaignMap';
 export { ExploreMap, type ExploreMapProps } from './ExploreMap';
+export {
+  ExploreHeader,
+  StatsRow,
+  SearchPill,
+  CategoryChips,
+  FeaturedCard,
+  type ExploreStat,
+} from './ExploreKit';
 export { FilterBottomSheet, type FilterBottomSheetProps } from './FilterBottomSheet';
 export { SortBottomSheet, type SortBottomSheetProps } from './SortBottomSheet';
 export {

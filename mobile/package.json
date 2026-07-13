@@ -5,6 +5,7 @@
   "dependencies": {
     "@gorhom/bottom-sheet": "^5.2.14",
     "@react-native-community/datetimepicker": "8.4.4",
+    "@react-native-google-signin/google-signin": "^16.1.2",
     "axios": "^1.17.0",
     "expo": "~54.0.35",
     "expo-auth-session": "~7.0.11",

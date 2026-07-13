@@ -54,42 +54,8 @@ function withMaps(config) {
   return next;
 }
 
-/**
- * Register the reversed iOS OAuth client ID as a custom URL scheme so the native
- * Google consent screen can redirect back into the app. `expo-auth-session`'s
- * Google provider uses this reversed-client-id scheme as the iOS redirect URI;
- * without it the consent flow opens but never returns and sign-in hangs.
- *
- * iOS client IDs look like `<num>-<hash>.apps.googleusercontent.com`; the scheme
- * is the same value reversed: `com.googleusercontent.apps.<num>-<hash>`.
- *
- * Android needs no scheme here — `expo-auth-session` redirects via the app's own
- * `collably://` scheme (already in app.json) and Google matches the Android
- * client by package name + signing SHA-1 configured in Google Cloud.
- *
- * Self-degrading: when `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` is unset the scheme is
- * not added and the "Continue with Google" button self-hides (JS gate:
- * `GOOGLE_OAUTH_CONFIGURED`).
- */
-function withGoogleIosScheme(config) {
-  const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || '';
-  const suffix = '.apps.googleusercontent.com';
-  if (!iosClientId.endsWith(suffix)) return config;
+// Note: the reversed iOS OAuth client-id URL scheme is now registered by the
+// `@react-native-google-signin/google-signin` config plugin (see app.json →
+// `iosUrlScheme`), so no manual CFBundleURLTypes injection is needed here.
 
-  const reversed = `com.googleusercontent.apps.${iosClientId.slice(0, -suffix.length)}`;
-  const existing =
-    (config.ios && config.ios.infoPlist && config.ios.infoPlist.CFBundleURLTypes) || [];
-
-  return {
-    ...config,
-    ios: {
-      ...config.ios,
-      infoPlist: {
-        ...(config.ios && config.ios.infoPlist),
-        CFBundleURLTypes: [...existing, { CFBundleURLSchemes: [reversed] }],
-      },
-    },
-  };
-}
-
-module.exports = ({ config }) => withGoogleIosScheme(withMaps(config));
+module.exports = ({ config }) => withMaps(config);

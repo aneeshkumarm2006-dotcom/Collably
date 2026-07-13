@@ -6,7 +6,7 @@
 import { ScrollView, Text, View } from 'react-native';
 import { Pressable } from '@/components/ui/SafePressable';
 import { useTheme } from '@/components/ThemeProvider';
-import { PLATFORMS, CONTENT_TYPES } from '@/constants';
+import { PLATFORMS, CONTENT_TYPES_BY_PLATFORM } from '@/constants';
 import type { CampaignDeliverable } from '@/types';
 import { Button, Card, Icon, TagChip } from '@/components/ui';
 import { Field, TextField, NumberStepper } from './fields';
@@ -39,14 +39,26 @@ export function Step5({ value, patch }: CampaignStepProps) {
           <Field label="Platform">
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {PLATFORMS.map((p) => (
-                <TagChip key={p} label={p} small selected={d.platform === p} onPress={() => update(i, { platform: p })} />
+                <TagChip
+                  key={p}
+                  label={p}
+                  small
+                  selected={d.platform === p}
+                  onPress={() => {
+                    // Switching platform may invalidate the current content type
+                    // (e.g. Google can't do "Reel") — snap it to the first allowed.
+                    const allowed = CONTENT_TYPES_BY_PLATFORM[p];
+                    const contentType = allowed.includes(d.contentType) ? d.contentType : allowed[0];
+                    update(i, { platform: p, contentType });
+                  }}
+                />
               ))}
             </View>
           </Field>
 
           <Field label="Content type">
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              {CONTENT_TYPES.map((ct) => (
+              {CONTENT_TYPES_BY_PLATFORM[d.platform].map((ct) => (
                 <TagChip key={ct} label={ct} small selected={d.contentType === ct} onPress={() => update(i, { contentType: ct })} />
               ))}
             </View>

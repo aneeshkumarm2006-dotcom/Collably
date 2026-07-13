@@ -20,7 +20,7 @@ import { BusinessProfile } from '../models/BusinessProfile';
 import { CreatorProfile } from '../models/CreatorProfile';
 import { CATEGORIES } from '../../../shared/constants/categories';
 import { PLATFORMS } from '../../../shared/constants/platforms';
-import { CONTENT_TYPES } from '../../../shared/constants/contentTypes';
+import { CONTENT_TYPES, isContentTypeForPlatform } from '../../../shared/constants/contentTypes';
 import { REWARD_TYPES } from '../../../shared/constants/rewards';
 import { canTransitionCampaign, type CampaignStatus } from '../../../shared/constants/statuses';
 import { authenticate, optionalAuthenticate } from '../middleware/authenticate';
@@ -45,12 +45,18 @@ const RELEVANCE_CANDIDATE_CAP = 200;
 
 // --- Validation ---------------------------------------------------------------
 
-const deliverableSchema = z.object({
-  platform: z.enum(PLATFORMS),
-  contentType: z.enum(CONTENT_TYPES),
-  quantity: z.coerce.number().int().min(1).default(1),
-  requirements: z.string().trim().max(1000).optional(),
-});
+const deliverableSchema = z
+  .object({
+    platform: z.enum(PLATFORMS),
+    contentType: z.enum(CONTENT_TYPES),
+    quantity: z.coerce.number().int().min(1).default(1),
+    requirements: z.string().trim().max(1000).optional(),
+  })
+  // The content type must be valid for the chosen platform (e.g. no "Reel" on Google).
+  .refine((d) => isContentTypeForPlatform(d.platform, d.contentType), {
+    message: 'This content type is not available for the selected platform.',
+    path: ['contentType'],
+  });
 
 const rewardSchema = z.object({
   type: z.enum(REWARD_TYPES),

@@ -1,14 +1,19 @@
 /**
- * Explore map view (On-Site Location feature) — the Airbnb-style discovery map
- * toggled from the Explore tab. Renders the same filtered `GET /api/campaigns`
- * results as price-bubble markers (`$X` from `reward.estimatedValue`, or a pin
- * when no value), with simple zoom-aware clustering and a tap-through mini card.
+ * Explore map view (On-Site Location feature) — the premium "LocalShout"
+ * discovery map toggled from the Explore tab. Renders the filtered
+ * `GET /api/campaigns` results as clean CATEGORY-COLORED teardrop pins, with a
+ * "Search this area" pill, floating layers/recenter buttons, the user's blue
+ * location dot + soft radius, and a bottom result-card carousel.
  *
  * Markers use the campaign's `approxCoordinates` (the server-fuzzed point) — the
  * exact pin is never sent to the feed. Remote / not-yet-pinned campaigns have no
  * coordinate and are surfaced via a "N of M shown on map" note rather than
  * silently dropped. Falls back to a "Map coming soon" placeholder until maps are
  * enabled.
+ *
+ * A compact `preview` mode renders just the map + pins (no overlays, gestures
+ * disabled) so the Explore page's "Nearby Campaigns" strip can tap through to the
+ * full map.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { FlatList, Platform, Text, View, useWindowDimensions } from 'react-native';
@@ -17,8 +22,6 @@ import {
   MapView,
   Marker,
   Circle,
-  QuestMarker,
-  rewardTier,
   MAPS_AVAILABLE,
   MapPlaceholder,
   PROVIDER_GOOGLE,
@@ -26,16 +29,17 @@ import {
   useMarkerSnapshot,
   type MapRegion,
 } from './CampaignMap';
-import { Icon } from '@/components/ui';
+import { Icon, type IconName } from '@/components/ui';
 import { Pressable } from '@/components/ui/SafePressable';
 import { CampaignCard } from './CampaignCard';
+import { CATEGORY_ICON, categoryTint } from '@/components/home';
 import { useTheme } from '@/components/ThemeProvider';
-import { formatCompactNumber } from '@/lib/utils';
 import Reanimated, { FadeInDown, FadeOutDown } from 'react-native-reanimated';
 import type RNMapView from 'react-native-maps';
 import type { Region } from 'react-native-maps';
 import type { GeoPoint } from '@/types';
 import type { Campaign, BusinessProfile } from '@/types';
+import type { Category } from '@/constants';
 
 type CampaignWithBusiness = Campaign & { business?: BusinessProfile };
 
@@ -48,12 +52,6 @@ const DEFAULT_REGION: MapRegion = {
 
 /** A campaign that carries a usable map point (fuzzed approx, or exact if owned). */
 type Pinned = { id: string; point: GeoPoint; campaign: CampaignWithBusiness };
-
-/** The bubble text for a campaign: "$2K" from estimatedValue, else empty (→ pin). */
-function priceLabel(c: CampaignWithBusiness): string {
-  const v = c.reward?.estimatedValue;
-  return typeof v === 'number' && v > 0 ? `$${formatCompactNumber(v)}` : '';
-}
 
 /** Pull the best available map point off a campaign (exact pin or fuzzed approx). */
 function pointOf(c: CampaignWithBusiness): GeoPoint | null {
@@ -139,10 +137,29 @@ export type ExploreMapProps = {
    * of sitting on the user's location — so searching a place actually shows it.
    */
   fitToResults?: boolean;
+  /**
+   * Compact preview mode for the Explore page "Nearby" strip: renders just the map
+   * + pins with gestures disabled and no overlays; the whole surface taps through
+   * via `onPressPreview` instead of being interactive.
+   */
+  preview?: boolean;
+  /** Tap handler for the whole map in `preview` mode (opens the full map). */
+  onPressPreview?: () => void;
+  /** "Search this area" handler — re-runs the current query. */
+  onSearchArea?: () => void;
 };
 
-export function ExploreMap({ items, onOpen, total, bottomInset = 0, fitToResults = false }: ExploreMapProps) {
-  const { colors } = useTheme();
+export function ExploreMap({
+  items,
+  onOpen,
+  total,
+  bottomInset = 0,
+  fitToResults = false,
+  preview = false,
+  onPressPreview,
+  onSearchArea,
+}: ExploreMapProps) {
+  const { colors, isDark } = useTheme();
 
   const pins = useMemo<Pinned[]>(() => {
     const acc: Pinned[] = [];
@@ -156,6 +173,8 @@ export function ExploreMap({ items, onOpen, total, bottomInset = 0, fitToResults
   const [region, setRegion] = useState<MapRegion>(() => fitRegion(pins.map((p) => p.point)));
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [userPoint, setUserPoint] = useState<GeoPoint | null>(null);
+  // Layers toggle: standard ⇄ satellite/hybrid imagery.
+  const [satellite, setSatellite] = useState(false);
   const mapRef = useRef<RNMapView>(null);
   // Read the latest `fitToResults` inside the async mount effect without re-running it.
   const fitToResultsRef = useRef(fitToResults);
@@ -214,10 +233,22 @@ export function ExploreMap({ items, onOpen, total, bottomInset = 0, fitToResults
   const loadedTotal = typeof total === 'number' && total > items.length ? total : items.length;
   // A pinned collab shows a result-card carousel at the bottom; it auto-sizes so a
   // single result is near-full-width and multiple cards peek to signal "swipe".
-  const showCards = pins.length > 0;
+  const showCards = !preview && pins.length > 0;
   const cardW = pins.length <= 1 ? width - 24 : Math.round(width * 0.82);
 
   if (!MAPS_AVAILABLE) {
+    if (preview) {
+      return (
+        <Pressable
+          onPress={onPressPreview}
+          accessibilityRole="button"
+          accessibilityLabel="Open full map"
+          style={{ flex: 1 }}
+        >
+          <MapPlaceholder height={180} rounded={false} label="Map preview" icon="compass" />
+        </Pressable>
+      );
+    }
     return (
       <View style={{ flex: 1, paddingHorizontal: 16, paddingTop: 4 }}>
         <MapPlaceholder
@@ -240,114 +271,162 @@ export function ExploreMap({ items, onOpen, total, bottomInset = 0, fitToResults
     mapRef.current?.animateToRegion(next, 350);
   };
 
-  return (
-    <View style={{ flex: 1 }}>
-      <MapView
-        ref={mapRef}
-        style={{ flex: 1 }}
-        provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
-        // Apple Maps can't take a full custom skin, but "muted" + dark gives a
-        // flatter, designed look so collab markers pop (full game skin = Google).
-        mapType={Platform.OS === 'ios' ? 'mutedStandard' : 'standard'}
-        userInterfaceStyle="dark"
-        showsUserLocation
-        showsMyLocationButton={false}
-        initialRegion={region}
-        onRegionChangeComplete={(r: Region) => setRegion(r)}
-        onPress={() => setSelectedId(null)}
-      >
-        {/* discovery radius around the user */}
-        {userPoint && Circle ? (
-          <Circle
-            center={toLatLng(userPoint)}
-            radius={6000}
-            strokeColor="rgba(45,136,255,0.55)"
-            fillColor="rgba(45,136,255,0.10)"
-            strokeWidth={1.5}
-          />
-        ) : null}
-        {clusters.map((cl) =>
-          cl.type === 'single' ? (
-            <QuestMarker
-              key={cl.key}
-              identifier={cl.key}
-              point={cl.point}
-              value={cl.pin.campaign.reward?.estimatedValue}
-              label={priceLabel(cl.pin.campaign)}
-              title={cl.pin.campaign.title}
-              subtitle={cl.pin.campaign.business?.businessName}
-              selected={cl.pin.id === selectedId}
-              onPress={() => {
+  const mapType = satellite ? 'hybrid' : Platform.OS === 'ios' ? 'mutedStandard' : 'standard';
+
+  const markers = clusters.map((cl) =>
+    cl.type === 'single' ? (
+      <CategoryPin
+        key={cl.key}
+        identifier={cl.key}
+        point={cl.point}
+        category={cl.pin.campaign.category}
+        selected={!preview && cl.pin.id === selectedId}
+        onPress={
+          preview
+            ? undefined
+            : () => {
                 setSelectedId(cl.pin.id);
                 const idx = pins.findIndex((p) => p.id === cl.pin.id);
                 if (idx >= 0) cardListRef.current?.scrollToIndex({ index: idx, animated: true });
                 zoomTo(cl.point);
-              }}
-            />
-          ) : (
-            <ClusterBubble
-              key={cl.key}
-              point={cl.point}
-              count={cl.count}
-              onPress={() => zoomTo(cl.point)}
-            />
-          ),
-        )}
-      </MapView>
+              }
+        }
+      />
+    ) : (
+      <ClusterBubble
+        key={cl.key}
+        point={cl.point}
+        count={cl.count}
+        onPress={preview ? undefined : () => zoomTo(cl.point)}
+      />
+    ),
+  );
+
+  const map = (
+    <MapView
+      ref={mapRef}
+      style={{ flex: 1 }}
+      provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
+      mapType={mapType}
+      userInterfaceStyle={isDark ? 'dark' : 'light'}
+      showsUserLocation
+      showsMyLocationButton={false}
+      initialRegion={region}
+      onRegionChangeComplete={preview ? undefined : (r: Region) => setRegion(r)}
+      onPress={preview ? undefined : () => setSelectedId(null)}
+      scrollEnabled={!preview}
+      zoomEnabled={!preview}
+      rotateEnabled={!preview}
+      pitchEnabled={!preview}
+      toolbarEnabled={false}
+    >
+      {/* discovery radius around the user */}
+      {userPoint && Circle ? (
+        <Circle
+          center={toLatLng(userPoint)}
+          radius={6000}
+          strokeColor="rgba(24,119,242,0.55)"
+          fillColor="rgba(24,119,242,0.10)"
+          strokeWidth={1.5}
+        />
+      ) : null}
+      {markers}
+    </MapView>
+  );
+
+  // --- Preview (Nearby strip) — just the map, tap-through, no overlays. ---
+  if (preview) {
+    return (
+      <View style={{ flex: 1 }}>
+        {map}
+        {/* Transparent tap layer: the map's own gestures are disabled in preview,
+            so this captures the tap to open the full map. */}
+        <Pressable
+          onPress={onPressPreview}
+          accessibilityRole="button"
+          accessibilityLabel="Open full map"
+          style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+        />
+      </View>
+    );
+  }
+
+  return (
+    <View style={{ flex: 1 }}>
+      {map}
+
+      {/* "Search this area" pill, centered near the top. */}
+      {onSearchArea ? (
+        <Pressable
+          onPress={onSearchArea}
+          accessibilityRole="button"
+          accessibilityLabel="Search this area"
+          style={{
+            position: 'absolute',
+            top: 12,
+            alignSelf: 'center',
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 7,
+            backgroundColor: colors.bgElev,
+            borderWidth: 1,
+            borderColor: colors.hair,
+            borderRadius: 22,
+            paddingHorizontal: 16,
+            paddingVertical: 9,
+            shadowColor: '#000',
+            shadowOpacity: 0.12,
+            shadowRadius: 6,
+            shadowOffset: { width: 0, height: 2 },
+            elevation: 4,
+          }}
+        >
+          <Icon name="search" size={15} color={colors.accent} strokeWidth={2.2} />
+          <Text style={{ fontSize: 13, fontWeight: '700', color: colors.text }}>Search this area</Text>
+        </Pressable>
+      ) : null}
 
       {/* Coverage note — never silently drop remote / unpinned campaigns. */}
       {pins.length === 0 ? (
-        <View style={overlayBox(colors, 'top')}>
+        <View style={overlayBox(colors)}>
           <Text style={{ fontSize: 12.5, color: colors.text2, textAlign: 'center' }}>
             No campaigns have a map location yet — switch to the list to see all {loadedTotal}.
           </Text>
         </View>
       ) : pins.length < loadedTotal ? (
-        <View style={overlayBox(colors, 'top')}>
+        <View style={overlayBox(colors)}>
           <Text style={{ fontSize: 12.5, color: colors.text2 }}>
             {pins.length} of {loadedTotal} shown on map · rest are remote/unpinned
           </Text>
         </View>
       ) : null}
 
-      {/* Rarity legend HUD (hidden while a quest card is open). */}
-      {!showCards ? <QuestLegend bottomInset={bottomInset} /> : null}
-
-      {/* Recenter-on-me button (sits above the card carousel when it's showing). */}
-      {userPoint ? (
-        <Pressable
-          onPress={recenter}
-          accessibilityLabel="Center on my location"
-          style={{
-            position: 'absolute',
-            right: 12,
-            bottom: showCards ? bottomInset + 130 : bottomInset + 12,
-            width: 46,
-            height: 46,
-            borderRadius: 23,
-            backgroundColor: colors.bgElev,
-            borderWidth: 1,
-            borderColor: colors.hair,
-            alignItems: 'center',
-            justifyContent: 'center',
-            shadowColor: '#000',
-            shadowOpacity: 0.15,
-            shadowRadius: 6,
-            shadowOffset: { width: 0, height: 2 },
-            elevation: 4,
-          }}
-        >
-          <Icon name="mappin" size={21} color={colors.accent} strokeWidth={2.2} />
-        </Pressable>
-      ) : null}
+      {/* Right-side floating controls: layers + recenter, stacked above the cards. */}
+      <View
+        style={{
+          position: 'absolute',
+          right: 12,
+          bottom: showCards ? bottomInset + 138 : bottomInset + 16,
+          gap: 10,
+        }}
+      >
+        <MapFab
+          icon="grid"
+          label={satellite ? 'Standard map' : 'Satellite map'}
+          active={satellite}
+          onPress={() => setSatellite((s) => !s)}
+        />
+        {userPoint ? <MapFab icon="mappin" label="Center on my location" onPress={recenter} /> : null}
+      </View>
 
       {/* Result-card carousel — one card per pinned collab. Auto-sizes to the count,
-          taps open the collab, and swiping pans the map to that card's pin. */}
+          taps open the collab, and swiping pans the map to that card's pin. The
+          bottom offset clears the FULL tab-bar height so the card is never half-cut. */}
       {showCards ? (
         <Reanimated.View
           entering={FadeInDown.springify().damping(18).stiffness(220)}
           exiting={FadeOutDown.duration(150)}
-          style={{ position: 'absolute', left: 0, right: 0, bottom: bottomInset + 12 }}
+          style={{ position: 'absolute', left: 0, right: 0, bottom: bottomInset + 24 }}
         >
           <FlatList
             ref={cardListRef}
@@ -389,6 +468,116 @@ export function ExploreMap({ items, onOpen, total, bottomInset = 0, fitToResults
   );
 }
 
+/** A round white floating action button on the map. */
+function MapFab({
+  icon,
+  label,
+  active,
+  onPress,
+}: {
+  icon: IconName;
+  label: string;
+  active?: boolean;
+  onPress: () => void;
+}) {
+  const { colors } = useTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      style={{
+        width: 46,
+        height: 46,
+        borderRadius: 23,
+        backgroundColor: active ? colors.accent : colors.bgElev,
+        borderWidth: 1,
+        borderColor: active ? colors.accent : colors.hair,
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: '#000',
+        shadowOpacity: 0.15,
+        shadowRadius: 6,
+        shadowOffset: { width: 0, height: 2 },
+        elevation: 4,
+      }}
+    >
+      <Icon name={icon} size={21} color={active ? colors.accentText : colors.accent} strokeWidth={2.2} />
+    </Pressable>
+  );
+}
+
+/**
+ * A clean category-colored teardrop pin: a rounded chip filled with the category
+ * color holding the category's white icon, with a small pointer at the tip
+ * (anchored y:1). Snapshot-frozen (via `useMarkerSnapshot`) so custom markers
+ * don't render half-cut on Android.
+ */
+function CategoryPin({
+  point,
+  category,
+  selected,
+  onPress,
+  identifier,
+}: {
+  point: GeoPoint;
+  category: Category;
+  selected?: boolean;
+  onPress?: () => void;
+  identifier?: string;
+}) {
+  const { isDark } = useTheme();
+  const color = categoryTint(category, isDark).fg;
+  const { tracksViewChanges, onLayout } = useMarkerSnapshot(`${category}|${selected ? 1 : 0}`);
+  if (!Marker) return null;
+  const size = selected ? 42 : 36;
+  return (
+    <Marker
+      identifier={identifier}
+      coordinate={toLatLng(point)}
+      onPress={onPress}
+      tracksViewChanges={tracksViewChanges}
+      anchor={{ x: 0.5, y: 1 }}
+    >
+      <View onLayout={onLayout} style={{ alignItems: 'center' }}>
+        <View
+          style={{
+            width: size,
+            height: size,
+            borderRadius: size / 2,
+            backgroundColor: color,
+            borderWidth: 2.5,
+            borderColor: '#FFFFFF',
+            alignItems: 'center',
+            justifyContent: 'center',
+            shadowColor: '#000',
+            shadowOpacity: 0.28,
+            shadowRadius: 5,
+            shadowOffset: { width: 0, height: 3 },
+            elevation: 6,
+          }}
+        >
+          <Icon name={CATEGORY_ICON[category]} size={selected ? 20 : 17} color="#FFFFFF" strokeWidth={2.2} />
+        </View>
+        {/* pointer tip connecting the chip to the coordinate */}
+        <View
+          style={{
+            width: 0,
+            height: 0,
+            borderLeftWidth: 6,
+            borderRightWidth: 6,
+            borderTopWidth: 9,
+            borderLeftColor: 'transparent',
+            borderRightColor: 'transparent',
+            borderTopColor: '#FFFFFF',
+            marginTop: -3,
+          }}
+        />
+      </View>
+    </Marker>
+  );
+}
+
 /** A round count bubble standing in for several overlapping markers. */
 function ClusterBubble({
   point,
@@ -397,7 +586,7 @@ function ClusterBubble({
 }: {
   point: GeoPoint;
   count: number;
-  onPress: () => void;
+  onPress?: () => void;
 }) {
   const { colors } = useTheme();
   const { tracksViewChanges, onLayout } = useMarkerSnapshot(String(count));
@@ -435,53 +624,10 @@ function ClusterBubble({
   );
 }
 
-/** Game-style "loot tiers" legend so the rarity colors are readable at a glance. */
-function QuestLegend({ bottomInset }: { bottomInset: number }) {
-  const { colors } = useTheme();
-  const tiers = [
-    rewardTier(600),
-    rewardTier(250),
-    rewardTier(100),
-    rewardTier(20),
-  ];
-  return (
-    <View
-      style={{
-        position: 'absolute',
-        left: 12,
-        bottom: bottomInset + 12,
-        backgroundColor: colors.bgElev,
-        borderWidth: 1,
-        borderColor: colors.hair,
-        borderRadius: 14,
-        paddingHorizontal: 12,
-        paddingVertical: 10,
-        gap: 6,
-        shadowColor: '#000',
-        shadowOpacity: 0.12,
-        shadowRadius: 6,
-        shadowOffset: { width: 0, height: 2 },
-        elevation: 3,
-      }}
-    >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 1 }}>
-        <Icon name="sparkles" size={12} color={colors.text2} />
-        <Text style={{ fontSize: 10.5, fontWeight: '800', color: colors.text2, letterSpacing: 0.4 }}>LOOT TIERS</Text>
-      </View>
-      {tiers.map((t) => (
-        <View key={t.key} style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
-          <View style={{ width: 11, height: 11, borderRadius: 6, backgroundColor: t.color, borderWidth: 1, borderColor: '#fff' }} />
-          <Text style={{ fontSize: 11.5, color: colors.text, fontWeight: '600' }}>{t.label}</Text>
-        </View>
-      ))}
-    </View>
-  );
-}
-
-function overlayBox(colors: ReturnType<typeof useTheme>['colors'], pos: 'top' | 'bottom') {
+function overlayBox(colors: ReturnType<typeof useTheme>['colors']) {
   return {
     position: 'absolute' as const,
-    [pos]: 12,
+    top: 60,
     alignSelf: 'center' as const,
     backgroundColor: colors.bgElev,
     borderWidth: 1,

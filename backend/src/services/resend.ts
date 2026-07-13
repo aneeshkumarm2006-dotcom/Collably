@@ -15,9 +15,11 @@ const RESEND_ENDPOINT = 'https://api.resend.com/emails';
 
 /** Brand constants for the shared email layout. */
 const BRAND = {
-  name: 'Collably',
+  name: 'LocalShout',
   accent: '#0C831F',
   // Deep-link scheme the mobile app registers (PRD §8.2). Used in email CTAs.
+  // NOTE: the `collably://` scheme is an identifier, NOT the display name — it
+  // stays as-is so existing deep links / OAuth / builds keep working.
   scheme: 'collably://',
 } as const;
 
@@ -165,7 +167,7 @@ export function accountCreatedEmail(p: { name: string }): EmailContent {
     heading: `Welcome to ${BRAND.name}, ${esc(p.name)}!`,
     bodyHtml: 'Your account is ready. Open the app to finish your profile and start collaborating.',
     bodyText: 'Your account is ready. Open the app to finish your profile and start collaborating.',
-    cta: { label: 'Open Collably', url: BRAND.scheme },
+    cta: { label: 'Open LocalShout', url: BRAND.scheme },
   });
 }
 

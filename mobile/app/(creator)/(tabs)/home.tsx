@@ -142,6 +142,8 @@ export default function CreatorHomeScreen() {
   const cats = [...catCounts.entries()].slice(0, 8);
 
   const goExplore = () => router.push('/(creator)/(tabs)/explore');
+  const goExploreMap = () =>
+    router.push({ pathname: '/(creator)/(tabs)/explore', params: { view: 'map' } });
   const goCategory = (category: Category) =>
     router.push({ pathname: '/(creator)/(tabs)/explore', params: { category } });
 
@@ -211,7 +213,7 @@ export default function CreatorHomeScreen() {
           onOpen={(c) => router.push({ pathname: '/(creator)/campaign/[id]', params: { id: c._id } })}
         />
 
-        {/* ── Collabs near you (map preview) ── */}
+        {/* ── Collabs near you (map preview) — opens the Explore MAP, not the list ── */}
         <NearbyCollabsCard
           count={campaigns.filter((c) => !c.isRemote).length || campaigns.length}
           city={city}
@@ -220,7 +222,7 @@ export default function CreatorHomeScreen() {
             .map((c) => c.reward?.estimatedValue)
             .filter((v): v is number => typeof v === 'number' && v > 0)
             .slice(0, 3)}
-          onPress={goExplore}
+          onPress={goExploreMap}
         />
 
         {/* ── Urgency rail: collabs that need action ── */}

@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "CollabSpace",
+    "name": "LocalShout",
     "slug": "collably",
     "version": "0.1.2",
     "orientation": "portrait",
@@ -88,7 +88,14 @@
           "color": "#1877F2",
           "icon": "./assets/images/android-icon-monochrome.png"
         }
-      ]
+      ],
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.915621087618-iq9nijp78a04tveb1o0cqdcl4uvl60qf"
+        }
+      ],
+      "./plugins/withGoogleSignInModularHeaders"
     ],
     "updates": {
       "enabled": false

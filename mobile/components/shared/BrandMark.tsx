@@ -48,7 +48,7 @@ export function BrandMark({ size = 44, wordmark = false, color, wordmarkColor, b
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
       <CollabMark size={size} color={stroke} bg={bg} />
       {wordmark ? (
-        <Text style={{ fontSize: size * 0.56, fontWeight: '800', color: wordmarkColor ?? stroke, letterSpacing: -0.8 }}>CollabSpace</Text>
+        <Text style={{ fontSize: size * 0.56, fontWeight: '800', color: wordmarkColor ?? stroke, letterSpacing: -0.8 }}>LocalShout</Text>
       ) : null}
     </View>
   );
