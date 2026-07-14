@@ -15,7 +15,7 @@
         "applinks:collably.app"
       ],
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Collably uses your location to show nearby brand collabs on the map."
+        "NSLocationWhenInUseUsageDescription": "LocalShout uses your location to show nearby brand collabs and how far away they are."
       }
     },
     "android": {

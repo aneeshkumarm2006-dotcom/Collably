@@ -19,6 +19,8 @@ import { api } from '@/lib/api';
 import { loadTokens, setTokens, clearTokens, forceSignOut, onSignOut } from '@/lib/auth';
 import { useNotificationStore } from '@/store/notificationStore';
 import { useCelebrationStore } from '@/store/celebrationStore';
+import { useFavoritesStore } from '@/store/favoritesStore';
+import { useIntroStore } from '@/store/introStore';
 
 /** Coarse auth state used to gate navigation in the root layout. */
 export type AuthStatus = 'loading' | 'authenticated' | 'guest' | 'unauthenticated';
@@ -134,4 +136,6 @@ onSignOut(() => {
   });
   useNotificationStore.getState().clear();
   useCelebrationStore.getState().dismiss();
+  useFavoritesStore.getState().clear();
+  useIntroStore.getState().reset();
 });

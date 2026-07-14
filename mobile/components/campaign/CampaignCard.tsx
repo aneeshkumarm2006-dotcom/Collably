@@ -11,7 +11,7 @@
 import { Text, View } from 'react-native';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { useTheme } from '@/components/ThemeProvider';
-import { formatCountdown, formatCompactNumber } from '@/lib/utils';
+import { formatCountdown, formatCompactNumber, formatMoney } from '@/lib/utils';
 import type { Campaign } from '@/types';
 import type { ApplicationStatus } from '@/constants';
 import { Icon, type IconName } from '@/components/ui';
@@ -39,7 +39,7 @@ const PLATFORM_ICON: Record<string, IconName> = {
 function rewardLabel(campaign: Campaign): string {
   const { reward } = campaign;
   if (typeof reward.estimatedValue === 'number' && reward.estimatedValue > 0) {
-    return `$${reward.estimatedValue.toLocaleString('en-CA')}`;
+    return formatMoney(reward.estimatedValue);
   }
   return 'Perk';
 }

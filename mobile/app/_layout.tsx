@@ -62,10 +62,13 @@ export default function RootLayout() {
     void hydrateTheme();
   }, [hydrate, hydrateTheme]);
 
-  // Minimum time the branded CollabSpace splash (app/index.tsx) stays visible
-  // before the auth gate routes away — otherwise it flashes for ~1 frame. Kept
-  // short so a first-time/reviewer cold start doesn't read as a hung app.
-  const SPLASH_MIN_MS = __DEV__ ? 500 : 1500;
+  // Minimum time the branded LocalShout intro (app/index.tsx) stays visible before
+  // the auth gate routes away — otherwise it flashes for ~1 frame.
+  //
+  // Sized to the intro animation itself (mark draw-on + wordmark), not padded past
+  // it: this used to be a flat 1500ms of *static* splash, which was ~550ms of dead
+  // waiting the user got nothing for. Now the wait is shorter AND it's the animation.
+  const SPLASH_MIN_MS = __DEV__ ? 500 : 950;
   const [minElapsed, setMinElapsed] = useState(false);
 
   // Hide the native splash once fonts are ready AND auth has resolved — this

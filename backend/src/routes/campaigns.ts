@@ -16,6 +16,7 @@ import { z } from 'zod';
 import type { FilterQuery } from 'mongoose';
 import { Campaign, type CampaignDoc } from '../models/Campaign';
 import { Application } from '../models/Application';
+import { Favorite } from '../models/Favorite';
 import { BusinessProfile } from '../models/BusinessProfile';
 import { CreatorProfile } from '../models/CreatorProfile';
 import { CATEGORIES } from '../../../shared/constants/categories';
@@ -29,6 +30,7 @@ import { asyncHandler } from '../lib/utils';
 import { AppError } from '../middleware/errorHandler';
 import { objectIdParam, parsePagination, paginated } from '../lib/http';
 import { toPublicCampaign, type CampaignViewerContext } from '../lib/serialize';
+import { resolveCampaignViewer } from '../lib/campaignViewer';
 import { isGeocodingConfigured, forwardGeocode, reverseGeocode } from '../services';
 import { notifyNewApplication } from '../lib/triggers';
 
@@ -171,46 +173,6 @@ async function requireBusinessProfile(userId: unknown) {
   const profile = await BusinessProfile.findOne({ userId });
   if (!profile) throw new AppError(404, 'Create your business profile before posting campaigns');
   return profile;
-}
-
-/** String id of a campaign's business ref, whether it's populated or a raw id. */
-function campaignBusinessId(c: CampaignDoc): string {
-  const b = c.businessId as unknown as { _id?: unknown };
-  if (b && typeof b === 'object' && '_id' in b && b._id) return String(b._id);
-  return String(c.businessId);
-}
-
-/**
- * Resolve the location-precision policy for the current request (On-Site Location
- * feature). Does the per-role lookups **once**, then returns a cheap per-campaign
- * classifier so each serialized campaign reveals its exact pin only to an admin,
- * the owning business, or a creator with an Accepted/Completed application.
- */
-async function resolveCampaignViewer(
-  req: Express.Request,
-): Promise<(c: CampaignDoc) => CampaignViewerContext> {
-  const role = req.user?.role;
-
-  if (role === 'admin') return () => ({ role: 'admin' });
-
-  if (role === 'business') {
-    const profile = await BusinessProfile.findOne({ userId: req.user!._id }).select('_id');
-    const pid = profile?._id?.toString();
-    return (c) => ({ role: 'business', isOwner: !!pid && campaignBusinessId(c) === pid });
-  }
-
-  if (role === 'creator') {
-    const creator = await CreatorProfile.findOne({ userId: req.user!._id }).select('_id');
-    if (!creator) return () => ({ role: 'creator' });
-    const accepted = await Application.find({
-      creatorId: creator._id,
-      status: { $in: ['Accepted', 'Completed'] },
-    }).select('campaignId');
-    const acceptedSet = new Set(accepted.map((a) => a.campaignId.toString()));
-    return (c) => ({ role: 'creator', isAcceptedCreator: acceptedSet.has(c.id) });
-  }
-
-  return () => ({ role: 'guest' });
 }
 
 type ParsedLocation = z.infer<typeof locationSchema>;
@@ -515,6 +477,9 @@ router.delete(
     await assertOwnerOrAdmin(campaign, req);
 
     await Application.deleteMany({ campaignId: campaign._id });
+    // Saved rows would otherwise outlive the campaign, leaving a filled heart on a
+    // collab the creator can no longer open.
+    await Favorite.deleteMany({ campaignId: campaign._id });
     await campaign.deleteOne();
     await BusinessProfile.updateOne(
       { _id: campaign.businessId, totalCampaigns: { $gt: 0 } },

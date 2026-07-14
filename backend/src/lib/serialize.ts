@@ -21,6 +21,7 @@ import type { ConversationDoc } from '../models/Conversation';
 import type { MessageDoc } from '../models/Message';
 import type { NotificationDoc } from '../models/Notification';
 import type { ReportDoc } from '../models/Report';
+import type { FavoriteDoc } from '../models/Favorite';
 import type { PublicUser, UserSummary } from '../../../shared/types/User';
 import type { BusinessProfile } from '../../../shared/types/BusinessProfile';
 import type { CreatorProfile } from '../../../shared/types/CreatorProfile';
@@ -31,6 +32,7 @@ import type { Conversation } from '../../../shared/types/Conversation';
 import type { Message } from '../../../shared/types/Message';
 import type { Notification } from '../../../shared/types/Notification';
 import type { Report } from '../../../shared/types/Report';
+import type { Favorite } from '../../../shared/types/Favorite';
 
 /** A `ref` field that may be a raw ObjectId or a populated document. */
 type Ref<T> = Types.ObjectId | (T & { _id: Types.ObjectId }) | null | undefined;
@@ -375,6 +377,27 @@ export function toPublicNotification(n: NotificationDoc): Notification {
     isRead: n.isRead,
     createdAt: n.createdAt.toISOString(),
   };
+}
+
+// --- Favorite ----------------------------------------------------------------
+
+/**
+ * A saved collab. When `campaignId` is populated the campaign is attached, using
+ * the caller's viewer context so a saved campaign leaks no more location precision
+ * than the same campaign does in the feed.
+ */
+export function toPublicFavorite(f: FavoriteDoc, viewer: CampaignViewerContext = {}): Favorite {
+  const out: Favorite = {
+    _id: f.id,
+    creatorId: refId(f.creatorId as Ref<unknown>),
+    campaignId: refId(f.campaignId as Ref<unknown>),
+    createdAt: f.createdAt.toISOString(),
+    updatedAt: f.updatedAt.toISOString(),
+  };
+  if (isPopulated<CampaignDoc>(f.campaignId as Ref<CampaignDoc>)) {
+    out.campaign = toPublicCampaign(f.campaignId as unknown as CampaignDoc, viewer);
+  }
+  return out;
 }
 
 // --- Report ------------------------------------------------------------------

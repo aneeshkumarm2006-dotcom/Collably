@@ -13,7 +13,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { CoverImage } from '@/components/campaign';
 import { Icon, type IconName } from '@/components/ui';
 import { useTheme } from '@/components/ThemeProvider';
-import { formatReward, formatCompactNumber } from '@/lib/utils';
+import { formatReward, formatMoney, formatMoneyCompact } from '@/lib/utils';
 import { Press } from './HomeKit';
 import type { Campaign, BusinessProfile, CreatorProfile } from '@/types';
 import type { Category } from '@/constants';
@@ -151,7 +151,7 @@ export function PremiumEarningsCard({
           <View style={{ flex: 1, minWidth: 0 }}>
             <Text style={{ fontSize: 12, color: colors.text2, fontWeight: '600' }}>Rewards earned</Text>
             <Text style={{ fontFamily: 'monospace', fontSize: 26, fontWeight: '700', color: colors.brandGreenText, letterSpacing: -0.8 }}>
-              ${Math.round(animated).toLocaleString('en-US')}
+              {formatMoney(animated)}
             </Text>
           </View>
           {/* Trend sparkline only once there are real earnings — no fabricated
@@ -183,16 +183,23 @@ const NICHE_FOR_CAT: Partial<Record<Category, string[]>> = {
   Travel: ['Travel'], 'Home & Lifestyle': ['Lifestyle'], Education: ['Education'],
 };
 
+/**
+ * How well a campaign fits this creator, as the "% match" on a recommended card.
+ *
+ * Built only from signals we actually have — the creator's niche, the campaign's
+ * tags, and the city. Deterministic on purpose: the score used to add
+ * `hash(campaign._id) % 4` points, which meant two otherwise-identical collabs
+ * showed different match percentages purely because of their database ids. That
+ * number is shown to creators, so it can't be jitter.
+ */
 export function matchScore(c: CampaignWithBiz, niche: string[], city?: string): number {
-  let s = 80;
+  let s = 80; // a listed campaign is, by definition, a plausible fit
   const cats = NICHE_FOR_CAT[c.category] ?? [];
   const lowNiche = niche.map((n) => n.toLowerCase());
   if (niche.some((n) => cats.includes(n))) s += 10;
   if (c.tags?.some((t) => lowNiche.includes(t.toLowerCase()))) s += 4;
   if (city && (c.location?.city === city || c.isRemote)) s += 4;
-  const h = [...(c._id || '')].reduce((a, ch) => a + ch.charCodeAt(0), 0);
-  s += h % 4;
-  return Math.min(99, Math.max(82, s));
+  return Math.min(98, s);
 }
 
 export function MatchedRail({
@@ -330,7 +337,7 @@ export function NearbyCollabsCard({
               }}
             >
               <Icon name="mappin" size={11} color={colors.brandGreenText} strokeWidth={2.6} />
-              <Text style={{ fontSize: 12, fontWeight: '800', color: colors.text }}>{v ? `$${formatCompactNumber(v)}` : 'Collab'}</Text>
+              <Text style={{ fontSize: 12, fontWeight: '800', color: colors.text }}>{v ? formatMoneyCompact(v) : 'Collab'}</Text>
             </View>
           ))}
 

@@ -26,6 +26,23 @@ export function formatCompactNumber(value: number): string {
   return `${trimZero(value / 1_000_000_000)}B`;
 }
 
+// --- Money --------------------------------------------------------------------
+
+/** The app trades in Indian rupees; every money string funnels through here. */
+export const CURRENCY = '₹';
+
+/** 45000 → "₹45,000" (Indian digit grouping: 12,34,567). */
+export function formatMoney(value: number): string {
+  if (!Number.isFinite(value)) return `${CURRENCY}0`;
+  return `${CURRENCY}${Math.round(value).toLocaleString('en-IN')}`;
+}
+
+/** 45000 → "₹45K". For tight spots (stat chips, map bubbles) where digits won't fit. */
+export function formatMoneyCompact(value: number): string {
+  if (!Number.isFinite(value)) return `${CURRENCY}0`;
+  return `${CURRENCY}${formatCompactNumber(Math.round(value))}`;
+}
+
 function trimZero(n: number): string {
   // One decimal, but drop a trailing ".0" (1.0K → 1K).
   return n.toFixed(1).replace(/\.0$/, '');
@@ -96,7 +113,7 @@ export function formatRelativeTime(value: string | Date): string {
 export function formatReward(reward: CampaignReward): string {
   const label = reward.description || reward.type;
   if (typeof reward.estimatedValue === 'number' && reward.estimatedValue > 0) {
-    return `${label} worth $${reward.estimatedValue.toLocaleString('en-CA')}`;
+    return `${label} worth ${formatMoney(reward.estimatedValue)}`;
   }
   return label;
 }

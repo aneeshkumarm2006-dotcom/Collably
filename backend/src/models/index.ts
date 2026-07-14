@@ -11,6 +11,7 @@ export { BusinessProfile, type BusinessProfileDoc } from './BusinessProfile';
 export { CreatorProfile, type CreatorProfileDoc } from './CreatorProfile';
 export { Campaign, type CampaignDoc } from './Campaign';
 export { Application, type ApplicationDoc } from './Application';
+export { Favorite, type FavoriteDoc } from './Favorite';
 export { Conversation, type ConversationDoc } from './Conversation';
 export { Message, type MessageDoc } from './Message';
 export { Notification, type NotificationDoc } from './Notification';

@@ -105,6 +105,33 @@ const ICON_PATHS = {
   film: 'M4 9h16v10a1 1 0 01-1 1H5a1 1 0 01-1-1zM4 9l1-4 3.5.9M9 6.2l3.5.9M14 7.1l3.5.9M19 5l1 4',
   video: 'M3 7h12a1 1 0 011 1v3l4-2.5v9L16 14v3a1 1 0 01-1 1H3a1 1 0 01-1-1V8a1 1 0 011-1z',
   story: 'M12 21a9 9 0 100-18 9 9 0 000 18zM12 8.5v7M8.5 12h7',
+
+  // --- Domain glyphs (LocalShout) ----------------------------------------------
+  // The five nouns this product is actually about. No general icon set ships a
+  // "collab" or a "campaign", so every app that needs them fudges it with a generic
+  // `users` or `megaphone` — and that fudge is exactly what reads as off-the-shelf.
+  //
+  // They share one motif: the **shout** — short radiating strokes, the same two-node
+  // connector idea as the brand mark. That repeated, semantically-meaningless accent
+  // is what makes an otherwise unrelated set look like a family.
+
+  /** Two nodes joined — the brand mark's connector, as a glyph. */
+  collab:
+    'M7 15.2a3.2 3.2 0 100-6.4 3.2 3.2 0 000 6.4zM17 15.2a3.2 3.2 0 100-6.4 3.2 3.2 0 000 6.4zM10.2 12h3.6',
+  /** A megaphone with two radiating waves — the literal shout. */
+  campaign:
+    'M4 10.6v2.8a1 1 0 001 1h2.2l4.6 3.3V6.3L7.2 9.6H5a1 1 0 00-1 1zM15.6 9.4a3.8 3.8 0 010 5.2M18.3 7a7.4 7.4 0 010 10',
+  /** A person with a spark — the creator. */
+  creator:
+    'M11 12.4a3.4 3.4 0 100-6.8 3.4 3.4 0 000 6.8zM4.5 19.6a6.5 6.5 0 0113 0M19.4 3.6l.65 1.5 1.5.65-1.5.65-.65 1.5-.65-1.5-1.5-.65 1.5-.65z',
+  /** A storefront — the local business. */
+  brand:
+    'M4 9.6h16V19a1 1 0 01-1 1H5a1 1 0 01-1-1zM4 9.6L5.7 5h12.6L20 9.6M9.6 20v-4.8h4.8V20',
+  /** A wallet with value leaving it — the payout. */
+  payout:
+    'M3 8.6h13.5a1.5 1.5 0 011.5 1.5v7a1.5 1.5 0 01-1.5 1.5H4a1 1 0 01-1-1zM3 8.6V6.4a1 1 0 011-1h10.4M14.2 13.6h.01M17.6 4.4L21 7.8m0 0h-3.4M21 7.8V4.4',
+  /** The rupee. The set shipped a `dollar` glyph in an app that trades in ₹. */
+  rupee: 'M7 5h10M7 9.3h10M13 5c2.6 0 4.1 1.7 4.1 3.6 0 2.4-1.9 4-4.7 4H7l8.6 6.4',
 } as const;
 
 /** Filled glyphs handled by special cases below (solid fill, no stroke). */
@@ -112,14 +139,42 @@ type FilledIconName = 'instagram' | 'youtube' | 'star_f' | 'heart_f' | 'bookmark
 
 export type IconName = keyof typeof ICON_PATHS | FilledIconName;
 
+/**
+ * The icon size scale.
+ *
+ * Sizes were previously passed as raw numbers at every call site, which drifted to
+ * 22 different values across the app (9, 10, 11, 12, 13, 14, …) — icons that should
+ * have matched didn't, by a pixel or two. New code should pass a token; a raw number
+ * still works, so the existing call sites keep rendering exactly as they did.
+ */
+export const ICON_SIZE = {
+  xs: 12,
+  sm: 14,
+  md: 16,
+  lg: 20,
+  xl: 24,
+  '2xl': 28,
+} as const;
+
+export type IconSizeToken = keyof typeof ICON_SIZE;
+
+/**
+ * Stroke weight for the outline set.
+ *
+ * 1.75 rather than the stock 1.8/2.0: a slightly lighter stroke reads as more
+ * considered, and it's the cheapest single move that stops an icon set looking
+ * like the library it came from.
+ */
+export const ICON_STROKE = 1.75;
+
 export type IconProps = {
   name: IconName;
-  /** Square size in px (width = height). Default 22. */
-  size?: number;
+  /** A size token (preferred) or a raw px value. Default `22`. */
+  size?: number | IconSizeToken;
   /** Stroke/fill color. Defaults to the theme's primary text color (so it stays
    *  legible in both light and dark); pass an explicit color to override. */
   color?: string;
-  /** Stroke width for outline glyphs. Default 1.8 (matches the design reference). */
+  /** Stroke width for outline glyphs. Defaults to the house weight. */
   strokeWidth?: number;
 };
 
@@ -128,14 +183,25 @@ export type IconProps = {
  * names render solid shapes. Unknown names fall back to `info` so a typo is
  * visible rather than crashing.
  */
-export function Icon({ name, size = 22, color, strokeWidth = 1.8 }: IconProps) {
+export function Icon({ name, size = 22, color, strokeWidth = ICON_STROKE }: IconProps) {
   const { colors } = useTheme();
   const resolvedColor = color ?? colors.text;
-  return <IconGlyph name={name} size={size} color={resolvedColor} strokeWidth={strokeWidth} />;
+  const resolvedSize = typeof size === 'string' ? ICON_SIZE[size] : size;
+  return <IconGlyph name={name} size={resolvedSize} color={resolvedColor} strokeWidth={strokeWidth} />;
 }
 
-/** Internal renderer — `color` is always resolved by the exported `Icon`. */
-function IconGlyph({ name, size, color, strokeWidth }: Required<Omit<IconProps, 'color'>> & { color: string }) {
+/** Internal renderer — `color` and `size` are always resolved by the exported `Icon`. */
+function IconGlyph({
+  name,
+  size,
+  color,
+  strokeWidth,
+}: {
+  name: IconName;
+  size: number;
+  color: string;
+  strokeWidth: number;
+}) {
   const base = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none' as const };
 
   if (name === 'instagram') {
