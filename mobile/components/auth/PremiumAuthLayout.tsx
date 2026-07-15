@@ -69,6 +69,14 @@ export function PremiumAuthLayout({ initialMode, initialRole = null, onBack }: P
   // The role chip + role-aware headline only make sense while signing up.
   const showRole = mode === 'signup' && role;
 
+  // Back must be safe even when this screen is the root — a returning user who logged
+  // out lands directly on /login (via replace), so there's no history to pop. Falling
+  // back to Welcome dispatches no unhandleable GO_BACK and lands somewhere sensible.
+  const handleBack = onBack ?? (() => {
+    if (router.canGoBack()) router.back();
+    else router.replace('/(auth)/welcome');
+  });
+
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.brandYellow }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       {/* ── Yellow brand hero ── */}
@@ -95,7 +103,7 @@ export function PremiumAuthLayout({ initialMode, initialRole = null, onBack }: P
         {/* back + role chip */}
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <Pressable
-            onPress={onBack ?? (() => router.back())}
+            onPress={handleBack}
             style={({ pressed }) => ({
               flexDirection: 'row',
               alignItems: 'center',
