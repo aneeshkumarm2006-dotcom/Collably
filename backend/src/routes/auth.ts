@@ -28,7 +28,8 @@ import { asyncHandler } from '../lib/utils';
 import { AppError } from '../middleware/errorHandler';
 import { authenticate } from '../middleware/authenticate';
 import { env } from '../lib/env';
-import { sendEmail, passwordResetEmail } from '../services';
+import { sendEmail, passwordResetEmail, verificationCodeEmail, sendSms } from '../services';
+import { issueVerificationCode, confirmVerificationCode } from '../lib/verification';
 
 const router = Router();
 
@@ -219,6 +220,124 @@ router.post(
 
     // Auto-login: hand back a fresh token pair so the app continues seamlessly.
     res.status(200).json(authResponse(user));
+  }),
+);
+
+// --- Email verification (OTP) -------------------------------------------------
+
+const confirmEmailSchema = z.object({
+  code: z.string().trim().regex(/^\d{6}$/, 'Enter the 6-digit code'),
+});
+
+/**
+ * POST /api/auth/verify/email/send — email the signed-in user a 6-digit code.
+ *
+ * No-ops (still 200) if the email is already verified, so a stale client can't
+ * spam a verified account with codes.
+ */
+router.post(
+  '/verify/email/send',
+  authenticate,
+  asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user!._id);
+    if (!user) throw new AppError(401, 'Account no longer exists');
+    if (user.isVerified) {
+      res.status(200).json({ alreadyVerified: true });
+      return;
+    }
+
+    const code = await issueVerificationCode(user._id, 'email', user.email);
+    await sendEmail({
+      to: user.email,
+      ...verificationCodeEmail({ name: user.name, code, ttlMinutes: env.otpTtlMinutes }),
+    });
+
+    // Dev aid (same gate as EXPOSE_DEV_RESET_TOKEN): hand the code back in the
+    // response so the flow is testable before a Resend domain is verified. Never
+    // in production, and never logged — a code in logs is a live credential.
+    const body: Record<string, unknown> = { sent: true, expiresInMinutes: env.otpTtlMinutes };
+    if (env.exposeDevOtp && !env.isProd) body.devCode = code;
+    res.status(200).json(body);
+  }),
+);
+
+/** POST /api/auth/verify/email/confirm — check the code and mark the email verified. */
+router.post(
+  '/verify/email/confirm',
+  authenticate,
+  asyncHandler(async (req, res) => {
+    const { code } = confirmEmailSchema.parse(req.body);
+    const user = await User.findById(req.user!._id);
+    if (!user) throw new AppError(401, 'Account no longer exists');
+    if (user.isVerified) {
+      res.status(200).json({ user: toPublicUser(user) });
+      return;
+    }
+
+    await confirmVerificationCode(user._id, 'email', user.email, code);
+    user.isVerified = true;
+    await user.save();
+
+    res.status(200).json({ user: toPublicUser(user) });
+  }),
+);
+
+// --- Phone verification (OTP over SMS) ----------------------------------------
+
+// E.164: a leading "+" and 8–15 digits (country code + national number).
+const phoneSchema = z
+  .string()
+  .trim()
+  .regex(/^\+[1-9]\d{7,14}$/, 'Enter a valid phone number with country code');
+const sendPhoneSchema = z.object({ phone: phoneSchema });
+const confirmPhoneSchema = z.object({
+  phone: phoneSchema,
+  code: z.string().trim().regex(/^\d{6}$/, 'Enter the 6-digit code'),
+});
+
+/** POST /api/auth/verify/phone/send — text the signed-in user a 6-digit code. */
+router.post(
+  '/verify/phone/send',
+  authenticate,
+  asyncHandler(async (req, res) => {
+    const { phone } = sendPhoneSchema.parse(req.body);
+    const user = await User.findById(req.user!._id);
+    if (!user) throw new AppError(401, 'Account no longer exists');
+    // Re-verifying the same, already-confirmed number is a no-op.
+    if (user.isPhoneVerified && user.phone === phone) {
+      res.status(200).json({ alreadyVerified: true });
+      return;
+    }
+
+    const code = await issueVerificationCode(user._id, 'phone', phone);
+    const result = await sendSms({
+      to: phone,
+      body: `${code} is your LocalShout verification code. It expires in ${env.otpTtlMinutes} minutes.`,
+    });
+
+    // Same dev aid as email: hand the code back only in non-prod when opted in, so
+    // the flow is testable before Twilio credentials exist. Never logged.
+    const body: Record<string, unknown> = { sent: result.sent, expiresInMinutes: env.otpTtlMinutes };
+    if (env.exposeDevOtp && !env.isProd) body.devCode = code;
+    res.status(200).json(body);
+  }),
+);
+
+/** POST /api/auth/verify/phone/confirm — check the code and store the verified number. */
+router.post(
+  '/verify/phone/confirm',
+  authenticate,
+  asyncHandler(async (req, res) => {
+    const { phone, code } = confirmPhoneSchema.parse(req.body);
+    const user = await User.findById(req.user!._id);
+    if (!user) throw new AppError(401, 'Account no longer exists');
+
+    await confirmVerificationCode(user._id, 'phone', phone, code);
+    user.phone = phone;
+    user.isPhoneVerified = true;
+    await user.save();
+
+    res.status(200).json({ user: toPublicUser(user) });
   }),
 );
 

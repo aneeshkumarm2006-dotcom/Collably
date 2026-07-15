@@ -23,7 +23,8 @@ import {
 import { useTheme } from '@/components/ThemeProvider';
 import { api, isApiError } from '@/lib/api';
 import { useFetch } from '@/lib/useFetch';
-import { formatCompactNumber } from '@/lib/utils';
+import { formatCompactNumber, formatMoneyCompact } from '@/lib/utils';
+import { VerifiedBadge } from '@/components/verify';
 import { pickAndUploadImage, ImagePermissionError } from '@/lib/imageUpload';
 import { useAuthStore } from '@/store/authStore';
 import type { CreatorProfile, PublicUser } from '@/types';
@@ -146,7 +147,7 @@ export default function CreatorProfileScreen() {
                 {data?.isVerified && <Icon name="badge" size={18} color={colors.accent} />}
               </View>
 
-              {/* location · email */}
+              {/* location · email + email-verification affordance */}
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 4 }}>
                 {!!locationLabel && (
                   <>
@@ -158,6 +159,58 @@ export default function CreatorProfileScreen() {
                 <Text numberOfLines={1} style={{ flexShrink: 1, fontSize: 13, color: colors.text2 }}>
                   {user?.email}
                 </Text>
+                {user?.isVerified ? (
+                  <VerifiedBadge size={14} />
+                ) : (
+                  <Pressable
+                    onPress={() => router.push('/verify/email')}
+                    hitSlop={8}
+                    style={({ pressed }) => ({
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 3,
+                      backgroundColor: colors.accentSoft,
+                      paddingHorizontal: 8,
+                      paddingVertical: 3,
+                      borderRadius: 7,
+                      opacity: pressed ? 0.7 : 1,
+                    })}
+                  >
+                    <Text style={{ fontSize: 11.5, fontWeight: '800', color: colors.accent }}>Verify</Text>
+                    <Icon name="arrowR" size={11} color={colors.accent} strokeWidth={2.6} />
+                  </Pressable>
+                )}
+              </View>
+
+              {/* phone: verified number, or a prompt to add + verify one */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 4 }}>
+                <Icon name="phone" size={14} color={colors.text3} strokeWidth={2} />
+                {user?.isPhoneVerified && user?.phone ? (
+                  <>
+                    <Text style={{ fontSize: 13, color: colors.text2 }}>{user.phone}</Text>
+                    <VerifiedBadge size={14} />
+                  </>
+                ) : (
+                  <Pressable
+                    onPress={() => router.push('/verify/phone')}
+                    hitSlop={8}
+                    style={({ pressed }) => ({
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 3,
+                      backgroundColor: colors.accentSoft,
+                      paddingHorizontal: 8,
+                      paddingVertical: 3,
+                      borderRadius: 7,
+                      opacity: pressed ? 0.7 : 1,
+                    })}
+                  >
+                    <Text style={{ fontSize: 11.5, fontWeight: '800', color: colors.accent }}>
+                      Add phone number
+                    </Text>
+                    <Icon name="arrowR" size={11} color={colors.accent} strokeWidth={2.6} />
+                  </Pressable>
+                )}
               </View>
 
               {/* niche + UGC tags */}
@@ -172,7 +225,7 @@ export default function CreatorProfileScreen() {
               <View style={{ flexDirection: 'row', marginTop: 16, paddingTop: 14, borderTopWidth: 1, borderTopColor: colors.hair }}>
                 <Stat value={String(data?.totalCollabsCompleted ?? 0)} label="Collabs" colors={colors} />
                 <Stat value={formatCompactNumber(reach)} label="Reach" colors={colors} divider />
-                <Stat value={`$${formatCompactNumber(data?.totalRewardsEarned ?? 0)}`} label="Earned" colors={colors} divider />
+                <Stat value={formatMoneyCompact(data?.totalRewardsEarned ?? 0)} label="Earned" colors={colors} divider />
               </View>
             </View>
           </View>

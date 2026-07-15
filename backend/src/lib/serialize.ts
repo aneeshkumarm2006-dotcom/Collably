@@ -64,6 +64,8 @@ export function toPublicUser(user: UserDoc): PublicUser {
     avatar: user.avatar ?? null,
     isVerified: user.isVerified,
     isOnboarded: user.isOnboarded,
+    phone: user.phone ?? null,
+    isPhoneVerified: user.isPhoneVerified,
     isBanned: user.isBanned,
     // `pushToken` is deliberately NOT serialized — it's a device credential
     // (lets the holder push notifications to that device). The client only ever

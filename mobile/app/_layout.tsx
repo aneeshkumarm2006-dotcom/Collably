@@ -104,6 +104,8 @@ export default function RootLayout() {
               <Stack.Screen name="(creator)" />
               <Stack.Screen name="(business)" />
               <Stack.Screen name="(admin)" />
+              <Stack.Screen name="verify" />
+
             </Stack>
             {/* App-wide overlay: network-error toasts (raised from anywhere via lib/toast). */}
             <ToastHost />
@@ -127,11 +129,17 @@ function resolveTarget(
   status: ReturnType<typeof useAuthStore.getState>['status'],
   role: ReturnType<typeof useAuthStore.getState>['role'],
   isOnboarded: boolean,
+  hasAuthedBefore: boolean,
 ): RouteTarget | null {
   if (status === 'loading') return null;
 
   if (status === 'unauthenticated') {
-    return { group: '(auth)', href: '/(auth)/welcome' as Href };
+    // A returning user who logged out lands on Sign in; a brand-new device gets the
+    // Welcome role-picker. Both live in (auth), so the gate's group check is unaffected.
+    return {
+      group: '(auth)',
+      href: (hasAuthedBefore ? '/(auth)/login' : '/(auth)/welcome') as Href,
+    };
   }
 
   if (status === 'guest') {
@@ -170,12 +178,13 @@ function useAuthGate(booted: boolean): void {
   const status = useAuthStore((s) => s.status);
   const role = useAuthStore((s) => s.role);
   const isOnboarded = useAuthStore((s) => s.user?.isOnboarded ?? false);
+  const hasAuthedBefore = useAuthStore((s) => s.hasAuthedBefore);
 
   useEffect(() => {
     // Wait until boot is done and the navigator has mounted (else replace throws).
     if (!booted || !navState?.key) return;
 
-    const target = resolveTarget(status, role, isOnboarded);
+    const target = resolveTarget(status, role, isOnboarded, hasAuthedBefore);
     if (!target) return;
 
     const currentGroup = segments[0];
@@ -184,6 +193,10 @@ function useAuthGate(booted: boolean): void {
     // A guest mid-login may legitimately sit in (auth) — don't yank them out.
     if (status === 'guest' && currentGroup === '(auth)') return;
 
+    // `verify` is a shared, top-level flow (email / phone / Instagram) any signed-in
+    // user can enter from either role home — don't bounce them back mid-flow.
+    if (currentGroup === 'verify' && status === 'authenticated') return;
+
     router.replace(target.href);
-  }, [booted, navState?.key, status, role, isOnboarded, segments, router]);
+  }, [booted, navState?.key, status, role, isOnboarded, hasAuthedBefore, segments, router]);
 }

@@ -185,6 +185,22 @@ function passwordResetUrl(token: string): string {
   return `${BRAND.scheme}reset-password?token=${encodeURIComponent(token)}`;
 }
 
+/** Email verification — a one-time code the user types back into the app. */
+export function verificationCodeEmail(p: { name: string; code: string; ttlMinutes: number }): EmailContent {
+  // Space the digits so they're easy to read off and hard to mis-copy.
+  const spaced = p.code.split('').join(' ');
+  const codeHtml = `<div style="font-size:30px;font-weight:700;letter-spacing:6px;color:${BRAND.accent};background:#f2f5ff;border-radius:12px;padding:16px;text-align:center;margin:8px 0;">${esc(
+    p.code,
+  )}</div>`;
+  return layout({
+    heading: 'Verify your email',
+    bodyHtml: `Hi ${esc(
+      p.name,
+    )}, enter this code in the app to confirm your email. It expires in ${p.ttlMinutes} minutes.${codeHtml}If you didn't request this, you can ignore this email.`,
+    bodyText: `Hi ${p.name}, your ${BRAND.name} verification code is ${spaced}. It expires in ${p.ttlMinutes} minutes. If you didn't request this, ignore this email.`,
+  });
+}
+
 /** Password reset — raw token links into the reset screen (PRD §8.2). */
 export function passwordResetEmail(p: { name: string; token: string }): EmailContent {
   const url = passwordResetUrl(p.token);

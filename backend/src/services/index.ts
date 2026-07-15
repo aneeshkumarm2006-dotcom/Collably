@@ -17,6 +17,8 @@ export {
   type UploadFolder,
 } from './cloudinary';
 
+export { sendSms, isTwilioConfigured, type SendSmsInput, type SendSmsResult } from './twilio';
+
 export {
   sendEmail,
   isResendConfigured,
@@ -25,6 +27,7 @@ export {
   type SendEmailResult,
   accountCreatedEmail,
   passwordResetEmail,
+  verificationCodeEmail,
   newApplicationEmail,
   applicationAcceptedEmail,
   applicationRejectedEmail,

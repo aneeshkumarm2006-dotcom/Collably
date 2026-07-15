@@ -50,9 +50,8 @@ function headlineFor(mode: PremiumAuthMode, role: PremiumAuthRole): string {
 }
 
 export function PremiumAuthLayout({ initialMode, initialRole = null, onBack }: PremiumAuthLayoutProps) {
-  const { colors, shadows, isDark } = useTheme();
+  const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
-  const [segW, setSegW] = useState(0);
   const [mode, setMode] = useState<PremiumAuthMode>(initialMode);
   // A role picked in the inline picker overrides the (possibly late) param.
   const [pickedRole, setPickedRole] = useState<SignupRole | null>(null);
@@ -150,39 +149,25 @@ export function PremiumAuthLayout({ initialMode, initialRole = null, onBack }: P
             paddingBottom: insets.bottom + 28,
           }}
         >
-          {/* segmented Sign up / Sign in toggle — switches the form in place */}
-          <View
-            onLayout={(e) => setSegW(e.nativeEvent.layout.width)}
-            style={{ flexDirection: 'row', backgroundColor: colors.cardSunk, borderRadius: 14, padding: 4, marginBottom: 24 }}
-          >
-            {segW > 0 ? (
-              <View
-                style={{
-                  position: 'absolute',
-                  top: 4,
-                  bottom: 4,
-                  width: (segW - 8) / 2,
-                  left: mode === 'signup' ? 4 : segW / 2,
-                  backgroundColor: colors.card,
-                  borderRadius: 11,
-                  ...shadows.card,
-                }}
-              />
-            ) : null}
-            {(['signup', 'signin'] as const).map((m) => (
-              <Pressable key={m} onPress={() => setMode(m)} style={{ flex: 1, paddingVertical: 10, alignItems: 'center' }}>
-                <Text style={{ fontSize: 15, fontWeight: '800', letterSpacing: -0.2, color: mode === m ? colors.text : colors.text3 }}>
-                  {m === 'signup' ? 'Sign up' : 'Sign in'}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-
+          {/* One form at a time. Sign in is the default; sign up isn't shown until the
+              user taps the switch link below — so a returning user sees only sign in. */}
           {mode === 'signup' ? (
             <SignupForm role={role} onPickRole={setPickedRole} />
           ) : (
             <LoginForm />
           )}
+
+          {/* Bottom switch: "New to LocalShout? Sign up" ⇄ "Already have an account? Sign in" */}
+          <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6, marginTop: 22 }}>
+            <Text style={{ fontSize: 14, color: colors.text2 }}>
+              {mode === 'signin' ? 'New to LocalShout?' : 'Already have an account?'}
+            </Text>
+            <Pressable onPress={() => setMode(mode === 'signin' ? 'signup' : 'signin')} hitSlop={10}>
+              <Text style={{ fontSize: 14, fontWeight: '800', color: colors.accent }}>
+                {mode === 'signin' ? 'Sign up' : 'Sign in'}
+              </Text>
+            </Pressable>
+          </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

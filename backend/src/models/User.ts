@@ -14,6 +14,10 @@ export interface UserDoc extends Document<Types.ObjectId> {
   avatar?: string | null;
   isVerified: boolean;
   isOnboarded: boolean;
+  /** E.164 phone number, set once verified via SMS OTP (e.g. "+919876543210"). */
+  phone?: string | null;
+  /** True once the phone number has been confirmed by an SMS code. */
+  isPhoneVerified: boolean;
   /** Expo push token, registered on app open after login (PRD §5.1, §9.1). */
   pushToken?: string | null;
   /** Admin moderation flag (PRD §7.5, §14). Banned users can't authenticate. */
@@ -47,6 +51,8 @@ const userSchema = new Schema<UserDoc>(
     avatar: { type: String, default: null },
     isVerified: { type: Boolean, default: false },
     isOnboarded: { type: Boolean, default: false },
+    phone: { type: String, default: null },
+    isPhoneVerified: { type: Boolean, default: false },
     pushToken: { type: String, default: null },
     isBanned: { type: Boolean, default: false },
     notificationPrefs: {

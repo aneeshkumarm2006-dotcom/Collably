@@ -10,9 +10,23 @@
  */
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
+import type { PublicUser } from '@/types';
 
 const ACCESS_KEY = 'collably.accessToken';
 const REFRESH_KEY = 'collably.refreshToken';
+/**
+ * Cached copy of the signed-in user. Lets the app restore the logged-in state at
+ * boot *without* a network round-trip, so a transient error (offline, server blip)
+ * at launch can't strand a genuinely-logged-in user on the login screen. Cleared
+ * with the tokens on logout.
+ */
+const USER_KEY = 'collably.user';
+/**
+ * Sticky "this device has signed in at least once" marker. Deliberately NOT wiped
+ * on logout — it's what lets a returning user land on Sign in (rather than the
+ * new-user Welcome) after they log out.
+ */
+const AUTHED_BEFORE_KEY = 'collably.hasAuthedBefore';
 
 /**
  * Platform-safe storage. SecureStore is backed by the iOS Keychain / Android
@@ -103,14 +117,41 @@ export async function setTokens(pair: TokenPair): Promise<void> {
   ]);
 }
 
-/** Wipe tokens from memory + SecureStore (logout / account deletion). */
+/** Wipe tokens + the cached user from memory + SecureStore (logout / account deletion). */
 export async function clearTokens(): Promise<void> {
   accessToken = null;
   refreshToken = null;
   await Promise.all([
     secureStorage.removeItem(ACCESS_KEY),
     secureStorage.removeItem(REFRESH_KEY),
+    secureStorage.removeItem(USER_KEY),
   ]);
+}
+
+/** Cache the signed-in user for optimistic restore at next boot. */
+export async function saveUser(user: PublicUser): Promise<void> {
+  await secureStorage.setItem(USER_KEY, JSON.stringify(user));
+}
+
+/** Load the cached user, or null if none / unparseable. */
+export async function loadUser(): Promise<PublicUser | null> {
+  const raw = await secureStorage.getItem(USER_KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as PublicUser;
+  } catch {
+    return null;
+  }
+}
+
+/** Has this device ever completed a sign-in? Read at boot to pick Welcome vs Sign in. */
+export async function loadHasAuthedBefore(): Promise<boolean> {
+  return (await secureStorage.getItem(AUTHED_BEFORE_KEY)) === '1';
+}
+
+/** Record that a sign-in has happened. Survives logout on purpose (see the key doc). */
+export async function markAuthedBefore(): Promise<void> {
+  await secureStorage.setItem(AUTHED_BEFORE_KEY, '1');
 }
 
 /** Synchronous read of the current access token (used by the request interceptor). */

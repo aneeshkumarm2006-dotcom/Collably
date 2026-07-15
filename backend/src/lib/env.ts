@@ -66,6 +66,20 @@ export const env = {
    */
   exposeDevResetToken: bool('EXPOSE_DEV_RESET_TOKEN', false),
 
+  /** How long an email/phone verification code stays valid, in minutes. */
+  otpTtlMinutes: int('OTP_TTL_MINUTES', 10),
+  /** Max failed guesses for one code before it's burned. */
+  otpMaxAttempts: int('OTP_MAX_ATTEMPTS', 5),
+  /** Min seconds between code sends to the same target (throttles resends). */
+  otpResendCooldownSeconds: int('OTP_RESEND_COOLDOWN_SECONDS', 30),
+  /**
+   * Debug aid, same shape as EXPOSE_DEV_RESET_TOKEN: when `true` AND not
+   * production, the verification-send endpoints return the plain code in the
+   * response so the flow is testable before a real email/SMS provider is wired.
+   * Off by default; a misconfigured/unset NODE_ENV can never leak a live code.
+   */
+  exposeDevOtp: bool('EXPOSE_DEV_OTP', false),
+
   mongodbUri: str('MONGODB_URI'),
 
   cloudinary: {
@@ -77,6 +91,13 @@ export const env = {
   resend: {
     apiKey: str('RESEND_API_KEY'),
     from: str('RESEND_FROM'),
+  },
+
+  twilio: {
+    accountSid: str('TWILIO_ACCOUNT_SID'),
+    authToken: str('TWILIO_AUTH_TOKEN'),
+    /** Sender: a Twilio phone number, OR a Messaging Service SID (starts with "MG"). */
+    from: str('TWILIO_FROM'),
   },
 
   expoAccessToken: str('EXPO_ACCESS_TOKEN'),

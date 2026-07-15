@@ -16,7 +16,17 @@ import { create } from 'zustand';
 import type { PublicUser } from '@/types';
 import type { UserRole } from '@/constants';
 import { api } from '@/lib/api';
-import { loadTokens, setTokens, clearTokens, forceSignOut, onSignOut } from '@/lib/auth';
+import {
+  loadTokens,
+  setTokens,
+  forceSignOut,
+  onSignOut,
+  loadHasAuthedBefore,
+  markAuthedBefore,
+  loadUser,
+  saveUser,
+  getAccessToken,
+} from '@/lib/auth';
 import { useNotificationStore } from '@/store/notificationStore';
 import { useCelebrationStore } from '@/store/celebrationStore';
 import { useFavoritesStore } from '@/store/favoritesStore';
@@ -45,6 +55,12 @@ type AuthState = {
    * the UI gate proactively.
    */
   approved: boolean;
+  /**
+   * True once this device has signed in at least once. Survives logout, so the gate
+   * can send a returning-but-logged-out user to Sign in instead of the new-user
+   * Welcome. Loaded at boot from SecureStore.
+   */
+  hasAuthedBefore: boolean;
   /** Restore session from SecureStore on app start. */
   hydrate: () => Promise<void>;
   /** Persist tokens + set the user after login/register/Google. */
@@ -65,37 +81,78 @@ export const useAuthStore = create<AuthState>((set) => ({
   role: null,
   isGuest: false,
   approved: false,
+  hasAuthedBefore: false,
 
   hydrate: async () => {
-    const { accessToken } = await loadTokens();
+    const [{ accessToken }, authedBefore, cachedUser] = await Promise.all([
+      loadTokens(),
+      loadHasAuthedBefore(),
+      loadUser(),
+    ]);
+    set({ hasAuthedBefore: authedBefore });
+
     if (!accessToken) {
       set({ status: 'unauthenticated', user: null, role: null, approved: false });
       return;
     }
+
+    // Optimistic restore: a stored token + cached user means "logged in". Show it
+    // immediately so a transient boot error (offline, server blip) can never strand
+    // a genuinely-logged-in user on the login screen. The token is re-validated in
+    // the background just below.
+    if (cachedUser) {
+      if (!authedBefore) void markAuthedBefore();
+      set({
+        status: 'authenticated',
+        user: cachedUser,
+        role: cachedUser.role,
+        isGuest: false,
+        hasAuthedBefore: true,
+        approved: cachedUser.role === 'admin',
+      });
+    }
+
     try {
-      // Token present — validate it and load the current user + approval flag.
+      // Validate the token and refresh the cached user + approval flag.
       const { data } = await api.get<{ user: PublicUser; approved?: boolean }>('/auth/me');
+      if (!authedBefore) void markAuthedBefore();
+      void saveUser(data.user);
       set({
         status: 'authenticated',
         user: data.user,
         role: data.user.role,
         isGuest: false,
+        hasAuthedBefore: true,
         approved: Boolean(data.approved),
       });
     } catch {
-      // Token invalid/expired beyond refresh — start clean.
-      await clearTokens();
-      set({ status: 'unauthenticated', user: null, role: null, approved: false });
+      // A genuine 401 whose refresh also failed already ran forceSignOut (tokens
+      // cleared, store reset via onSignOut) — detectable because the in-memory token
+      // is now null. Anything else is transient (offline, timeout, 5xx): keep the
+      // session rather than logging the user out for a network hiccup.
+      if (getAccessToken() === null) {
+        set({ status: 'unauthenticated', user: null, role: null, approved: false });
+      } else if (!cachedUser) {
+        // Token still valid but no cache to show and /auth/me didn't answer. Don't
+        // wipe the token — surface login for now and recover on the next good boot.
+        set({ status: 'unauthenticated', user: null, role: null, approved: false });
+      }
+      // else: keep the optimistic authenticated session from the cache.
     }
   },
 
   signIn: async (payload) => {
     await setTokens({ accessToken: payload.accessToken, refreshToken: payload.refreshToken });
+    // Cache the user for optimistic restore, and mark the device as "has signed in"
+    // (persists across a later logout so the gate routes to Sign in, not Welcome).
+    void saveUser(payload.user);
+    void markAuthedBefore();
     set({
       status: 'authenticated',
       user: payload.user,
       role: payload.user.role,
       isGuest: false,
+      hasAuthedBefore: true,
       // Admins are always approved; otherwise default to false until /auth/me resolves.
       approved: payload.user.role === 'admin',
     });
@@ -117,7 +174,11 @@ export const useAuthStore = create<AuthState>((set) => ({
   continueAsGuest: () =>
     set({ status: 'guest', isGuest: true, user: null, role: null, approved: false }),
 
-  setUser: (user) => set({ user, role: user.role }),
+  setUser: (user) => {
+    // Keep the boot cache in step with profile/onboarding edits.
+    void saveUser(user);
+    set({ user, role: user.role });
+  },
 
   setApproved: (approved) => set({ approved }),
 }));

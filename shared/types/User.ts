@@ -18,6 +18,10 @@ export interface User extends Timestamped {
   avatar?: string | null;
   isVerified: boolean;
   isOnboarded: boolean;
+  /** E.164 phone number, set once verified via SMS OTP. */
+  phone?: string | null;
+  /** True once the phone number has been confirmed by an SMS code. */
+  isPhoneVerified: boolean;
   /** Expo push token, registered on app open after login (PRD §5.1, §8.2). */
   pushToken?: string | null;
   /** Admin moderation flag (PRD §7.5, §14). Banned users can't authenticate. */
