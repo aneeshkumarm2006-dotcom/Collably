@@ -14,7 +14,7 @@ export interface CreatorProfileDoc extends Document<Types.ObjectId> {
   niche: Niche[];
   location: { city?: string; state?: string; country?: string };
   socialHandles: {
-    instagram?: { handle: string; link: string; followerCount?: number; engagementRate?: number };
+    instagram?: { handle: string; link: string; followerCount?: number; engagementRate?: number; verified?: boolean };
     youtube?: { handle: string; link: string; subscriberCount?: number };
     tiktok?: { handle: string; link: string; followerCount?: number };
   };
@@ -55,6 +55,7 @@ const creatorProfileSchema = new Schema<CreatorProfileDoc>(
         link: { type: String, trim: true },
         followerCount: { type: Number, min: 0 },
         engagementRate: { type: Number, min: 0 },
+        verified: { type: Boolean, default: false },
       },
       youtube: {
         handle: { type: String, trim: true },

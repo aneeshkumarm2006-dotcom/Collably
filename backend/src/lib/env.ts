@@ -100,6 +100,17 @@ export const env = {
     from: str('TWILIO_FROM'),
   },
 
+  instagram: {
+    /** App secret — verifies the X-Hub-Signature-256 on inbound webhooks. */
+    appSecret: str('IG_APP_SECRET'),
+    /** Instagram Graph API token — reads the DM sender's profile + sends the code DM. */
+    accessToken: str('IG_ACCESS_TOKEN'),
+    /** Shared secret echoed back on Meta's GET webhook-verification challenge. */
+    webhookVerifyToken: str('IG_WEBHOOK_VERIFY_TOKEN'),
+    /** The handle users DM to verify (shown in the app, without the @). */
+    businessHandle: str('IG_BUSINESS_HANDLE', 'localshout'),
+  },
+
   expoAccessToken: str('EXPO_ACCESS_TOKEN'),
 
   /**

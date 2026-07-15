@@ -37,7 +37,18 @@ export function createApp(): Express {
   // enabled when an explicit allowlist is configured (set CORS_ORIGIN in prod).
   const origins = corsOrigins();
   app.use(cors({ origin: origins, credentials: origins !== true }));
-  app.use(express.json({ limit: '1mb' }));
+  app.use(
+    express.json({
+      limit: '1mb',
+      // Stash the raw body for webhook routes so their signature (e.g. Meta's
+      // X-Hub-Signature-256) can be verified against the exact received bytes.
+      verify: (req, _res, buf) => {
+        if (req.url?.includes('/webhooks/')) {
+          (req as express.Request & { rawBody?: Buffer }).rawBody = buf;
+        }
+      },
+    }),
+  );
   app.use(express.urlencoded({ extended: true }));
 
   // Rate limiting (brute-force / abuse protection). A generous global cap, plus

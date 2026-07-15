@@ -272,6 +272,7 @@ export default function CreatorProfileScreen() {
                     count={social.instagram.followerCount != null ? `${formatCompactNumber(social.instagram.followerCount)} followers` : ''}
                     colors={colors}
                     first
+                    verified={social.instagram.verified}
                   />
                 )}
                 {social.youtube?.handle && (
@@ -293,6 +294,48 @@ export default function CreatorProfileScreen() {
                   />
                 )}
               </View>
+            </Section>
+          )}
+
+          {/* Instagram verification CTA — until they've proven their handle. */}
+          {data && !social?.instagram?.verified && (
+            <Section title="Get verified" colors={colors}>
+              <Pressable
+                onPress={() => router.push('/verify/instagram')}
+                style={({ pressed }) => ({
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 12,
+                  backgroundColor: colors.card,
+                  borderWidth: 1,
+                  borderColor: colors.hair,
+                  borderRadius: 14,
+                  padding: 14,
+                  opacity: pressed ? 0.7 : 1,
+                })}
+              >
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 11,
+                    backgroundColor: colors.accentSoft,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Icon name="instagram" size={20} color={colors.accent} />
+                </View>
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <Text style={{ fontSize: 14.5, fontWeight: '800', color: colors.text }}>
+                    Verify your Instagram
+                  </Text>
+                  <Text style={{ fontSize: 12.5, color: colors.text2, marginTop: 1 }}>
+                    Prove your following and earn a verified badge.
+                  </Text>
+                </View>
+                <Icon name="arrowR" size={18} color={colors.text3} strokeWidth={2.2} />
+              </Pressable>
             </Section>
           )}
 
@@ -380,12 +423,14 @@ function SocialRow({
   count,
   colors,
   first,
+  verified,
 }: {
   icon: IconName;
   handle: string;
   count: string;
   colors: ReturnType<typeof useTheme>['colors'];
   first?: boolean;
+  verified?: boolean;
 }) {
   return (
     <View
@@ -400,7 +445,10 @@ function SocialRow({
       }}
     >
       <Icon name={icon} size={20} color={colors.text2} />
-      <Text numberOfLines={1} style={{ flex: 1, fontSize: 14, fontWeight: '600', color: colors.text }}>{handle}</Text>
+      <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 5, minWidth: 0 }}>
+        <Text numberOfLines={1} style={{ flexShrink: 1, fontSize: 14, fontWeight: '600', color: colors.text }}>{handle}</Text>
+        {verified ? <VerifiedBadge size={14} /> : null}
+      </View>
       <Text style={{ fontSize: 13, color: colors.text2 }}>{count}</Text>
     </View>
   );

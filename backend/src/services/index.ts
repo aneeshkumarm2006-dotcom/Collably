@@ -20,6 +20,15 @@ export {
 export { sendSms, isTwilioConfigured, type SendSmsInput, type SendSmsResult } from './twilio';
 
 export {
+  isInstagramConfigured,
+  extractInstagramHandle,
+  verifyWebhookSignature,
+  getInstagramProfile,
+  sendInstagramDm,
+  type InstagramProfile,
+} from './instagram';
+
+export {
   sendEmail,
   isResendConfigured,
   type EmailContent,

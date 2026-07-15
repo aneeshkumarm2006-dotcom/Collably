@@ -8,6 +8,12 @@ export interface InstagramHandle {
   link: string;
   followerCount?: number;
   engagementRate?: number;
+  /**
+   * True once ownership was proven via the DM-code flow. When set, `followerCount`
+   * is Meta's number (not self-reported). Verifying does NOT gate anything — it's a
+   * trust signal; businesses still set their own per-campaign `minFollowers`.
+   */
+  verified?: boolean;
 }
 
 export interface YouTubeHandle {
