@@ -57,7 +57,7 @@ export function ExploreHeader({ name, right }: { name?: string; right?: ReactNod
 
 export type ExploreStat = {
   icon: IconName;
-  /** Pre-formatted big value, e.g. "128" or "₹12.4M". */
+  /** Pre-formatted big value, e.g. "128" or "$12.4M". */
   value: string;
   label: string;
   tone: 'blue' | 'green';

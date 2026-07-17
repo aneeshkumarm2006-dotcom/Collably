@@ -130,7 +130,7 @@ const ICON_PATHS = {
   /** A wallet with value leaving it — the payout. */
   payout:
     'M3 8.6h13.5a1.5 1.5 0 011.5 1.5v7a1.5 1.5 0 01-1.5 1.5H4a1 1 0 01-1-1zM3 8.6V6.4a1 1 0 011-1h10.4M14.2 13.6h.01M17.6 4.4L21 7.8m0 0h-3.4M21 7.8V4.4',
-  /** The rupee. The set shipped a `dollar` glyph in an app that trades in ₹. */
+  /** Rupee glyph — retained but unused; the app trades in CAD ($) and uses `dollar`. */
   rupee: 'M7 5h10M7 9.3h10M13 5c2.6 0 4.1 1.7 4.1 3.6 0 2.4-1.9 4-4.7 4H7l8.6 6.4',
 } as const;
 

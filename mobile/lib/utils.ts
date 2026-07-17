@@ -28,16 +28,16 @@ export function formatCompactNumber(value: number): string {
 
 // --- Money --------------------------------------------------------------------
 
-/** The app trades in Indian rupees; every money string funnels through here. */
-export const CURRENCY = '₹';
+/** The app trades in Canadian dollars; every money string funnels through here. */
+export const CURRENCY = '$';
 
-/** 45000 → "₹45,000" (Indian digit grouping: 12,34,567). */
+/** 45000 → "$45,000" (Canadian grouping). */
 export function formatMoney(value: number): string {
   if (!Number.isFinite(value)) return `${CURRENCY}0`;
-  return `${CURRENCY}${Math.round(value).toLocaleString('en-IN')}`;
+  return `${CURRENCY}${Math.round(value).toLocaleString('en-CA')}`;
 }
 
-/** 45000 → "₹45K". For tight spots (stat chips, map bubbles) where digits won't fit. */
+/** 45000 → "$45K". For tight spots (stat chips, map bubbles) where digits won't fit. */
 export function formatMoneyCompact(value: number): string {
   if (!Number.isFinite(value)) return `${CURRENCY}0`;
   return `${CURRENCY}${formatCompactNumber(Math.round(value))}`;
@@ -109,7 +109,7 @@ export function formatRelativeTime(value: string | Date): string {
 
 // --- Domain helpers -----------------------------------------------------------
 
-/** One-line reward summary, e.g. "Free product worth $2,000" / "Experience". */
+/** One-line reward summary, e.g. "Free product worth $2,000 CAD" / "Experience". */
 export function formatReward(reward: CampaignReward): string {
   const label = reward.description || reward.type;
   if (typeof reward.estimatedValue === 'number' && reward.estimatedValue > 0) {

@@ -51,7 +51,7 @@ import {
 import { useTheme } from '@/components/ThemeProvider';
 import { useAuthStore } from '@/store/authStore';
 import { api, isApiError } from '@/lib/api';
-import { formatCompactNumber } from '@/lib/utils';
+import { formatCompactNumber, formatMoneyCompact } from '@/lib/utils';
 import type { Campaign, BusinessProfile } from '@/types';
 import type { Category } from '@/constants';
 
@@ -204,7 +204,7 @@ export default function ExploreScreen() {
     }).length;
     return [
       { icon: 'briefcase', value: formatCompactNumber(total), label: 'Campaigns', tone: 'blue' },
-      { icon: 'gift', value: `₹${formatCompactNumber(availableSum)}`, label: 'Available', tone: 'green' },
+      { icon: 'gift', value: formatMoneyCompact(availableSum), label: 'Available', tone: 'green' },
       { icon: 'checkcircle', value: formatCompactNumber(verifiedCount), label: 'Verified Brands', tone: 'blue' },
       { icon: 'zap', value: formatCompactNumber(newCount > 0 ? newCount : total), label: 'New this week', tone: 'blue' },
     ];

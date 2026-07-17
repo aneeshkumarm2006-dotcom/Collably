@@ -14,7 +14,7 @@ export interface UserDoc extends Document<Types.ObjectId> {
   avatar?: string | null;
   isVerified: boolean;
   isOnboarded: boolean;
-  /** E.164 phone number, set once verified via SMS OTP (e.g. "+919876543210"). */
+  /** E.164 phone number, set once verified via SMS OTP (e.g. "+14165550199"). */
   phone?: string | null;
   /** True once the phone number has been confirmed by an SMS code. */
   isPhoneVerified: boolean;
@@ -26,6 +26,8 @@ export interface UserDoc extends Document<Types.ObjectId> {
   notificationPrefs?: { push: boolean; email: boolean };
   /** Google account subject id, set when the user signs in with Google (PRD §7.1). */
   googleId?: string | null;
+  /** Apple subject id, set when the user signs in with Apple (App Store Guideline 4.8). */
+  appleId?: string | null;
   /** SHA-256 hash of the active password-reset token (raw token is emailed, never stored). */
   passwordResetToken?: string | null;
   /** Expiry of the password-reset token; both are cleared once the password is reset. */
@@ -63,6 +65,8 @@ const userSchema = new Schema<UserDoc>(
     // Uniqueness is enforced by a partial index below (not here), so the many
     // users without a Google link — all stored as `null` — don't collide.
     googleId: { type: String, default: null },
+    // Same partial-index rationale as googleId (see the index below).
+    appleId: { type: String, default: null },
     // Reset-token fields are server-side only and never serialized to clients.
     passwordResetToken: { type: String, default: null, select: false },
     passwordResetExpires: { type: Date, default: null, select: false },
@@ -77,6 +81,13 @@ const userSchema = new Schema<UserDoc>(
 userSchema.index(
   { googleId: 1 },
   { unique: true, partialFilterExpression: { googleId: { $type: 'string' } } },
+);
+
+// Same reasoning as googleId above — partial (not sparse) so the many explicit
+// nulls from non-Apple users don't collide on the unique index.
+userSchema.index(
+  { appleId: 1 },
+  { unique: true, partialFilterExpression: { appleId: { $type: 'string' } } },
 );
 
 // Reuse the model across hot reloads (ts-node-dev) to avoid OverwriteModelError.

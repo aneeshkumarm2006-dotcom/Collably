@@ -1,8 +1,9 @@
 /**
  * Phone verification — confirm a mobile number over SMS.
  *
- * Two steps in one screen: enter a number (India +91), then the 6-digit code we
- * text. Success stores the verified number and flips `user.isPhoneVerified`.
+ * Two steps in one screen: enter a number (country picker, defaults to Canada),
+ * then the 6-digit code we text. Success stores the verified number and flips
+ * `user.isPhoneVerified`.
  *
  * Like email, in dev the backend returns the code in the send response
  * (EXPOSE_DEV_OTP) so the flow is testable before Twilio credentials exist — shown
@@ -11,10 +12,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { TextInput } from '@/components/ui/SafeTextInput';
 import { Button, Icon } from '@/components/ui';
 import {
   OtpInput,
+  PhoneNumberField,
   ResendRow,
   TrustLine,
   VerifyHeading,
@@ -24,10 +25,10 @@ import {
 import { useTheme } from '@/components/ThemeProvider';
 import { api, isApiError } from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
+import { DEFAULT_COUNTRY, toE164, type PhoneCountry } from '@/lib/phoneCountries';
 import type { PublicUser } from '@/types';
 
 const RESEND_COOLDOWN = 30;
-const DIAL_CODE = '+91'; // India-first; the backend accepts any E.164 number.
 
 export default function VerifyPhoneScreen() {
   const { colors } = useTheme();
@@ -35,6 +36,7 @@ export default function VerifyPhoneScreen() {
   const setUser = useAuthStore((s) => s.setUser);
 
   const [phase, setPhase] = useState<'phone' | 'otp' | 'success'>('phone');
+  const [country, setCountry] = useState<PhoneCountry>(DEFAULT_COUNTRY);
   const [digits, setDigits] = useState(''); // national number, no country code
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -42,8 +44,8 @@ export default function VerifyPhoneScreen() {
   const [cooldown, setCooldown] = useState(0);
   const [devCode, setDevCode] = useState<string | null>(null);
 
-  const e164 = `${DIAL_CODE}${digits}`;
-  const phoneValid = digits.length === 10;
+  const e164 = toE164(country, digits);
+  const phoneValid = country.valid(digits);
 
   const goBack = useCallback(() => {
     if (router.canGoBack()) router.back();
@@ -126,36 +128,17 @@ export default function VerifyPhoneScreen() {
           subtitle="We'll text you a 6-digit code to confirm it."
         />
 
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            borderWidth: 1.5,
-            borderColor: error ? colors.danger : colors.hair,
-            borderRadius: 14,
-            backgroundColor: colors.card,
-            paddingHorizontal: 14,
-            height: 56,
+        <PhoneNumberField
+          country={country}
+          onCountryChange={setCountry}
+          digits={digits}
+          onDigitsChange={(d) => {
+            setDigits(d);
+            if (error) setError(null);
           }}
-        >
-          <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text }}>{DIAL_CODE}</Text>
-          <View style={{ width: 1, height: 24, backgroundColor: colors.hair, marginHorizontal: 12 }} />
-          <TextInput
-            value={digits}
-            onChangeText={(t) => {
-              setDigits(t.replace(/\D/g, '').slice(0, 10));
-              if (error) setError(null);
-            }}
-            placeholder="98765 43210"
-            placeholderTextColor={colors.text3}
-            keyboardType="phone-pad"
-            textContentType="telephoneNumber"
-            autoComplete="tel"
-            maxLength={10}
-            autoFocus
-            style={{ flex: 1, fontSize: 16, fontWeight: '600', color: colors.text }}
-          />
-        </View>
+          error={!!error}
+          autoFocus
+        />
 
         <View style={{ minHeight: 22, marginTop: 12, justifyContent: 'center' }}>
           {error ? (

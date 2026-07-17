@@ -100,6 +100,15 @@ export const env = {
     from: str('TWILIO_FROM'),
   },
 
+  apple: {
+    /**
+     * Bundle id that Apple identity tokens must be issued for (the `aud` claim).
+     * Defaults to the app's real bundle id — no Apple secret/.p8 is needed for the
+     * native Sign in with Apple flow.
+     */
+    bundleId: str('APPLE_BUNDLE_ID', 'com.collably.app'),
+  },
+
   instagram: {
     /** App secret — verifies the X-Hub-Signature-256 on inbound webhooks. */
     appSecret: str('IG_APP_SECRET'),

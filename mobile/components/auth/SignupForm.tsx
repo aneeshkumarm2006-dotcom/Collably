@@ -12,12 +12,14 @@ import { Text, View, type TextInput } from 'react-native';
 import { Pressable } from '@/components/ui/SafePressable';
 import { AuthInput } from './AuthInput';
 import { GoogleButton } from './GoogleButton';
+import { AppleButton } from './AppleButton';
 import { FormBanner } from './FormBanner';
 import { AuthFooter } from './AuthFooter';
 import { Button, Icon, type IconName } from '@/components/ui';
 import { useTheme } from '@/components/ThemeProvider';
 import { api, isApiError } from '@/lib/api';
 import { useGoogleSignIn } from '@/lib/googleAuth';
+import { useAppleSignIn } from '@/lib/appleAuth';
 import { useAuthStore, type AuthPayload } from '@/store/authStore';
 import { validateEmail, validateName, validatePassword, MIN_PASSWORD_LENGTH } from '@/lib/validation';
 
@@ -47,6 +49,7 @@ export function SignupForm({ role, onPickRole }: SignupFormProps) {
   const [submitting, setSubmitting] = useState(false);
 
   const google = useGoogleSignIn({ role: role ?? undefined, onError: setFormError });
+  const apple = useAppleSignIn({ role: role ?? undefined, onError: setFormError });
 
   const submit = async () => {
     setFormError(null);
@@ -87,6 +90,15 @@ export function SignupForm({ role, onPickRole }: SignupFormProps) {
       return;
     }
     google.start();
+  };
+
+  // Same guard as Google: a brand-new social account needs a role to create against.
+  const onApple = () => {
+    if (!role) {
+      setFormError('Choose how you want to join first.');
+      return;
+    }
+    apple.start();
   };
 
   return (
@@ -176,7 +188,19 @@ export function SignupForm({ role, onPickRole }: SignupFormProps) {
 
       <AuthFooter
         showTerms
-        social={google.available ? <GoogleButton onPress={onGoogle} loading={google.signingIn} disabled={submitting} /> : undefined}
+        social={
+          google.available || apple.available ? (
+            <View style={{ width: '100%', gap: 10 }}>
+              {google.available ? (
+                <GoogleButton onPress={onGoogle} loading={google.signingIn} disabled={submitting || apple.signingIn} />
+              ) : null}
+              {/* Guideline 4.8: offering Google means we must also offer Apple (iOS). */}
+              {apple.available ? (
+                <AppleButton onPress={onApple} loading={apple.signingIn} disabled={submitting || google.signingIn} />
+              ) : null}
+            </View>
+          ) : undefined
+        }
       />
     </>
   );

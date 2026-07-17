@@ -12,12 +12,14 @@ import { Text, View, type TextInput } from 'react-native';
 import { router } from 'expo-router';
 import { AuthInput } from './AuthInput';
 import { GoogleButton } from './GoogleButton';
+import { AppleButton } from './AppleButton';
 import { FormBanner } from './FormBanner';
 import { AuthFooter } from './AuthFooter';
 import { Button } from '@/components/ui';
 import { useTheme } from '@/components/ThemeProvider';
 import { api, isApiError } from '@/lib/api';
 import { useGoogleSignIn } from '@/lib/googleAuth';
+import { useAppleSignIn } from '@/lib/appleAuth';
 import { useAuthStore, type AuthPayload } from '@/store/authStore';
 import { validateEmail } from '@/lib/validation';
 
@@ -33,6 +35,7 @@ export function LoginForm() {
   const [submitting, setSubmitting] = useState(false);
 
   const google = useGoogleSignIn({ onError: setFormError });
+  const apple = useAppleSignIn({ onError: setFormError });
 
   const submit = async () => {
     setFormError(null);
@@ -106,7 +109,19 @@ export function LoginForm() {
       </Button>
 
       <AuthFooter
-        social={google.available ? <GoogleButton onPress={google.start} loading={google.signingIn} disabled={submitting} /> : undefined}
+        social={
+          google.available || apple.available ? (
+            <View style={{ width: '100%', gap: 10 }}>
+              {google.available ? (
+                <GoogleButton onPress={google.start} loading={google.signingIn} disabled={submitting || apple.signingIn} />
+              ) : null}
+              {/* Guideline 4.8: offering Google means we must also offer Apple (iOS). */}
+              {apple.available ? (
+                <AppleButton onPress={apple.start} loading={apple.signingIn} disabled={submitting || google.signingIn} />
+              ) : null}
+            </View>
+          ) : undefined
+        }
       />
     </>
   );

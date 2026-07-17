@@ -15,5 +15,6 @@ export { LoginForm } from './LoginForm';
 export { AuthFooter, type AuthFooterProps } from './AuthFooter';
 export { AuthInput, type AuthInputProps } from './AuthInput';
 export { GoogleButton, type GoogleButtonProps } from './GoogleButton';
+export { AppleButton, type AppleButtonProps } from './AppleButton';
 export { FormBanner, type FormBannerProps } from './FormBanner';
 export { OrDivider } from './OrDivider';

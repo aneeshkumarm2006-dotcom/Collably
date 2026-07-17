@@ -12,7 +12,7 @@ import { env } from '../lib/env';
 const TWILIO_BASE = 'https://api.twilio.com/2010-04-01';
 
 export interface SendSmsInput {
-  /** Recipient in E.164 (e.g. "+919876543210"). */
+  /** Recipient in E.164 (e.g. "+14165550199"). */
   to: string;
   body: string;
 }

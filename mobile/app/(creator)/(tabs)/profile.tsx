@@ -147,7 +147,7 @@ export default function CreatorProfileScreen() {
                 {data?.isVerified && <Icon name="badge" size={18} color={colors.accent} />}
               </View>
 
-              {/* location · email + email-verification affordance */}
+              {/* location · verified email (email is verified at the mandatory gate) */}
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 4 }}>
                 {!!locationLabel && (
                   <>
@@ -159,59 +159,17 @@ export default function CreatorProfileScreen() {
                 <Text numberOfLines={1} style={{ flexShrink: 1, fontSize: 13, color: colors.text2 }}>
                   {user?.email}
                 </Text>
-                {user?.isVerified ? (
-                  <VerifiedBadge size={14} />
-                ) : (
-                  <Pressable
-                    onPress={() => router.push('/verify/email')}
-                    hitSlop={8}
-                    style={({ pressed }) => ({
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 3,
-                      backgroundColor: colors.accentSoft,
-                      paddingHorizontal: 8,
-                      paddingVertical: 3,
-                      borderRadius: 7,
-                      opacity: pressed ? 0.7 : 1,
-                    })}
-                  >
-                    <Text style={{ fontSize: 11.5, fontWeight: '800', color: colors.accent }}>Verify</Text>
-                    <Icon name="arrowR" size={11} color={colors.accent} strokeWidth={2.6} />
-                  </Pressable>
-                )}
+                {user?.isVerified ? <VerifiedBadge size={14} /> : null}
               </View>
 
-              {/* phone: verified number, or a prompt to add + verify one */}
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 4 }}>
-                <Icon name="phone" size={14} color={colors.text3} strokeWidth={2} />
-                {user?.isPhoneVerified && user?.phone ? (
-                  <>
-                    <Text style={{ fontSize: 13, color: colors.text2 }}>{user.phone}</Text>
-                    <VerifiedBadge size={14} />
-                  </>
-                ) : (
-                  <Pressable
-                    onPress={() => router.push('/verify/phone')}
-                    hitSlop={8}
-                    style={({ pressed }) => ({
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 3,
-                      backgroundColor: colors.accentSoft,
-                      paddingHorizontal: 8,
-                      paddingVertical: 3,
-                      borderRadius: 7,
-                      opacity: pressed ? 0.7 : 1,
-                    })}
-                  >
-                    <Text style={{ fontSize: 11.5, fontWeight: '800', color: colors.accent }}>
-                      Add phone number
-                    </Text>
-                    <Icon name="arrowR" size={11} color={colors.accent} strokeWidth={2.6} />
-                  </Pressable>
-                )}
-              </View>
+              {/* verified phone (also confirmed at the mandatory gate) */}
+              {user?.isPhoneVerified && user?.phone ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 4 }}>
+                  <Icon name="phone" size={14} color={colors.text3} strokeWidth={2} />
+                  <Text style={{ fontSize: 13, color: colors.text2 }}>{user.phone}</Text>
+                  <VerifiedBadge size={14} />
+                </View>
+              ) : null}
 
               {/* niche + UGC tags */}
               {(data?.niche?.length || data?.isUGCOnly) ? (
@@ -297,47 +255,9 @@ export default function CreatorProfileScreen() {
             </Section>
           )}
 
-          {/* Instagram verification CTA — until they've proven their handle. */}
-          {data && !social?.instagram?.verified && (
-            <Section title="Get verified" colors={colors}>
-              <Pressable
-                onPress={() => router.push('/verify/instagram')}
-                style={({ pressed }) => ({
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 12,
-                  backgroundColor: colors.card,
-                  borderWidth: 1,
-                  borderColor: colors.hair,
-                  borderRadius: 14,
-                  padding: 14,
-                  opacity: pressed ? 0.7 : 1,
-                })}
-              >
-                <View
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 11,
-                    backgroundColor: colors.accentSoft,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Icon name="instagram" size={20} color={colors.accent} />
-                </View>
-                <View style={{ flex: 1, minWidth: 0 }}>
-                  <Text style={{ fontSize: 14.5, fontWeight: '800', color: colors.text }}>
-                    Verify your Instagram
-                  </Text>
-                  <Text style={{ fontSize: 12.5, color: colors.text2, marginTop: 1 }}>
-                    Prove your following and earn a verified badge.
-                  </Text>
-                </View>
-                <Icon name="arrowR" size={18} color={colors.text3} strokeWidth={2.2} />
-              </Pressable>
-            </Section>
-          )}
+          {/* Instagram is verified manually by an admin (via a Social ID request in
+              chat), so there's no self-serve card here — just the badge on the social
+              row once approved. */}
 
           {/* Content types */}
           {data && data.contentTypes.length > 0 && (

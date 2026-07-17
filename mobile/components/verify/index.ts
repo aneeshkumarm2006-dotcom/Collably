@@ -9,3 +9,4 @@ export {
   VerifiedBadge,
 } from './VerifyKit';
 export { VerifySuccess } from './VerifySuccess';
+export { PhoneNumberField } from './PhoneNumberField';

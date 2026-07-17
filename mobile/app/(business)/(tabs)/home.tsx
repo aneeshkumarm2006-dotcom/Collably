@@ -25,7 +25,6 @@ import { useTheme } from '@/components/ThemeProvider';
 import { api } from '@/lib/api';
 import { useFetch } from '@/lib/useFetch';
 import { formatRelativeTime, formatReward } from '@/lib/utils';
-import { useVerifyPrompt } from '@/lib/useVerifyPrompt';
 import { useAuthStore } from '@/store/authStore';
 import { useNotificationStore } from '@/store/notificationStore';
 import type { Application, Campaign, BusinessProfile, CreatorProfile, Notification, UserSummary } from '@/types';
@@ -42,8 +41,6 @@ export default function BusinessHomeScreen() {
   const { colors, shadows, isDark } = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  // Nudge an unverified business to verify their email (once per launch).
-  useVerifyPrompt();
   const user = useAuthStore((s) => s.user);
   const hasUnread = useNotificationStore((s) => s.unreadCount > 0);
 

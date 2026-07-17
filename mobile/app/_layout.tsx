@@ -130,6 +130,7 @@ function resolveTarget(
   role: ReturnType<typeof useAuthStore.getState>['role'],
   isOnboarded: boolean,
   hasAuthedBefore: boolean,
+  needsVerification: boolean,
 ): RouteTarget | null {
   if (status === 'loading') return null;
 
@@ -145,6 +146,12 @@ function resolveTarget(
   if (status === 'guest') {
     // PRD §8.6 — guests browse the creator Explore tab read-only.
     return { group: '(creator)', href: '/(creator)/(tabs)/explore' as Href };
+  }
+
+  // Email + phone are a mandatory gate for creators/businesses — no access to
+  // onboarding or the app until both are verified. Admins are exempt.
+  if (needsVerification && (role === 'creator' || role === 'business')) {
+    return { group: 'verify', href: '/verify/required' as Href };
   }
 
   // authenticated — onboarding gates creator/business until their profile exists.
@@ -179,12 +186,15 @@ function useAuthGate(booted: boolean): void {
   const role = useAuthStore((s) => s.role);
   const isOnboarded = useAuthStore((s) => s.user?.isOnboarded ?? false);
   const hasAuthedBefore = useAuthStore((s) => s.hasAuthedBefore);
+  const emailVerified = useAuthStore((s) => s.user?.isVerified ?? false);
+  const phoneVerified = useAuthStore((s) => s.user?.isPhoneVerified ?? false);
+  const needsVerification = !emailVerified || !phoneVerified;
 
   useEffect(() => {
     // Wait until boot is done and the navigator has mounted (else replace throws).
     if (!booted || !navState?.key) return;
 
-    const target = resolveTarget(status, role, isOnboarded, hasAuthedBefore);
+    const target = resolveTarget(status, role, isOnboarded, hasAuthedBefore, needsVerification);
     if (!target) return;
 
     const currentGroup = segments[0];
@@ -193,10 +203,6 @@ function useAuthGate(booted: boolean): void {
     // A guest mid-login may legitimately sit in (auth) — don't yank them out.
     if (status === 'guest' && currentGroup === '(auth)') return;
 
-    // `verify` is a shared, top-level flow (email / phone / Instagram) any signed-in
-    // user can enter from either role home — don't bounce them back mid-flow.
-    if (currentGroup === 'verify' && status === 'authenticated') return;
-
     router.replace(target.href);
-  }, [booted, navState?.key, status, role, isOnboarded, hasAuthedBefore, segments, router]);
+  }, [booted, navState?.key, status, role, isOnboarded, hasAuthedBefore, needsVerification, segments, router]);
 }

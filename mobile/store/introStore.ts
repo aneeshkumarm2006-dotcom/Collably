@@ -13,13 +13,6 @@ type IntroState = {
   /** The blue header's greeting + stat reveal has run this launch. */
   homeIntroPlayed: boolean;
   markHomeIntroPlayed: () => void;
-  /**
-   * The "verify your email" nudge has been shown this launch. Keeps the auto-prompt
-   * to once per launch so a new signup is asked once, and an existing unverified
-   * user gets a gentle reminder — never a per-tab-focus loop.
-   */
-  emailPromptShown: boolean;
-  markEmailPromptShown: () => void;
   /** Sign-out resets these, so the next user starts fresh. */
   reset: () => void;
 };
@@ -27,7 +20,5 @@ type IntroState = {
 export const useIntroStore = create<IntroState>((set) => ({
   homeIntroPlayed: false,
   markHomeIntroPlayed: () => set({ homeIntroPlayed: true }),
-  emailPromptShown: false,
-  markEmailPromptShown: () => set({ emailPromptShown: true }),
-  reset: () => set({ homeIntroPlayed: false, emailPromptShown: false }),
+  reset: () => set({ homeIntroPlayed: false }),
 }));

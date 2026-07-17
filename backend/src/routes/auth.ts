@@ -23,6 +23,7 @@ import { Notification } from '../models/Notification';
 import { hashPassword, verifyPassword, MIN_PASSWORD_LENGTH } from '../lib/password';
 import { signTokenPair, verifyToken } from '../lib/jwt';
 import { verifyGoogleIdToken } from '../lib/google';
+import { verifyAppleIdentityToken } from '../lib/apple';
 import { toPublicUser } from '../lib/serialize';
 import { asyncHandler } from '../lib/utils';
 import { AppError } from '../middleware/errorHandler';
@@ -72,6 +73,18 @@ const googleSchema = z.object({
   idToken: z.string().min(1, 'idToken is required'),
   // Required only when the Google account is brand new (no existing user).
   role: signupRoleSchema.optional(),
+});
+
+const appleSchema = z.object({
+  identityToken: z.string().min(1, 'identityToken is required'),
+  // Required only when the Apple account is brand new (no existing user).
+  role: signupRoleSchema.optional(),
+  /**
+   * Apple only returns the user's name on the FIRST authorization, and only to the
+   * client — it's never in the identity token. The app forwards it once so we can
+   * name the account; every later sign-in omits it.
+   */
+  fullName: z.string().trim().max(120).optional(),
 });
 
 // --- Helpers ------------------------------------------------------------------
@@ -375,6 +388,59 @@ router.post(
         role,
         googleId: profile.googleId,
         avatar: profile.picture ?? null,
+        isVerified: profile.emailVerified,
+      });
+      isNewUser = true;
+    }
+
+    res.status(isNewUser ? 201 : 200).json({ ...authResponse(user), isNewUser });
+  }),
+);
+
+/**
+ * POST /api/auth/apple — verify an Apple identity token and find-or-create the user.
+ *
+ * Required by App Store Guideline 4.8: an app offering a third-party login (we offer
+ * Google) must also offer a privacy-respecting equivalent. Mirrors the Google flow —
+ * matches an existing account by appleId or email (linking appleId on first use); a
+ * brand-new account needs a `role`.
+ *
+ * Note: Apple's "Hide My Email" yields a private relay address; that's a real,
+ * deliverable address, so it's stored and treated like any other.
+ */
+router.post(
+  '/apple',
+  asyncHandler(async (req, res) => {
+    const { identityToken, role, fullName } = appleSchema.parse(req.body);
+    const profile = await verifyAppleIdentityToken(identityToken);
+
+    // Apple always gives us a stable `sub`; email may be absent on later sign-ins,
+    // so appleId is the primary key and email is only a secondary link.
+    const or: Record<string, unknown>[] = [{ appleId: profile.appleId }];
+    if (profile.email) or.push({ email: profile.email });
+    let user = await User.findOne({ $or: or });
+    let isNewUser = false;
+
+    if (user) {
+      // Link the Apple identity to a pre-existing (e.g. password/Google) account once.
+      if (!user.appleId) {
+        user.appleId = profile.appleId;
+        if (profile.emailVerified) user.isVerified = true;
+        await user.save();
+      }
+    } else {
+      if (!role) {
+        throw new AppError(400, 'A role (business or creator) is required to create a new account');
+      }
+      if (!profile.email) {
+        // Without an email we can't create an account (it's our login + contact key).
+        throw new AppError(400, 'Apple did not share an email address — please sign up with email instead');
+      }
+      user = await User.create({
+        name: fullName || 'LocalShout member',
+        email: profile.email,
+        role,
+        appleId: profile.appleId,
         isVerified: profile.emailVerified,
       });
       isNewUser = true;

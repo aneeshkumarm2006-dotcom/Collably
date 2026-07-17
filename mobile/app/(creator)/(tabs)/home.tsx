@@ -45,7 +45,6 @@ import { useTheme } from '@/components/ThemeProvider';
 import { api } from '@/lib/api';
 import { useFetch } from '@/lib/useFetch';
 import { campaignDistanceKm, useUserLocation } from '@/lib/geo';
-import { useVerifyPrompt } from '@/lib/useVerifyPrompt';
 import { showToast } from '@/lib/toast';
 import { daysUntil } from '@/lib/utils';
 import { DURATION, STAGGER_MS } from '@/lib/motion';
@@ -72,8 +71,6 @@ const NEARBY_RADIUS_KM = 5;
 export default function CreatorHomeScreen() {
   const { colors, isDark } = useTheme();
   const router = useRouter();
-  // Nudge a new / unverified creator to verify their email (once per launch).
-  useVerifyPrompt();
 
   const insets = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user);

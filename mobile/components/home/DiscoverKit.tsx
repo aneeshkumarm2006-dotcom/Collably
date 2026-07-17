@@ -68,13 +68,13 @@ export const SHOUTS_PER_LEVEL = 100;
  * What a Shout is worth.
  *
  * Deliberately coarse: a level is ~5 completed collabs, so the bar moves visibly
- * for real work instead of drifting up with every rupee. Rewards contribute only a
+ * for real work instead of drifting up with every dollar. Rewards contribute only a
  * little, so a creator can't out-level a reliable peer just by taking one expensive
  * collab.
  */
 export const SHOUTS_PER_COLLAB = 20;
-/** ₹2,000 of verified rewards = 1 Shout. */
-const RUPEES_PER_SHOUT = 2000;
+/** $2,000 of verified rewards = 1 Shout. */
+const DOLLARS_PER_SHOUT = 2000;
 
 export type LevelState = {
   /** Lifetime Shouts. */
@@ -94,7 +94,7 @@ export type LevelState = {
 export function levelStateFor(profile: CreatorProfile | null): LevelState {
   const completed = profile?.totalCollabsCompleted ?? 0;
   const earned = profile?.totalRewardsEarned ?? 0;
-  const shouts = completed * SHOUTS_PER_COLLAB + Math.floor(earned / RUPEES_PER_SHOUT);
+  const shouts = completed * SHOUTS_PER_COLLAB + Math.floor(earned / DOLLARS_PER_SHOUT);
   const level = Math.floor(shouts / SHOUTS_PER_LEVEL) + 1;
   const shoutsInLevel = shouts % SHOUTS_PER_LEVEL;
   return {

@@ -46,7 +46,7 @@ function headlineFor(mode: PremiumAuthMode, role: PremiumAuthRole): string {
   if (mode === 'signin') return 'Welcome back.\nLet’s get to it.';
   if (role === 'creator') return 'Get paid in perks for\ncontent you already make.';
   if (role === 'business') return 'Find creators who fit\nyour brand — fast.';
-  return 'Create your\nCollabSpace account.';
+  return 'Create your\nLocalShout account.';
 }
 
 export function PremiumAuthLayout({ initialMode, initialRole = null, onBack }: PremiumAuthLayoutProps) {
