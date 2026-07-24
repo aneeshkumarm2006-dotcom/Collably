@@ -82,6 +82,13 @@ function getGmailTransport(): Transporter {
     gmailTransport = nodemailer.createTransport({
       service: 'gmail',
       auth: { user: env.gmail.user, pass: env.gmail.appPassword },
+      // Hard caps so a blocked/slow SMTP path fails fast instead of hanging the
+      // user's HTTP request. Some hosts (e.g. Render) block outbound SMTP; without
+      // these the connect() hangs for minutes and the signup/reset call hangs with
+      // it. 10s is generous for a reachable server, instant-ish when blocked.
+      connectionTimeout: 10_000,
+      greetingTimeout: 10_000,
+      socketTimeout: 15_000,
     });
   }
   return gmailTransport;
@@ -124,6 +131,8 @@ async function sendViaResend(input: SendEmailInput): Promise<SendEmailResult> {
         html: input.html,
         text: input.text,
       }),
+      // Never let a slow provider hang the request (mirrors the Gmail caps).
+      signal: AbortSignal.timeout(10_000),
     });
 
     if (!res.ok) {
@@ -143,11 +152,24 @@ async function sendViaResend(input: SendEmailInput): Promise<SendEmailResult> {
 }
 
 /**
- * Send one email. Prefers Gmail SMTP, falls back to Resend, and skips (never
- * throws) when neither is configured — callers treat email as best-effort.
+ * Send one email. Tries Gmail SMTP first; if that fails AND Resend is configured,
+ * falls back to Resend automatically. Skips (never throws) when neither is set.
+ *
+ * The fallback matters on hosts that block outbound SMTP (e.g. Render): Gmail
+ * fails fast via the transport timeouts, then Resend (HTTPS) delivers. For best
+ * latency on such a host, unset the GMAIL_* vars there so it goes straight to
+ * Resend rather than eating the ~10s Gmail timeout on every send.
  */
 export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult> {
-  if (isGmailConfigured()) return sendViaGmail(input);
+  if (isGmailConfigured()) {
+    const result = await sendViaGmail(input);
+    if (result.sent) return result;
+    if (isResendConfigured()) {
+      console.warn(`[email] gmail failed, falling back to resend → ${maskEmail(input.to)}`);
+      return sendViaResend(input);
+    }
+    return result;
+  }
   if (isResendConfigured()) return sendViaResend(input);
 
   const reason = 'No email transport configured (set GMAIL_USER+GMAIL_APP_PASSWORD or RESEND_API_KEY+RESEND_FROM)';
