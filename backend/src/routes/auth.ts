@@ -20,6 +20,13 @@ import { CreatorProfile } from '../models/CreatorProfile';
 import { Campaign } from '../models/Campaign';
 import { Application } from '../models/Application';
 import { Notification } from '../models/Notification';
+import { Conversation } from '../models/Conversation';
+import { Message } from '../models/Message';
+import { Favorite } from '../models/Favorite';
+import { Report } from '../models/Report';
+import { InstagramVerification } from '../models/InstagramVerification';
+import { VerificationCode } from '../models/VerificationCode';
+import { Block } from '../models/Block';
 import { hashPassword, verifyPassword, MIN_PASSWORD_LENGTH } from '../lib/password';
 import { signTokenPair, verifyToken } from '../lib/jwt';
 import { verifyGoogleIdToken } from '../lib/google';
@@ -260,15 +267,18 @@ router.post(
     }
 
     const code = await issueVerificationCode(user._id, 'email', user.email);
-    await sendEmail({
+    const result = await sendEmail({
       to: user.email,
       ...verificationCodeEmail({ name: user.name, code, ttlMinutes: env.otpTtlMinutes }),
     });
 
+    // `sent` reflects the ACTUAL transport result, not a hardcoded true — email is
+    // the only signup gate, so a silent delivery failure must surface (a stuck
+    // "code sent" screen with no code is exactly the bug that hides otherwise).
     // Dev aid (same gate as EXPOSE_DEV_RESET_TOKEN): hand the code back in the
-    // response so the flow is testable before a Resend domain is verified. Never
-    // in production, and never logged — a code in logs is a live credential.
-    const body: Record<string, unknown> = { sent: true, expiresInMinutes: env.otpTtlMinutes };
+    // response so the flow is testable before email is configured. Never in
+    // production, and never logged — a code in logs is a live credential.
+    const body: Record<string, unknown> = { sent: result.sent, expiresInMinutes: env.otpTtlMinutes };
     if (env.exposeDevOtp && !env.isProd) body.devCode = code;
     res.status(200).json(body);
   }),
@@ -325,7 +335,7 @@ router.post(
     const code = await issueVerificationCode(user._id, 'phone', phone);
     const result = await sendSms({
       to: phone,
-      body: `${code} is your LocalShout verification code. It expires in ${env.otpTtlMinutes} minutes.`,
+      body: `${code} is your Local Creator Crew verification code. It expires in ${env.otpTtlMinutes} minutes.`,
     });
 
     // Same dev aid as email: hand the code back only in non-prod when opted in, so
@@ -437,7 +447,7 @@ router.post(
         throw new AppError(400, 'Apple did not share an email address — please sign up with email instead');
       }
       user = await User.create({
-        name: fullName || 'LocalShout member',
+        name: fullName || 'Local Creator Crew member',
         email: profile.email,
         role,
         appleId: profile.appleId,
@@ -576,9 +586,53 @@ router.patch(
 const deleteMeSchema = z.object({ password: z.string().min(1).optional() }).optional();
 
 /**
+ * Run one step of the delete cascade without letting it abort the rest.
+ *
+ * The cascade spans ~10 collections and Mongo has no cross-collection
+ * transaction here, so a single failing `deleteMany` used to 500 the request and
+ * leave the account half-deleted: the user still logs in, but their profile /
+ * campaigns are gone. Best-effort per step + deleting the `User` LAST means the
+ * worst case is a few orphaned rows (logged, sweepable) instead of a live
+ * account with a shredded profile.
+ */
+async function cascadeStep(label: string, run: () => Promise<unknown>): Promise<void> {
+  try {
+    await run();
+  } catch (err) {
+    // No user id / email in the log line — this runs on the deletion path, where
+    // the whole point is to stop retaining identifiers.
+    console.error(`[auth] account deletion: "${label}" step failed:`, err);
+  }
+}
+
+/**
  * DELETE /api/auth/me — permanently delete the account and its data (PRD §7.3).
- * Cascades the user's role profile, campaigns/applications, and notifications so
- * nothing is orphaned.
+ * Cascades the user's role profile, campaigns/applications, chat, saves,
+ * verification state and notifications so nothing is orphaned — the app's own
+ * copy and the Privacy Policy both promise "all associated data".
+ *
+ * Two judgement calls worth knowing about:
+ *
+ * 1. **Conversations + messages are deleted whole**, not just the leaving user's
+ *    messages. A thread is 1:1 and is created from an accepted application; that
+ *    application (and, for a business, the campaign) is deleted by this same
+ *    cascade, so the survivor is left with a thread they can't reply to, whose
+ *    collab no longer exists, and whose counterparty profile won't render.
+ *    Deleting only the leaving user's messages would ALSO leave the survivor a
+ *    one-sided transcript that reads as if they talked to themselves, while
+ *    `lastMessage` on the conversation still cached the deleted user's words.
+ *    Tradeoff accepted: the surviving participant loses the history of a
+ *    completed collab. That's the cost of an honest "permanently deletes"
+ *    promise; anything they must keep (deliverables, terms) lives outside chat.
+ *
+ * 2. **Reports filed BY the user are deleted; reports filed ABOUT them are
+ *    kept.** A report's `reporterId` is the deleted user's own data and an open
+ *    flag can't be followed up with a gone account. But a report ABOUT them
+ *    belongs to the *reporter*, not to them — purging it would let a bad actor
+ *    erase the moderation trail on demand by deleting their account, which is a
+ *    textbook abuse-evasion path. Those rows keep a `targetId` that now points
+ *    at nothing; the admin Reports tab already resolves targets per `targetType`
+ *    and must tolerate an unresolvable target.
  */
 router.delete(
   '/me',
@@ -595,24 +649,67 @@ router.delete(
       }
     }
 
-    if (user.role === 'business') {
-      const profile = await BusinessProfile.findOne({ userId: user._id }).select('_id');
-      if (profile) {
-        const campaigns = await Campaign.find({ businessId: profile._id }).select('_id');
-        const campaignIds = campaigns.map((c) => c._id);
-        await Application.deleteMany({ businessId: profile._id });
-        if (campaignIds.length) await Campaign.deleteMany({ _id: { $in: campaignIds } });
-        await profile.deleteOne();
+    await cascadeStep('role profile', async () => {
+      if (user.role === 'business') {
+        const profile = await BusinessProfile.findOne({ userId: user._id }).select('_id');
+        if (profile) {
+          const campaigns = await Campaign.find({ businessId: profile._id }).select('_id');
+          const campaignIds = campaigns.map((c) => c._id);
+          await Application.deleteMany({ businessId: profile._id });
+          if (campaignIds.length) await Campaign.deleteMany({ _id: { $in: campaignIds } });
+          await profile.deleteOne();
+        }
+      } else if (user.role === 'creator') {
+        const profile = await CreatorProfile.findOne({ userId: user._id }).select('_id');
+        if (profile) {
+          await Application.deleteMany({ creatorId: profile._id });
+          await profile.deleteOne();
+        }
       }
-    } else if (user.role === 'creator') {
-      const profile = await CreatorProfile.findOne({ userId: user._id }).select('_id');
-      if (profile) {
-        await Application.deleteMany({ creatorId: profile._id });
-        await profile.deleteOne();
-      }
-    }
+    });
 
-    await Notification.deleteMany({ userId: user._id });
+    // Chat: see (1) in the doc block — the whole thread goes, both sides'
+    // messages with it. Messages are removed by `conversationId` first so a
+    // failure mid-step can't strand a bag of messages with no thread to reach
+    // them through; the trailing `senderUserId` sweep catches anything authored
+    // outside a thread this user is still listed on (legacy / mis-mirrored rows).
+    await cascadeStep('conversations + messages', async () => {
+      const conversations = await Conversation.find({ participantUserIds: user._id }).select('_id');
+      const conversationIds = conversations.map((c) => c._id);
+      if (conversationIds.length) {
+        await Message.deleteMany({ conversationId: { $in: conversationIds } });
+        await Conversation.deleteMany({ _id: { $in: conversationIds } });
+      }
+      await Message.deleteMany({ senderUserId: user._id });
+    });
+
+    // Saved collabs. `Favorite.creatorId` is the **User** id, not the profile id.
+    await cascadeStep('favorites', () => Favorite.deleteMany({ creatorId: user._id }));
+
+    // Verification state: live/expired OTPs (email + phone) and any Instagram
+    // ownership session. These hold the user's email/phone/handle, so they must
+    // not outlive the account.
+    await cascadeStep('verification codes', () => VerificationCode.deleteMany({ userId: user._id }));
+    await cascadeStep('instagram verification', () =>
+      InstagramVerification.deleteMany({ userId: user._id }),
+    );
+
+    // Reports this user FILED. Reports filed ABOUT them are deliberately kept —
+    // see (2) in the doc block.
+    await cascadeStep('filed reports', () => Report.deleteMany({ reporterId: user._id }));
+
+    await cascadeStep('notifications', () => Notification.deleteMany({ userId: user._id }));
+
+    // Blocks in BOTH directions. Unlike reports there is nothing to preserve for
+    // anyone else: a block only ever suppresses contact between two accounts, and
+    // one of them is about to stop existing. Leaving the rows would also let a
+    // recycled ObjectId inherit a stranger's block.
+    await cascadeStep('blocks', () =>
+      Block.deleteMany({ $or: [{ blockerId: user._id }, { blockedId: user._id }] }),
+    );
+
+    // The identity row goes LAST: once this succeeds the account can never be
+    // signed into again, even if a step above logged a failure.
     await user.deleteOne();
 
     res.status(200).json({ deleted: true });

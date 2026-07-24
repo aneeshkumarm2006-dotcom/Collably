@@ -1,5 +1,5 @@
 /**
- * Boot splash — the LocalShout brand intro.
+ * Boot splash — the Local Creator Crew brand intro.
  *
  * `/` is the initial route. The native splash stays up until the root layout has
  * loaded fonts + hydrated the session; the auth gate then `replace()`s into the
@@ -74,7 +74,7 @@ export default function BootScreen() {
 
         <Animated.View style={reduced ? undefined : tailStyle}>
           <Text style={{ fontSize: 30, fontWeight: '800', color: INK, letterSpacing: -0.9 }}>
-            LocalShout
+            Local Creator Crew
           </Text>
         </Animated.View>
       </View>

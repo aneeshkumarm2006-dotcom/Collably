@@ -12,8 +12,8 @@ import { Icon } from '@/components/ui';
 // Both stores require a reachable privacy policy (the app collects accounts,
 // push tokens, location, photos). These must be live, hosted pages before
 // submission — update if the marketing domain changes.
-const TERMS_URL = 'https://collably.app/terms';
-const PRIVACY_URL = 'https://collably.app/privacy';
+const TERMS_URL = 'https://www.localcreatorcrew.com/terms';
+const PRIVACY_URL = 'https://www.localcreatorcrew.com/privacy';
 
 export type AuthFooterProps = {
   /** Optional social-auth node (e.g. the Google button), shown under a divider. */

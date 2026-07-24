@@ -22,3 +22,4 @@ export { Conversation, type ConversationDoc } from './Conversation';
 export { Message, type MessageDoc } from './Message';
 export { Notification, type NotificationDoc } from './Notification';
 export { Report, type ReportDoc } from './Report';
+export { Block, type BlockDoc, areBlocked, blockedUserIds } from './Block';

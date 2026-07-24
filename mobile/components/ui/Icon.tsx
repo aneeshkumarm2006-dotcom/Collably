@@ -79,6 +79,10 @@ const ICON_PATHS = {
   pen: 'M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z',
   logout: 'M15 4h3a1 1 0 011 1v14a1 1 0 01-1 1h-3M10 8l-4 4 4 4M6 12h11',
   flag: 'M5 21V4M5 4s2-1 5-1 5 2 8 2v9c-3 0-5-2-8-2s-5 1-5 1',
+  // Overflow affordance ("⋯"). Drawn as three zero-length segments so the shared
+  // strokeLinecap="round" renders them as dots — no fill path needed.
+  more: 'M5 12h0M12 12h0M19 12h0',
+  ban: 'M5.6 5.6l12.8 12.8M12 3a9 9 0 100 18 9 9 0 000-18z',
   rotate: 'M3 12a9 9 0 109-9 9 9 0 00-6.4 2.6L3 8M3 4v4h4',
   play: 'M8 5l11 7-11 7z',
   // campaign categories (replaces the old CATEGORY_EMOJI map)
@@ -106,7 +110,7 @@ const ICON_PATHS = {
   video: 'M3 7h12a1 1 0 011 1v3l4-2.5v9L16 14v3a1 1 0 01-1 1H3a1 1 0 01-1-1V8a1 1 0 011-1z',
   story: 'M12 21a9 9 0 100-18 9 9 0 000 18zM12 8.5v7M8.5 12h7',
 
-  // --- Domain glyphs (LocalShout) ----------------------------------------------
+  // --- Domain glyphs (Local Creator Crew) ----------------------------------------------
   // The five nouns this product is actually about. No general icon set ships a
   // "collab" or a "campaign", so every app that needs them fudges it with a generic
   // `users` or `megaphone` — and that fudge is exactly what reads as off-the-shelf.

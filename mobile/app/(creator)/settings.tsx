@@ -71,6 +71,20 @@ export default function SettingsScreen() {
           </Card>
         </Group>
 
+        {/* Safety — the required unblock surface (App Store 1.2 / Play UGC). */}
+        <Group title="Safety" colors={colors}>
+          <Card padding={0}>
+            <Row
+              icon="ban"
+              label="Blocked accounts"
+              value="Manage who you've blocked"
+              onPress={() => router.push('/blocked')}
+              colors={colors}
+              first
+            />
+          </Card>
+        </Group>
+
         {/* Appearance */}
         <Group title="Appearance" colors={colors}>
           <ThemeModeRow />

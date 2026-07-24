@@ -19,6 +19,7 @@ import { Conversation, type ConversationDoc } from '../models/Conversation';
 import { Message, type MessageDoc } from '../models/Message';
 import { BusinessProfile } from '../models/BusinessProfile';
 import { User } from '../models/User';
+import { areBlocked } from '../models/Block';
 import { authenticate } from '../middleware/authenticate';
 import { asyncHandler } from '../lib/utils';
 import { AppError } from '../middleware/errorHandler';
@@ -156,6 +157,13 @@ router.post(
     const senderUserId = req.user!._id;
     const senderIsBusiness = c.businessUserId.toString() === senderUserId.toString();
     const recipientUserId = senderIsBusiness ? c.creatorUserId : c.businessUserId;
+
+    // A block cuts contact both ways (App Store 1.2 / Play UGC). Checked here at
+    // the send rather than at thread open so an existing thread stays readable —
+    // history doesn't vanish, it just goes read-only for both sides.
+    if (await areBlocked(senderUserId, recipientUserId)) {
+      throw new AppError(403, 'You can no longer message this account.');
+    }
 
     // If the recipient is connected, the message:new below reaches their device
     // now → it's delivered (WhatsApp ✓✓ grey). Otherwise it stays "sent" (✓) until

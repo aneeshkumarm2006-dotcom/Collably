@@ -37,7 +37,7 @@ export default function VerifyInstagramScreen() {
 
   const [phase, setPhase] = useState<Phase>('handle');
   const [handleInput, setHandleInput] = useState('');
-  const [bizHandle, setBizHandle] = useState('localshout');
+  const [bizHandle, setBizHandle] = useState('localcreatorcrew');
   const [code, setCode] = useState('');
   const [followerCount, setFollowerCount] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);

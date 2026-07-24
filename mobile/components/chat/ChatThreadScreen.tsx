@@ -17,7 +17,7 @@ import {
 } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Header } from '@/components/shared';
+import { Header, SafetyMenu } from '@/components/shared';
 import { ErrorState, Icon } from '@/components/ui';
 import { useTheme } from '@/components/ThemeProvider';
 import { api, isApiError } from '@/lib/api';
@@ -182,7 +182,24 @@ export function ChatThreadScreen() {
       style={{ flex: 1, backgroundColor: pal.chatBg }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <Header title={title} subtitle={subtitle} onBack={() => router.back()} variant="card" />
+      <Header
+        title={title}
+        subtitle={subtitle}
+        onBack={() => router.back()}
+        variant="card"
+        // Report/block lives on the thread itself — the surface both stores check
+        // first for a UGC app. Blocking pops back to the list: the thread stays
+        // readable, but there's nothing more to do in it.
+        right={
+          conv?.otherParticipant ? (
+            <SafetyMenu
+              userId={String(conv.otherParticipant._id)}
+              name={conv.otherParticipant.name}
+              onBlocked={() => router.back()}
+            />
+          ) : null
+        }
+      />
 
       {/* collab-context strip — reminds you what this thread is about */}
       {conv?.campaignTitle ? (

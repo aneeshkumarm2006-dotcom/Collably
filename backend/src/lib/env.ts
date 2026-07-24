@@ -93,11 +93,32 @@ export const env = {
     from: str('RESEND_FROM'),
   },
 
+  /**
+   * Gmail SMTP via an App Password (https://myaccount.google.com/apppasswords).
+   * Preferred over Resend when set — `sendEmail` picks Gmail first. `user` is the
+   * full Gmail address (also the default From); `appPassword` is the 16-char app
+   * password, NOT the account password. `from` overrides the visible sender name.
+   */
+  gmail: {
+    user: str('GMAIL_USER'),
+    appPassword: str('GMAIL_APP_PASSWORD'),
+    from: str('GMAIL_FROM'),
+  },
+
   twilio: {
     accountSid: str('TWILIO_ACCOUNT_SID'),
     authToken: str('TWILIO_AUTH_TOKEN'),
-    /** Sender: a Twilio phone number, OR a Messaging Service SID (starts with "MG"). */
-    from: str('TWILIO_FROM'),
+    /**
+     * Messaging Service SID (starts "MG"). Preferred sender when set — Twilio
+     * picks the number/compliance from the service. Read from its own var, or
+     * from `TWILIO_FROM` if that happens to hold an MG id.
+     */
+    messagingServiceSid: str('TWILIO_MESSAGING_SERVICE_SID'),
+    /**
+     * Fallback sender: a Twilio phone number in E.164. Accepts either
+     * `TWILIO_FROM` or `TWILIO_FROM_NUMBER` (both names seen in the wild).
+     */
+    from: str('TWILIO_FROM') || str('TWILIO_FROM_NUMBER'),
   },
 
   apple: {
@@ -117,7 +138,7 @@ export const env = {
     /** Shared secret echoed back on Meta's GET webhook-verification challenge. */
     webhookVerifyToken: str('IG_WEBHOOK_VERIFY_TOKEN'),
     /** The handle users DM to verify (shown in the app, without the @). */
-    businessHandle: str('IG_BUSINESS_HANDLE', 'localshout'),
+    businessHandle: str('IG_BUSINESS_HANDLE', 'localcreatorcrew'),
   },
 
   expoAccessToken: str('EXPO_ACCESS_TOKEN'),

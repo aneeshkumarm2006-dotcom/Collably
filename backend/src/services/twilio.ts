@@ -25,9 +25,11 @@ export interface SendSmsResult {
   reason?: string;
 }
 
-/** True when Twilio is configured enough to send. */
+/** True when Twilio is configured enough to send (needs a sender: service SID or number). */
 export function isTwilioConfigured(): boolean {
-  return Boolean(env.twilio.accountSid && env.twilio.authToken && env.twilio.from);
+  return Boolean(
+    env.twilio.accountSid && env.twilio.authToken && (env.twilio.messagingServiceSid || env.twilio.from),
+  );
 }
 
 /** Mask a phone for logs — keep country code + last 2 digits, hide the rest. */
@@ -48,9 +50,11 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
     return { sent: false, reason };
   }
 
-  // A "from" beginning with "MG" is a Messaging Service SID; otherwise it's a number.
+  // Prefer the Messaging Service; else a plain number. (An MG value stashed in
+  // `from` is still honoured as a service SID.)
   const form = new URLSearchParams({ To: input.to, Body: input.body });
-  if (env.twilio.from.startsWith('MG')) form.set('MessagingServiceSid', env.twilio.from);
+  if (env.twilio.messagingServiceSid) form.set('MessagingServiceSid', env.twilio.messagingServiceSid);
+  else if (env.twilio.from.startsWith('MG')) form.set('MessagingServiceSid', env.twilio.from);
   else form.set('From', env.twilio.from);
 
   const auth = Buffer.from(`${env.twilio.accountSid}:${env.twilio.authToken}`).toString('base64');

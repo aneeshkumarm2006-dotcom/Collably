@@ -6,6 +6,8 @@ export {
   TrustLine,
   OtpInput,
   ResendRow,
+  DevCodePill,
+  VerifyButton,
   VerifiedBadge,
 } from './VerifyKit';
 export { VerifySuccess } from './VerifySuccess';

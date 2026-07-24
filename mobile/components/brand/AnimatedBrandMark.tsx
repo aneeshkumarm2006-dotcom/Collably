@@ -1,5 +1,5 @@
 /**
- * The LocalShout connector mark, drawing itself on.
+ * The Local Creator Crew connector mark, drawing itself on.
  *
  * The whole animation is a pure function of one `progress` shared value (0 → 1),
  * which is what lets the *same* component serve two very different drivers:

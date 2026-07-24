@@ -12,12 +12,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Button, Icon } from '@/components/ui';
 import {
+  DevCodePill,
   OtpInput,
   PhoneNumberField,
   ResendRow,
   TrustLine,
+  VerifyButton,
   VerifyHeading,
   VerifyShell,
   VerifySuccess,
@@ -147,9 +148,7 @@ export default function VerifyPhoneScreen() {
         </View>
 
         <View style={{ marginTop: 8 }}>
-          <Button block size="lg" loading={busy} disabled={!phoneValid} onPress={send}>
-            Send code
-          </Button>
+          <VerifyButton label="Send code" loading={busy} disabled={!phoneValid} onPress={send} />
         </View>
 
         <View style={{ flex: 1 }} />
@@ -200,26 +199,7 @@ export default function VerifyPhoneScreen() {
         <ResendRow seconds={cooldown} onResend={send} />
       </View>
 
-      {devCode ? (
-        <View
-          style={{
-            marginTop: 24,
-            alignSelf: 'center',
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 6,
-            backgroundColor: colors.cardSunk,
-            borderRadius: 10,
-            paddingHorizontal: 12,
-            paddingVertical: 8,
-          }}
-        >
-          <Icon name="info" size={13} color={colors.text3} />
-          <Text style={{ fontFamily: 'monospace', fontSize: 12, color: colors.text2 }}>
-            dev code: {devCode}
-          </Text>
-        </View>
-      ) : null}
+      <DevCodePill code={devCode} />
 
       <View style={{ flex: 1 }} />
     </VerifyShell>

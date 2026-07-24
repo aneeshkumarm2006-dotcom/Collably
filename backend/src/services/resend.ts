@@ -1,21 +1,27 @@
 /**
- * Resend transactional email (PRD §9.2, §17). One low-level `sendEmail` talks to
- * the Resend HTTP API; the rest of the file is a template per trigger in the
- * §9.2 table. Templates are pure (they return `{ subject, html, text }`) so they
- * can be unit-tested without sending, and so the push/notify layer can reuse the
+ * Transactional email (PRD §9.2, §17). One low-level `sendEmail` dispatches to a
+ * transport; the rest of the file is a template per trigger in the §9.2 table.
+ * Templates are pure (they return `{ subject, html, text }`) so they can be
+ * unit-tested without sending, and so the push/notify layer can reuse the
  * rendered email.
  *
- * Sending is **best-effort**: if `RESEND_API_KEY` isn't set we log and return a
+ * Two transports, tried in order: **Gmail SMTP** (an App Password) when
+ * configured, else **Resend** (HTTP API). Gmail wins because it needs no domain
+ * verification — good enough to launch. Resend is the higher-deliverability path
+ * for later.
+ *
+ * Sending is **best-effort**: if no transport is configured we log and return a
  * skipped result instead of throwing, so a missing email provider never breaks a
  * core flow (the in-app Notification is the source of truth).
  */
+import nodemailer, { type Transporter } from 'nodemailer';
 import { env } from '../lib/env';
 
 const RESEND_ENDPOINT = 'https://api.resend.com/emails';
 
 /** Brand constants for the shared email layout. */
 const BRAND = {
-  name: 'LocalShout',
+  name: 'Local Creator Crew',
   accent: '#0C831F',
   // Deep-link scheme the mobile app registers (PRD §8.2). Used in email CTAs.
   // NOTE: the `collably://` scheme is an identifier, NOT the display name — it
@@ -34,17 +40,27 @@ export interface SendEmailInput extends EmailContent {
 }
 
 export interface SendEmailResult {
-  /** `true` when Resend accepted the message; `false` when skipped/failed. */
+  /** `true` when a transport accepted the message; `false` when skipped/failed. */
   sent: boolean;
-  /** Resend message id when sent. */
+  /** Provider message id when sent. */
   id?: string;
   /** Reason it was skipped or the error message when it failed. */
   reason?: string;
 }
 
+/** True when Gmail SMTP is configured enough to send. */
+export function isGmailConfigured(): boolean {
+  return Boolean(env.gmail.user && env.gmail.appPassword);
+}
+
 /** True when Resend is configured enough to send. */
 export function isResendConfigured(): boolean {
   return Boolean(env.resend.apiKey && env.resend.from);
+}
+
+/** True when at least one email transport can send. */
+export function isEmailConfigured(): boolean {
+  return isGmailConfigured() || isResendConfigured();
 }
 
 /** Mask an email for logs — keep the first char + domain, hide the rest of the
@@ -56,17 +72,44 @@ function maskEmail(email: string): string {
 }
 
 /**
- * Send one email via Resend. Never throws — returns `{ sent: false, reason }`
- * when skipped (unconfigured) or on transport/API error, so callers can treat
- * email as best-effort.
+ * Lazily-built Gmail transporter, reused across sends (a fresh SMTP connection
+ * per email is slow and can trip Gmail's rate limits). Built only once Gmail is
+ * configured, so an unconfigured deploy never touches nodemailer.
  */
-export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult> {
-  if (!isResendConfigured()) {
-    const reason = 'Resend is not configured (RESEND_API_KEY / RESEND_FROM unset)';
-    if (!env.isProd) console.warn(`[resend] skipped → ${maskEmail(input.to)}: ${reason}`);
+let gmailTransport: Transporter | null = null;
+function getGmailTransport(): Transporter {
+  if (!gmailTransport) {
+    gmailTransport = nodemailer.createTransport({
+      service: 'gmail',
+      auth: { user: env.gmail.user, pass: env.gmail.appPassword },
+    });
+  }
+  return gmailTransport;
+}
+
+/** Send via Gmail SMTP. Never throws — returns a result the caller can log. */
+async function sendViaGmail(input: SendEmailInput): Promise<SendEmailResult> {
+  try {
+    // App Passwords can only send as their own account; a spoofed From is dropped
+    // by Gmail. Use the display-name override if given, else the account address.
+    const from = env.gmail.from || env.gmail.user;
+    const info = await getGmailTransport().sendMail({
+      from,
+      to: input.to,
+      subject: input.subject,
+      html: input.html,
+      text: input.text,
+    });
+    return { sent: true, id: info.messageId };
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : 'unknown SMTP error';
+    console.error(`[gmail] error → ${maskEmail(input.to)}: ${reason}`);
     return { sent: false, reason };
   }
+}
 
+/** Send via the Resend HTTP API. Never throws. */
+async function sendViaResend(input: SendEmailInput): Promise<SendEmailResult> {
   try {
     const res = await fetch(RESEND_ENDPOINT, {
       method: 'POST',
@@ -97,6 +140,19 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
     console.error(`[resend] error → ${maskEmail(input.to)}: ${reason}`);
     return { sent: false, reason };
   }
+}
+
+/**
+ * Send one email. Prefers Gmail SMTP, falls back to Resend, and skips (never
+ * throws) when neither is configured — callers treat email as best-effort.
+ */
+export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult> {
+  if (isGmailConfigured()) return sendViaGmail(input);
+  if (isResendConfigured()) return sendViaResend(input);
+
+  const reason = 'No email transport configured (set GMAIL_USER+GMAIL_APP_PASSWORD or RESEND_API_KEY+RESEND_FROM)';
+  if (!env.isProd) console.warn(`[email] skipped → ${maskEmail(input.to)}: ${reason}`);
+  return { sent: false, reason };
 }
 
 // --- Template helpers ---------------------------------------------------------
@@ -167,7 +223,7 @@ export function accountCreatedEmail(p: { name: string }): EmailContent {
     heading: `Welcome to ${BRAND.name}, ${esc(p.name)}!`,
     bodyHtml: 'Your account is ready. Open the app to finish your profile and start collaborating.',
     bodyText: 'Your account is ready. Open the app to finish your profile and start collaborating.',
-    cta: { label: 'Open LocalShout', url: BRAND.scheme },
+    cta: { label: 'Open Local Creator Crew', url: BRAND.scheme },
   });
 }
 

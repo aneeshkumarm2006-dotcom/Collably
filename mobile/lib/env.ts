@@ -16,8 +16,8 @@ import { Platform } from 'react-native';
 
 const DEFAULT_BACKEND_PORT = 4000;
 
-/** Production backend URL — replaced with the real Render/Railway URL in Phase 18. */
-const PRODUCTION_API_URL = 'https://api.collably.app/api';
+/** Production backend URL — the live Render service (see eas.json build profiles). */
+const PRODUCTION_API_URL = 'https://collably-0q2s.onrender.com/api';
 
 /** Pull the LAN host (e.g. "192.168.1.5:8081") Metro is served from, dev only. */
 function metroHost(): string | null {
@@ -95,6 +95,16 @@ export const GOOGLE_MAPS_API_KEY =
 
 /** True once a Maps SDK key is configured for this build (else "map coming soon"). */
 export const MAPS_ENABLED = Boolean(GOOGLE_MAPS_API_KEY);
+
+/**
+ * Whether phone (SMS) verification is a required signup step. Off by default so
+ * the first Play Store build ships email-only — SMS to India needs Twilio DLT
+ * registration we don't have yet. Flip `EXPO_PUBLIC_REQUIRE_PHONE=true` at build
+ * time to bring the phone step back once SMS delivery is production-ready. The
+ * whole phone flow (screens, backend routes) stays intact behind this flag.
+ */
+export const REQUIRE_PHONE_VERIFICATION =
+  process.env.EXPO_PUBLIC_REQUIRE_PHONE === 'true';
 
 /** App display version, surfaced in settings / support screens. */
 export const APP_VERSION = Constants.expoConfig?.version ?? '0.0.0';

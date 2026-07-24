@@ -46,7 +46,7 @@ function headlineFor(mode: PremiumAuthMode, role: PremiumAuthRole): string {
   if (mode === 'signin') return 'Welcome back.\nLet’s get to it.';
   if (role === 'creator') return 'Get paid in perks for\ncontent you already make.';
   if (role === 'business') return 'Find creators who fit\nyour brand — fast.';
-  return 'Create your\nLocalShout account.';
+  return 'Create your\nLocal Creator Crew account.';
 }
 
 export function PremiumAuthLayout({ initialMode, initialRole = null, onBack }: PremiumAuthLayoutProps) {
@@ -165,10 +165,10 @@ export function PremiumAuthLayout({ initialMode, initialRole = null, onBack }: P
             <LoginForm />
           )}
 
-          {/* Bottom switch: "New to LocalShout? Sign up" ⇄ "Already have an account? Sign in" */}
+          {/* Bottom switch: "New to Local Creator Crew? Sign up" ⇄ "Already have an account? Sign in" */}
           <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6, marginTop: 22 }}>
             <Text style={{ fontSize: 14, color: colors.text2 }}>
-              {mode === 'signin' ? 'New to LocalShout?' : 'Already have an account?'}
+              {mode === 'signin' ? 'New to Local Creator Crew?' : 'Already have an account?'}
             </Text>
             <Pressable onPress={() => setMode(mode === 'signin' ? 'signup' : 'signin')} hitSlop={10}>
               <Text style={{ fontSize: 14, fontWeight: '800', color: colors.accent }}>

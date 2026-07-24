@@ -33,10 +33,12 @@ import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { ThemeProvider } from '@/components/ThemeProvider';
+import { RootErrorBoundary } from '@/components/RootErrorBoundary';
 import { ToastHost } from '@/components/ui';
 import { CelebrationModal } from '@/components/shared/CelebrationModal';
 import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
+import { REQUIRE_PHONE_VERIFICATION } from '@/lib/env';
 import { configureNotificationHandler } from '@/lib/notifications';
 import { usePushNotifications } from '@/lib/usePushNotifications';
 import { useChatSocket } from '@/lib/useChatSocket';
@@ -47,6 +49,15 @@ void SplashScreen.preventAutoHideAsync();
 
 // Foreground notification presentation — safe to call once at module load.
 configureNotificationHandler();
+
+/**
+ * Expo Router picks up an `ErrorBoundary` export from any route file and wraps
+ * that route in it. Exporting it from the ROOT layout makes it the app-wide net:
+ * a render throw anywhere in the tree shows the themed fallback with a retry
+ * instead of a blank screen in release. Implementation lives in
+ * `components/RootErrorBoundary` (provider-free by design — see its header).
+ */
+export { RootErrorBoundary as ErrorBoundary };
 
 export default function RootLayout() {
   // Empty map: no custom faces yet, but this wires the loading gate so adding
@@ -62,7 +73,7 @@ export default function RootLayout() {
     void hydrateTheme();
   }, [hydrate, hydrateTheme]);
 
-  // Minimum time the branded LocalShout intro (app/index.tsx) stays visible before
+  // Minimum time the branded Local Creator Crew intro (app/index.tsx) stays visible before
   // the auth gate routes away — otherwise it flashes for ~1 frame.
   //
   // Sized to the intro animation itself (mark draw-on + wordmark), not padded past
@@ -187,8 +198,17 @@ function useAuthGate(booted: boolean): void {
   const isOnboarded = useAuthStore((s) => s.user?.isOnboarded ?? false);
   const hasAuthedBefore = useAuthStore((s) => s.hasAuthedBefore);
   const emailVerified = useAuthStore((s) => s.user?.isVerified ?? false);
-  const phoneVerified = useAuthStore((s) => s.user?.isPhoneVerified ?? false);
-  const needsVerification = !emailVerified || !phoneVerified;
+  const isPhoneVerified = useAuthStore((s) => s.user?.isPhoneVerified ?? false);
+  // Phone only gates entry when the build opts in; email-only builds treat it as
+  // satisfied. Keep this in lockstep with the same flag in app/verify/required.tsx.
+  const phoneVerified = REQUIRE_PHONE_VERIFICATION ? isPhoneVerified : true;
+  // Dev-only escape hatch: skip the mandatory email/phone gate while testing the
+  // rest of the app before SMS/email delivery is fully wired. HARD-gated on
+  // `__DEV__`, so a production build ALWAYS enforces verification no matter what
+  // the env flag says. Flip EXPO_PUBLIC_SKIP_VERIFY back to false (and restart the
+  // bundler) to test the verification flow itself again.
+  const skipVerify = __DEV__ && process.env.EXPO_PUBLIC_SKIP_VERIFY === 'true';
+  const needsVerification = !skipVerify && (!emailVerified || !phoneVerified);
 
   useEffect(() => {
     // Wait until boot is done and the navigator has mounted (else replace throws).

@@ -11,7 +11,11 @@
  * validity via `country.valid`); this component is purely the input surface.
  */
 import { useState } from 'react';
-import { Modal, Pressable, Text, View } from 'react-native';
+import { Modal, Text, View } from 'react-native';
+// NativeWind v4 drops function-form `style` on RN's Pressable (the "broken
+// alignment" bug) — the country chip's `flexDirection:'row'` would be lost and it
+// would stack vertically. SafePressable resolves the style before that happens.
+import { Pressable } from '@/components/ui/SafePressable';
 import { TextInput } from '@/components/ui/SafeTextInput';
 import { Icon } from '@/components/ui';
 import { useTheme } from '@/components/ThemeProvider';
@@ -36,8 +40,10 @@ export function PhoneNumberField({
   autoFocus,
   editable = true,
 }: PhoneNumberFieldProps) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const ring = isDark ? '0px 0px 0px 4px rgba(45,136,255,0.22)' : '0px 0px 0px 4px rgba(24,119,242,0.12)';
 
   const pick = (c: PhoneCountry) => {
     setPickerOpen(false);
@@ -54,11 +60,12 @@ export function PhoneNumberField({
           flexDirection: 'row',
           alignItems: 'center',
           borderWidth: 1.5,
-          borderColor: error ? colors.danger : colors.hair,
-          borderRadius: 14,
+          borderColor: error ? colors.danger : focused ? colors.accent : colors.hair,
+          borderRadius: 15,
           backgroundColor: colors.card,
-          paddingHorizontal: 14,
-          height: 56,
+          paddingHorizontal: 16,
+          height: 58,
+          boxShadow: !error && focused ? ring : undefined,
         }}
       >
         <Pressable
@@ -81,6 +88,8 @@ export function PhoneNumberField({
         <TextInput
           value={digits}
           onChangeText={(t) => onDigitsChange(t.replace(/\D/g, '').slice(0, country.length))}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           placeholder={country.placeholder}
           placeholderTextColor={colors.text3}
           keyboardType="phone-pad"
@@ -89,7 +98,7 @@ export function PhoneNumberField({
           maxLength={country.length}
           autoFocus={autoFocus}
           editable={editable}
-          style={{ flex: 1, fontSize: 16, fontWeight: '600', color: colors.text }}
+          style={{ flex: 1, fontSize: 17, fontWeight: '500', color: colors.text, letterSpacing: 0.3 }}
         />
       </View>
 

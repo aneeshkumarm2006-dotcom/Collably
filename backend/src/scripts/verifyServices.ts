@@ -28,6 +28,8 @@ import {
   isCloudinaryConfigured,
   createSignedUpload,
   isResendConfigured,
+  isGmailConfigured,
+  isEmailConfigured,
   accountCreatedEmail,
   passwordResetEmail,
   newApplicationEmail,
@@ -158,7 +160,9 @@ function checkEmailTemplates(): void {
   assert(injected.html.includes('&lt;script&gt;'), 'escaped form present');
   ok('dynamic values are HTML-escaped (no injection)');
 
-  info(`      Resend configured: ${isResendConfigured() ? 'yes' : 'no (sends are skipped)'}`);
+  info(`      Gmail configured:  ${isGmailConfigured() ? 'yes' : 'no'}`);
+  info(`      Resend configured: ${isResendConfigured() ? 'yes' : 'no'}`);
+  info(`      Email deliverable: ${isEmailConfigured() ? 'yes' : 'NO — sends are skipped'}`);
 }
 
 // --- [3] Expo push -----------------------------------------------------------

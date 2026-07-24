@@ -11,7 +11,7 @@
  * root gate routes to the creator home. No exit until complete.
  */
 import { useEffect, useRef, useState } from 'react';
-import { Text, View } from 'react-native';
+import { Alert, Text, View } from 'react-native';
 import Reanimated, {
   Easing,
   FadeInDown,
@@ -215,6 +215,20 @@ export default function CreatorOnboardingScreen({ initialIndex = 0 }: { initialI
   const back = () => {
     setError(null);
     setIndex((i) => Math.max(i - 1, 0));
+  };
+
+  // Leaving the socials step: make the creator pause on their handles. These are
+  // what we verify against, so a typo here means they simply can't be verified —
+  // cheaper to catch now than to have them wonder why verification never lands.
+  const confirmSocials = () => {
+    Alert.alert(
+      'Double-check your handles',
+      'Make sure every handle and profile link is exactly right. If anything is wrong, we can’t verify you and brands won’t see you as verified.',
+      [
+        { text: 'Let me check', style: 'cancel' },
+        { text: 'It’s correct', style: 'default', onPress: next },
+      ],
+    );
   };
 
   // Auto-advance after a UGC pick; track the timer so it's cleared on unmount.
@@ -429,7 +443,7 @@ export default function CreatorOnboardingScreen({ initialIndex = 0 }: { initialI
           <StoryPanel
             title="Where can brands find you?"
             subtitle="Connect the platforms you post on — we verify these so brands trust your reach."
-            footer={<NextPill label="Continue" onPress={next} disabled={!hasOneSocial(form)} />}
+            footer={<NextPill label="Continue" onPress={confirmSocials} disabled={!hasOneSocial(form)} />}
           >
             <SocialCard icon="instagram" badge={['#F9CE34', '#EE2A7B', '#6228D7']} name="Instagram" sub="Photos, Reels & Stories" complete={platformValid(form.social.igHandle, form.social.igLink)}>
               <StoryInput label="Handle" value={form.social.igHandle} placeholder="@yourhandle" maxLength={120} onChangeText={(igHandle) => setSocial({ igHandle })} />

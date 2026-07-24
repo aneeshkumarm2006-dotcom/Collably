@@ -8,7 +8,8 @@
  * screens own the API wiring.
  */
 import { type ReactNode, useEffect, useRef, useState } from 'react';
-import { Keyboard, Pressable, Text, View, type TextStyle } from 'react-native';
+import { ActivityIndicator, Keyboard, Text, View, type TextStyle } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useAnimatedStyle,
   useReducedMotion,
@@ -17,10 +18,16 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Pressable } from '@/components/ui/SafePressable';
 import { TextInput } from '@/components/ui/SafeTextInput';
 import { Icon, type IconName } from '@/components/ui';
 import { useTheme } from '@/components/ThemeProvider';
 import { Press } from '@/components/home';
+
+/** A crisp accent focus ring (CSS-style box-shadow, RN 0.76+). Theme-aware alpha. */
+function accentRing(isDark: boolean): string {
+  return isDark ? '0px 0px 0px 4px rgba(45,136,255,0.22)' : '0px 0px 0px 4px rgba(24,119,242,0.12)';
+}
 
 // ── Step dots ─────────────────────────────────────────────────────────────────
 
@@ -87,7 +94,18 @@ export function VerifyShell({
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
-          <Icon name="arrowL" size={24} color={colors.text} strokeWidth={2.2} />
+          <View
+            style={{
+              width: 38,
+              height: 38,
+              borderRadius: 19,
+              backgroundColor: colors.cardSunk,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Icon name="chevL" size={20} color={colors.text} strokeWidth={2.6} />
+          </View>
         </Pressable>
         {typeof step === 'number' && typeof steps === 'number' ? (
           <StepDots total={steps} index={step} />
@@ -120,25 +138,28 @@ export function VerifyHeading({
   return (
     <View style={{ marginBottom: 26 }}>
       {icon ? (
-        <View
+        <LinearGradient
+          colors={[colors.accent, colors.brandYellowDeep]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
           style={{
             width: 52,
             height: 52,
-            borderRadius: 15,
-            backgroundColor: colors.accentSoft,
+            borderRadius: 16,
             alignItems: 'center',
             justifyContent: 'center',
-            marginBottom: 16,
+            marginBottom: 18,
+            boxShadow: '0px 8px 18px rgba(24,119,242,0.32)',
           }}
         >
-          <Icon name={icon} size={26} color={colors.accent} strokeWidth={2} />
-        </View>
+          <Icon name={icon} size={24} color="#FFFFFF" strokeWidth={2.2} />
+        </LinearGradient>
       ) : null}
-      <Text style={{ fontSize: 26, fontWeight: '800', color: colors.text, letterSpacing: -0.6, lineHeight: 31 }}>
+      <Text style={{ fontSize: 27, fontWeight: '700', color: colors.text, letterSpacing: -0.6, lineHeight: 32 }}>
         {title}
       </Text>
       {subtitle ? (
-        <Text style={{ fontSize: 15, color: colors.text2, marginTop: 8, lineHeight: 21 }}>
+        <Text style={{ fontSize: 15, color: colors.text2, marginTop: 9, lineHeight: 22 }}>
           {subtitle}
         </Text>
       ) : null}
@@ -181,7 +202,7 @@ export function OtpInput({
   error?: boolean;
   autoFocus?: boolean;
 }) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const reduced = useReducedMotion();
   const inputRef = useRef<React.ComponentRef<typeof TextInput>>(null);
   const [focused, setFocused] = useState(false);
@@ -208,10 +229,12 @@ export function OtpInput({
     }
   };
 
+  // The single "current" box: the one that would receive the next digit (or the
+  // last box once full). Only lit while the hidden field is focused.
+  const activeIndex = focused ? (value.length >= length ? length - 1 : value.length) : -1;
   const boxBorder = (i: number): string => {
     if (error) return colors.danger;
-    const isActive = focused && (i === value.length || (i === length - 1 && value.length === length));
-    if (isActive) return colors.accent;
+    if (i === activeIndex) return colors.accent;
     if (i < value.length) return colors.hairStrong;
     return colors.hair;
   };
@@ -225,16 +248,17 @@ export function OtpInput({
             style={{
               flex: 1,
               aspectRatio: 0.82,
-              maxWidth: 54,
-              borderRadius: 14,
+              maxWidth: 56,
+              borderRadius: 13,
               borderWidth: 1.5,
               borderColor: boxBorder(i),
               backgroundColor: colors.card,
               alignItems: 'center',
               justifyContent: 'center',
+              boxShadow: !error && i === activeIndex ? accentRing(isDark) : undefined,
             }}
           >
-            <Text style={{ fontSize: 24, fontWeight: '700', color: colors.text }}>
+            <Text style={{ fontSize: 23, fontWeight: '600', color: colors.text }}>
               {value[i] ?? ''}
             </Text>
           </View>
@@ -279,17 +303,98 @@ export function ResendRow({
     const m = Math.floor(seconds / 60);
     const s = String(seconds % 60).padStart(2, '0');
     return (
-      <Text style={[{ fontSize: 13.5, color: colors.text3, textAlign: 'center' }, style]}>
+      <Text style={[{ fontSize: 15, color: colors.text3, textAlign: 'center' }, style]}>
         Resend code in {m}:{s}
       </Text>
     );
   }
   return (
     <Press onPress={onResend}>
-      <Text style={[{ fontSize: 13.5, fontWeight: '700', color: colors.accent, textAlign: 'center' }, style]}>
+      <Text style={[{ fontSize: 15, fontWeight: '600', color: colors.accent, textAlign: 'center' }, style]}>
         Resend code
       </Text>
     </Press>
+  );
+}
+
+// ── Dev code pill ────────────────────────────────────────────────────────────────
+
+/**
+ * Dev-only chip that surfaces the OTP on-screen (backend EXPOSE_DEV_OTP) so the
+ * flow is testable before real SMS/email delivery. Renders nothing without a code;
+ * screens already guard on `__DEV__` before passing one.
+ */
+export function DevCodePill({ code }: { code: string | null }) {
+  const { colors } = useTheme();
+  if (!code) return null;
+  return (
+    <View style={{ alignItems: 'center', marginTop: 18 }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 8,
+          paddingHorizontal: 14,
+          paddingVertical: 8,
+          borderRadius: 999,
+          backgroundColor: colors.cardSunk,
+          borderWidth: 1,
+          borderColor: colors.hair,
+        }}
+      >
+        <Icon name="info" size={13} color={colors.text3} />
+        <Text style={{ fontSize: 12.5, fontWeight: '500', color: colors.text2 }}>Dev code</Text>
+        <Text style={{ fontFamily: 'monospace', fontSize: 13, fontWeight: '600', color: colors.text, letterSpacing: 1 }}>
+          {code}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+// ── Primary CTA ──────────────────────────────────────────────────────────────────
+
+/** Gradient primary button for the verify flow (matches the redesign's CTA). */
+export function VerifyButton({
+  label,
+  onPress,
+  loading = false,
+  disabled = false,
+}: {
+  label: string;
+  onPress: () => void;
+  loading?: boolean;
+  disabled?: boolean;
+}) {
+  const { colors } = useTheme();
+  const off = disabled || loading;
+  return (
+    <Pressable
+      onPress={off ? undefined : onPress}
+      disabled={off}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: off }}
+      style={({ pressed }) => ({ opacity: off ? 0.5 : pressed ? 0.92 : 1 })}
+    >
+      <LinearGradient
+        colors={[colors.accent, colors.brandYellowDeep]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={{
+          height: 54,
+          borderRadius: 15,
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: off ? undefined : '0px 10px 24px rgba(24,119,242,0.32)',
+        }}
+      >
+        {loading ? (
+          <ActivityIndicator color="#FFFFFF" />
+        ) : (
+          <Text style={{ fontSize: 16.5, fontWeight: '600', color: '#FFFFFF', letterSpacing: 0.1 }}>{label}</Text>
+        )}
+      </LinearGradient>
+    </Pressable>
   );
 }
 

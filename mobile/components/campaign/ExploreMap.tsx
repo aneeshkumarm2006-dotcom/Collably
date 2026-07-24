@@ -1,5 +1,5 @@
 /**
- * Explore map view (On-Site Location feature) — the premium "LocalShout"
+ * Explore map view (On-Site Location feature) — the premium "Local Creator Crew"
  * discovery map toggled from the Explore tab. Renders the filtered
  * `GET /api/campaigns` results as clean CATEGORY-COLORED teardrop pins, with a
  * "Search this area" pill, floating layers/recenter buttons, the user's blue

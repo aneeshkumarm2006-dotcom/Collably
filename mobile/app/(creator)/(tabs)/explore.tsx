@@ -1,6 +1,6 @@
 /**
  * Explore tab (PRD §7.3, §13, §8.6) — the CREATOR campaign discovery page,
- * restyled to the premium "LocalShout" design: a hero header, a stats card, a
+ * restyled to the premium "Local Creator Crew" design: a hero header, a stats card, a
  * search pill + filter, category chips, a "Nearby Campaigns" map strip, a
  * featured hero card, and the paginated "Recommended For You" feed (infinite
  * scroll + pull-to-refresh) driving `GET /api/campaigns`.

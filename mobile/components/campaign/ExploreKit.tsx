@@ -1,6 +1,6 @@
 /**
  * Presentational building blocks for the CREATOR Explore page — the premium
- * "LocalShout" discovery design. These are pure presentation (no data fetching):
+ * "Local Creator Crew" discovery design. These are pure presentation (no data fetching):
  * the Explore screen owns the query/pagination and feeds derived values in.
  *
  * Blue/white premium look driven entirely by `useTheme()` tokens (`colors.accent`

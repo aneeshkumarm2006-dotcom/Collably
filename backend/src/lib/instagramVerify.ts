@@ -42,7 +42,7 @@ export async function handleInstagramDm(
   // DM the code back (best-effort; in dev this is a no-op and the caller exposes it).
   await sendInstagramDm(
     igsid,
-    `${code} is your LocalShout verification code. It expires in ${env.otpTtlMinutes} minutes.`,
+    `${code} is your Local Creator Crew verification code. It expires in ${env.otpTtlMinutes} minutes.`,
   );
 
   return code;

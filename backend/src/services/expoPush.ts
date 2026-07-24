@@ -24,7 +24,7 @@ import { toPublicNotification } from '../lib/serialize';
 const EXPO_PUSH_ENDPOINT = 'https://exp.host/--/api/v2/push/send';
 /** Expo accepts at most 100 messages per request. */
 const PUSH_CHUNK_SIZE = 100;
-const APP_NAME = 'LocalShout';
+const APP_NAME = 'Local Creator Crew';
 
 /** A single message in the Expo Push API shape. */
 export interface ExpoPushMessage {

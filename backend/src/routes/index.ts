@@ -13,6 +13,7 @@ import notificationsRouter from './notifications';
 import uploadRouter from './upload';
 import pushRouter from './push';
 import reportsRouter from './reports';
+import blocksRouter from './blocks';
 import adminRouter from './admin';
 
 /**
@@ -36,6 +37,7 @@ api.use('/notifications', notificationsRouter);
 api.use('/upload', uploadRouter);
 api.use('/push', pushRouter);
 api.use('/reports', reportsRouter);
+api.use('/blocks', blocksRouter);
 api.use('/admin', adminRouter);
 
 export default api;

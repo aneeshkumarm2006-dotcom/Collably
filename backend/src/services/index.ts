@@ -31,6 +31,8 @@ export {
 export {
   sendEmail,
   isResendConfigured,
+  isGmailConfigured,
+  isEmailConfigured,
   type EmailContent,
   type SendEmailInput,
   type SendEmailResult,

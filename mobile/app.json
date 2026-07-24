@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "LocalShout",
+    "name": "Local Creator Crew",
     "slug": "collably",
     "version": "0.1.2",
     "orientation": "portrait",
@@ -13,10 +13,11 @@
       "bundleIdentifier": "com.collably.app",
       "usesAppleSignIn": true,
       "associatedDomains": [
-        "applinks:collably.app"
+        "applinks:www.localcreatorcrew.com"
       ],
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "LocalShout uses your location to show nearby brand collabs and how far away they are."
+        "NSLocationWhenInUseUsageDescription": "Local Creator Crew uses your location to show nearby brand collabs and how far away they are.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -39,12 +40,12 @@
           "data": [
             {
               "scheme": "https",
-              "host": "collably.app",
+              "host": "www.localcreatorcrew.com",
               "pathPrefix": "/reset-password"
             },
             {
               "scheme": "https",
-              "host": "collably.app",
+              "host": "www.localcreatorcrew.com",
               "pathPrefix": "/campaign"
             }
           ]
@@ -85,8 +86,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "LocalShout needs access to your photos so you can upload a profile picture, business logo, campaign cover, and proof of your posted content.",
-          "cameraPermission": "LocalShout needs camera access so you can take photos for your profile and for content submissions."
+          "photosPermission": "Local Creator Crew needs access to your photos so you can upload a profile picture, business logo, campaign cover, and proof of your posted content.",
+          "cameraPermission": false
         }
       ],
       "expo-apple-authentication",

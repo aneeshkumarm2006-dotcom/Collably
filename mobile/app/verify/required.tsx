@@ -9,39 +9,24 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Text, View } from 'react-native';
-import { Button, Icon } from '@/components/ui';
-import { OtpInput, PhoneNumberField, ResendRow, TrustLine, VerifyHeading, VerifyShell } from '@/components/verify';
+import {
+  DevCodePill,
+  OtpInput,
+  PhoneNumberField,
+  ResendRow,
+  TrustLine,
+  VerifyButton,
+  VerifyHeading,
+  VerifyShell,
+} from '@/components/verify';
 import { useTheme } from '@/components/ThemeProvider';
 import { api, isApiError } from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
 import { DEFAULT_COUNTRY, toE164, type PhoneCountry } from '@/lib/phoneCountries';
+import { REQUIRE_PHONE_VERIFICATION } from '@/lib/env';
 import type { PublicUser } from '@/types';
 
 const RESEND_COOLDOWN = 30;
-
-/** Dev-only code chip shown under the input. */
-function DevCode({ code }: { code: string | null }) {
-  const { colors } = useTheme();
-  if (!code) return null;
-  return (
-    <View
-      style={{
-        marginTop: 24,
-        alignSelf: 'center',
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-        backgroundColor: colors.cardSunk,
-        borderRadius: 10,
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-      }}
-    >
-      <Icon name="info" size={13} color={colors.text3} />
-      <Text style={{ fontFamily: 'monospace', fontSize: 12, color: colors.text2 }}>dev code: {code}</Text>
-    </View>
-  );
-}
 
 export default function VerifyRequiredScreen() {
   const { colors } = useTheme();
@@ -49,10 +34,13 @@ export default function VerifyRequiredScreen() {
   const signOut = useAuthStore((s) => s.signOut);
 
   const emailDone = user?.isVerified ?? false;
-  const phoneDone = user?.isPhoneVerified ?? false;
+  // Phone is only a gate when the build opts in (EXPO_PUBLIC_REQUIRE_PHONE=true).
+  // Otherwise a verified phone is treated as "done" so the gate ends at email.
+  const phoneDone = REQUIRE_PHONE_VERIFICATION ? (user?.isPhoneVerified ?? false) : true;
 
   const confirmLogout = useCallback(() => {
-    Alert.alert('Log out?', 'You need to verify your email and phone to continue.', [
+    const what = REQUIRE_PHONE_VERIFICATION ? 'your email and phone' : 'your email';
+    Alert.alert('Log out?', `You need to verify ${what} to continue.`, [
       { text: 'Keep verifying', style: 'cancel' },
       { text: 'Log out', style: 'destructive', onPress: () => void signOut() },
     ]);
@@ -186,7 +174,7 @@ function EmailStep({ onLogout }: { onLogout: () => void }) {
           <View style={{ marginTop: 8 }}>
             <ResendRow seconds={cooldown} onResend={send} />
           </View>
-          <DevCode code={devCode} />
+          <DevCodePill code={devCode} />
         </>
       )}
       <View style={{ flex: 1 }} />
@@ -282,9 +270,7 @@ function PhoneStep({ onLogout }: { onLogout: () => void }) {
         <View style={{ minHeight: 22, marginTop: 12, justifyContent: 'center' }}>
           {error ? <Text style={{ fontSize: 13.5, color: colors.danger }}>{error}</Text> : null}
         </View>
-        <Button block size="lg" loading={busy} disabled={!phoneValid} onPress={send}>
-          Send code
-        </Button>
+        <VerifyButton label="Send code" loading={busy} disabled={!phoneValid} onPress={send} />
         <View style={{ flex: 1 }} />
       </VerifyShell>
     );
@@ -328,7 +314,7 @@ function PhoneStep({ onLogout }: { onLogout: () => void }) {
       <View style={{ marginTop: 8 }}>
         <ResendRow seconds={cooldown} onResend={send} />
       </View>
-      <DevCode code={devCode} />
+      <DevCodePill code={devCode} />
       <View style={{ flex: 1 }} />
     </VerifyShell>
   );
