@@ -489,6 +489,9 @@ const updateMeSchema = z
     name: z.string().trim().min(1).max(120).optional(),
     avatar: z.string().trim().max(2048).nullable().optional(),
     notificationPrefs: z.object({ push: z.boolean(), email: z.boolean() }).partial().optional(),
+    // Collect a phone number WITHOUT verifying it (SMS OTP is deferred). Storing it
+    // never flips `isPhoneVerified` — that stays a job for the /verify/phone flow.
+    phone: phoneSchema.optional(),
   })
   .refine((v) => Object.keys(v).length > 0, 'Provide at least one field to update');
 
@@ -502,6 +505,8 @@ router.patch(
 
     if (data.name !== undefined) user.name = data.name;
     if (data.avatar !== undefined) user.avatar = data.avatar;
+    // Store the number as-is; do NOT set isPhoneVerified (no OTP was checked).
+    if (data.phone !== undefined) user.phone = data.phone;
     if (data.notificationPrefs) {
       const current = user.notificationPrefs ?? { push: true, email: true };
       user.notificationPrefs = {
