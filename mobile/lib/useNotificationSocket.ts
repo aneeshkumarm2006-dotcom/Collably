@@ -8,6 +8,7 @@
 import { useEffect, useRef } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { useNotificationStore } from '@/store/notificationStore';
+import { useNotificationBannerStore } from '@/store/notificationBannerStore';
 import { CELEBRATION_TYPES, celebrateForNotification, replayMissedCelebration } from './celebration';
 import { connectSocket } from './socket';
 
@@ -51,6 +52,15 @@ export function useNotificationSocket(ready: boolean): void {
       const n = payload?.notification;
       if (n?.type && CELEBRATION_TYPES.has(n.type)) {
         void celebrateForNotification(n._id, n.message);
+      } else if (n?._id && n.message) {
+        // Non-celebration events (new chat message, application update, …) get a
+        // lightweight top banner so the user sees something beyond the bell badge.
+        useNotificationBannerStore.getState().show({
+          id: n._id,
+          message: n.message,
+          deepLinkPath: n.deepLinkPath,
+          type: n.type,
+        });
       }
     };
 

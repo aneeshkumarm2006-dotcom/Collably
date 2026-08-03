@@ -36,6 +36,7 @@ import { ThemeProvider } from '@/components/ThemeProvider';
 import { RootErrorBoundary } from '@/components/RootErrorBoundary';
 import { ToastHost } from '@/components/ui';
 import { CelebrationModal } from '@/components/shared/CelebrationModal';
+import { NotificationBanner } from '@/components/shared/NotificationBanner';
 import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
 import { REQUIRE_PHONE_VERIFICATION } from '@/lib/env';
@@ -122,6 +123,8 @@ export default function RootLayout() {
             <ToastHost />
             {/* App-wide overlay: the "Hurray" confetti popup on approval/verify. */}
             <CelebrationModal />
+            {/* App-wide overlay: top toast for live non-celebration notifications. */}
+            <NotificationBanner />
           </BottomSheetModalProvider>
         </ThemeProvider>
       </SafeAreaProvider>
