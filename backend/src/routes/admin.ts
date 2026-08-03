@@ -30,6 +30,8 @@ import { Campaign } from '../models/Campaign';
 import { Application } from '../models/Application';
 import { Report, type ReportDoc } from '../models/Report';
 import { Message } from '../models/Message';
+import { Conversation } from '../models/Conversation';
+import type { ReportTargetType } from '../../../shared/constants/reports';
 import { USER_ROLES } from '../../../shared/constants/statuses';
 import { REPORT_STATUSES } from '../../../shared/constants/reports';
 import { adminApiKeyOrAuthenticate } from '../middleware/authenticate';
@@ -596,25 +598,67 @@ router.post(
       });
     }
 
-    // Notify the creator when they aren't actively connected. Best-effort.
-    if (!recipientOnline) {
-      try {
-        const preview = body.length > 80 ? `${body.slice(0, 79)}…` : body;
-        await notify({
-          recipient: creatorUserId,
-          type: 'new_message',
-          message: `${SUPPORT_NAME}: ${preview}`,
-          deepLinkPath: `/chat/${c.id}`,
-        });
-      } catch (err) {
-        console.error(
-          '[admin] support message notify error:',
-          err instanceof Error ? err.message : err,
-        );
-      }
+    // Always notify the creator of a support message, even when their socket is
+    // connected. A live socket doesn't mean they're looking at this thread (a
+    // backgrounded app stays connected), and support messages are important and
+    // rare, so we don't suppress the in-app notification + push while "online".
+    // notify() writes the in-app record, emits the live bell event, and pushes
+    // (if they have a valid token + opted in). Best-effort.
+    try {
+      const preview = body.length > 80 ? `${body.slice(0, 79)}…` : body;
+      await notify({
+        recipient: creatorUserId,
+        type: 'new_message',
+        message: `${SUPPORT_NAME}: ${preview}`,
+        deepLinkPath: `/chat/${c.id}`,
+      });
+    } catch (err) {
+      console.error(
+        '[admin] support message notify error:',
+        err instanceof Error ? err.message : err,
+      );
     }
 
     res.status(201).json({ message: publicMessage });
+  }),
+);
+
+// --- Support inbox -----------------------------------------------------------
+
+/**
+ * GET /api/admin/conversations — the support inbox: every admin<->creator thread
+ * that has activity, newest first, with the creator's name/avatar, the last
+ * message, and the support-side unread count. `creatorProfileId` lets the UI open
+ * the thread via the existing /creators/:id/messages endpoints.
+ */
+router.get(
+  '/conversations',
+  asyncHandler(async (_req, res) => {
+    const convos = await Conversation.find({ kind: 'admin', lastMessageAt: { $ne: null } })
+      .sort({ lastMessageAt: -1 })
+      .limit(200);
+
+    const data = await Promise.all(
+      convos.map(async (c) => {
+        const creatorUserId = String(c.creatorUserId);
+        const [profile, user] = await Promise.all([
+          CreatorProfile.findOne({ userId: creatorUserId }).select('_id'),
+          User.findById(creatorUserId).select('name avatar'),
+        ]);
+        return {
+          _id: c.id,
+          creatorProfileId: profile ? String(profile._id) : null,
+          creatorName: user?.name ?? 'Creator',
+          creatorAvatar: user?.avatar ?? null,
+          lastMessage: c.lastMessage ?? '',
+          lastMessageAt: c.lastMessageAt ? c.lastMessageAt.toISOString() : null,
+          lastSenderUserId: c.lastSenderUserId ? String(c.lastSenderUserId) : null,
+          unread: c.unreadByBusiness,
+        };
+      }),
+    );
+
+    res.status(200).json({ data });
   }),
 );
 
@@ -624,7 +668,41 @@ const reportListSchema = z.object({
   status: z.enum(REPORT_STATUSES).optional(),
 });
 
-/** GET /api/admin/reports — the moderation queue, newest first. */
+/**
+ * Human-readable label for a report's target so the moderation queue shows a name
+ * instead of a raw id. `targetId` isn't a single ref, so we resolve per type.
+ * Best-effort: falls back to the type name if the target was deleted.
+ */
+async function reportTargetLabel(
+  targetType: ReportTargetType,
+  targetId: unknown,
+): Promise<string> {
+  try {
+    if (targetType === 'campaign') {
+      const c = await Campaign.findById(targetId).select('title');
+      return c?.title ?? 'Deleted campaign';
+    }
+    if (targetType === 'business') {
+      const b = await BusinessProfile.findById(targetId).select('businessName');
+      return b?.businessName ?? 'Deleted business';
+    }
+    if (targetType === 'creator') {
+      const p = await CreatorProfile.findById(targetId).populate('userId', 'name');
+      const u = p?.userId as unknown as { name?: string } | null;
+      return u?.name ?? 'Deleted creator';
+    }
+    const u = await User.findById(targetId).select('name');
+    return u?.name ?? 'Deleted user';
+  } catch {
+    return targetType;
+  }
+}
+
+/**
+ * GET /api/admin/reports — the moderation queue, newest first. Each report is
+ * enriched with the reporter's name/email and a readable target label so the
+ * dashboard can render who reported what without extra round-trips.
+ */
 router.get(
   '/reports',
   asyncHandler(async (req, res) => {
@@ -637,9 +715,22 @@ router.get(
     const docs = await Report.find(filter)
       .sort({ createdAt: -1 })
       .skip(pagination.skip)
-      .limit(pagination.limit);
+      .limit(pagination.limit)
+      .populate('reporterId', 'name email');
 
-    res.status(200).json(paginated(docs.map(toPublicReport), total, pagination));
+    const data = await Promise.all(
+      docs.map(async (r) => {
+        const reporter = r.reporterId as unknown as { name?: string; email?: string } | null;
+        return {
+          ...toPublicReport(r),
+          reporterName: reporter?.name ?? 'Unknown',
+          reporterEmail: reporter?.email ?? '',
+          targetLabel: await reportTargetLabel(r.targetType, r.targetId),
+        };
+      }),
+    );
+
+    res.status(200).json(paginated(data, total, pagination));
   }),
 );
 
