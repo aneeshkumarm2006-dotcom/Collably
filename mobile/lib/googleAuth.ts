@@ -109,6 +109,16 @@ export function useGoogleSignIn(options: GoogleSignInOptions = {}): GoogleSignIn
       // Android needs Play Services; on iOS this resolves immediately.
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
 
+      // Force the account chooser every time. Without this, the SDK silently
+      // reuses the last-signed-in Google account, so a user can't pick a different
+      // Gmail. Clearing the cached session makes the native picker appear again.
+      // Best-effort: a no-op/throw when nobody is signed in, so swallow it.
+      try {
+        await GoogleSignin.signOut();
+      } catch {
+        // no cached session to clear — the picker will show anyway
+      }
+
       // v13+ returns `{ type: 'success' | 'cancelled', data }`; older returns the
       // user object directly. Normalise across both shapes with one cast.
       const result = (await GoogleSignin.signIn()) as {

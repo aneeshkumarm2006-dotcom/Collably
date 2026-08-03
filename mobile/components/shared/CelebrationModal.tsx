@@ -5,7 +5,7 @@
  * rains over a centered card with the headline + message and a single dismiss CTA.
  */
 import { Modal, Text, View } from 'react-native';
-import Reanimated, { FadeIn, FadeInDown, useReducedMotion } from 'react-native-reanimated';
+import Reanimated, { FadeIn, FadeInDown, ZoomIn, useReducedMotion } from 'react-native-reanimated';
 import { Pressable } from '@/components/ui/SafePressable';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Confetti, Icon } from '@/components/ui';
@@ -44,19 +44,40 @@ export function CelebrationModal() {
             elevation: 8,
           }}
         >
-          <View
+          {/* Premium verified-check badge: a blue gradient disc with a white check,
+              cradled in a soft halo, springing in. No emoji, no sparkle. */}
+          <Reanimated.View
+            entering={reduced ? FadeIn.duration(220) : ZoomIn.springify().damping(12).stiffness(180).delay(120)}
             style={{
-              width: 76,
-              height: 76,
-              borderRadius: 38,
+              width: 98,
+              height: 98,
+              borderRadius: 49,
               alignItems: 'center',
               justifyContent: 'center',
-              marginBottom: 18,
+              marginBottom: 20,
               backgroundColor: colors.brandGreenSoft,
             }}
           >
-            <Icon name="sparkles" size={36} color={colors.brandGreenText} />
-          </View>
+            <LinearGradient
+              colors={[colors.brandGreen, colors.brandGreenDeep]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={{
+                width: 72,
+                height: 72,
+                borderRadius: 36,
+                alignItems: 'center',
+                justifyContent: 'center',
+                shadowColor: colors.brandGreen,
+                shadowOpacity: 0.55,
+                shadowRadius: 18,
+                shadowOffset: { width: 0, height: 8 },
+                elevation: 10,
+              }}
+            >
+              <Icon name="check" size={38} color="#fff" strokeWidth={3.5} />
+            </LinearGradient>
+          </Reanimated.View>
 
           <Text style={{ fontSize: 22, fontWeight: '800', letterSpacing: -0.4, color: colors.text, textAlign: 'center' }}>
             {current?.title ?? ''}
