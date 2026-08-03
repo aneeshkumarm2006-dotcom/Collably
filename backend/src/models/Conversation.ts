@@ -10,37 +10,60 @@ import { Schema, model, models, type Document, type Model, type Types } from 'mo
  * tracked per participant role and reset when that user opens the thread.
  */
 export interface ConversationDoc extends Document<Types.ObjectId> {
-  applicationId: Types.ObjectId;
-  campaignId: Types.ObjectId;
+  /**
+   * Thread flavour. `application` is the business<->creator collab chat (the
+   * default, keyed by a unique applicationId). `admin` is the support thread
+   * between the Local Creator Crew support account and a single creator.
+   */
+  kind: 'application' | 'admin';
+  applicationId?: Types.ObjectId;
+  campaignId?: Types.ObjectId;
   /** Denormalised so list rows don't populate the campaign each time. */
   campaignTitle?: string;
-  businessId: Types.ObjectId; // BusinessProfile
-  creatorId: Types.ObjectId; // CreatorProfile
-  businessUserId: Types.ObjectId; // User
+  businessId?: Types.ObjectId; // BusinessProfile
+  creatorId?: Types.ObjectId; // CreatorProfile
+  businessUserId?: Types.ObjectId; // User (for admin threads: the support user)
   creatorUserId: Types.ObjectId; // User
   participantUserIds: Types.ObjectId[];
   lastMessage?: string;
   lastMessageAt?: Date;
   lastSenderUserId?: Types.ObjectId;
+  /** For admin threads this doubles as the support/admin-side unread counter. */
   unreadByBusiness: number;
   unreadByCreator: number;
   createdAt: Date;
   updatedAt: Date;
 }
 
+// Collab-thread fields are required only for `application` conversations; an
+// `admin` support thread has no application/campaign/business behind it.
+const requiredForApplication = function (this: ConversationDoc): boolean {
+  return this.kind !== 'admin';
+};
+
 const conversationSchema = new Schema<ConversationDoc>(
   {
+    kind: { type: String, enum: ['application', 'admin'], default: 'application' },
+    // Uniqueness is enforced by the partial index below (not here) so multiple
+    // admin threads — all without an applicationId — don't collide on a unique key.
     applicationId: {
       type: Schema.Types.ObjectId,
       ref: 'Application',
-      required: true,
-      unique: true,
+      required: requiredForApplication,
     },
-    campaignId: { type: Schema.Types.ObjectId, ref: 'Campaign', required: true },
+    campaignId: { type: Schema.Types.ObjectId, ref: 'Campaign', required: requiredForApplication },
     campaignTitle: { type: String, trim: true },
-    businessId: { type: Schema.Types.ObjectId, ref: 'BusinessProfile', required: true },
-    creatorId: { type: Schema.Types.ObjectId, ref: 'CreatorProfile', required: true },
-    businessUserId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    businessId: {
+      type: Schema.Types.ObjectId,
+      ref: 'BusinessProfile',
+      required: requiredForApplication,
+    },
+    creatorId: {
+      type: Schema.Types.ObjectId,
+      ref: 'CreatorProfile',
+      required: requiredForApplication,
+    },
+    businessUserId: { type: Schema.Types.ObjectId, ref: 'User', required: requiredForApplication },
     creatorUserId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     participantUserIds: { type: [Schema.Types.ObjectId], ref: 'User', default: [] },
     lastMessage: { type: String, trim: true },
@@ -50,6 +73,20 @@ const conversationSchema = new Schema<ConversationDoc>(
     unreadByCreator: { type: Number, default: 0, min: 0 },
   },
   { timestamps: true },
+);
+
+// Keep application threads 1:1 with their accepted collab, while allowing many
+// admin threads (which carry no applicationId). Partial (not sparse) so only docs
+// that actually have an ObjectId applicationId participate in the unique index.
+conversationSchema.index(
+  { applicationId: 1 },
+  { unique: true, partialFilterExpression: { applicationId: { $type: 'objectId' } } },
+);
+
+// One admin/support thread per creator — idempotent get-or-create relies on this.
+conversationSchema.index(
+  { kind: 1, creatorUserId: 1 },
+  { unique: true, partialFilterExpression: { kind: 'admin' } },
 );
 
 // "My conversations", newest activity first.

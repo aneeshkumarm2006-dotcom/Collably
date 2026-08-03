@@ -18,6 +18,7 @@ export const NOTIFICATION_TYPES = [
   'new_message',
   'creator_verified',
   'business_verified',
+  'creator_rejected',
 ] as const;
 
 export type KnownNotificationType = (typeof NOTIFICATION_TYPES)[number];

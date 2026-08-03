@@ -127,6 +127,7 @@ export function toPublicCreatorProfile(p: CreatorProfileDoc): CreatorProfile {
     isUGCOnly: p.isUGCOnly,
     isVerified: p.isVerified,
     isSuspended: p.isSuspended,
+    rejectionReason: p.rejectionReason,
     createdAt: p.createdAt.toISOString(),
     updatedAt: p.updatedAt.toISOString(),
   };
@@ -334,13 +335,19 @@ export function toPublicConversation(
   viewerUserId: string,
   otherParticipant?: UserSummary,
 ): Conversation {
+  // Always present: the business on an application thread, the support user on an
+  // admin thread (it fills the "business" seat so dyad plumbing keeps working).
   const businessUserId = refId(c.businessUserId as Ref<unknown>);
   const creatorUserId = refId(c.creatorUserId as Ref<unknown>);
-  const viewerIsBusiness = businessUserId === viewerUserId;
+  // Unread is viewer-relative. The creator's counter is `unreadByCreator`; the
+  // other seat (business, or support on an admin thread) is `unreadByBusiness`.
+  const viewerIsCreator = creatorUserId === viewerUserId;
   return {
     _id: c.id,
-    applicationId: refId(c.applicationId as Ref<unknown>),
-    campaignId: refId(c.campaignId as Ref<unknown>),
+    kind: c.kind,
+    // Admin/support threads have no application or campaign behind them.
+    applicationId: c.applicationId ? refId(c.applicationId as Ref<unknown>) : undefined,
+    campaignId: c.campaignId ? refId(c.campaignId as Ref<unknown>) : undefined,
     campaignTitle: c.campaignTitle,
     businessUserId,
     creatorUserId,
@@ -348,7 +355,7 @@ export function toPublicConversation(
     lastMessage: c.lastMessage,
     lastMessageAt: iso(c.lastMessageAt),
     lastSenderUserId: c.lastSenderUserId ? refId(c.lastSenderUserId as Ref<unknown>) : undefined,
-    unreadCount: viewerIsBusiness ? c.unreadByBusiness : c.unreadByCreator,
+    unreadCount: viewerIsCreator ? c.unreadByCreator : c.unreadByBusiness,
     createdAt: c.createdAt.toISOString(),
     updatedAt: c.updatedAt.toISOString(),
   };

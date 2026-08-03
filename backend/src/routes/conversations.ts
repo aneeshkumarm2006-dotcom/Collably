@@ -26,6 +26,7 @@ import { AppError } from '../middleware/errorHandler';
 import { objectIdParam, parsePagination, paginated } from '../lib/http';
 import { toPublicConversation, toPublicMessage } from '../lib/serialize';
 import { emitToUser, isUserOnline } from '../lib/realtime';
+import { otherParticipantUserId, SUPPORT_NAME } from '../lib/conversations';
 import { notify } from '../services';
 import type { UserSummary } from '../../../shared/types/User';
 
@@ -67,10 +68,23 @@ async function resolveOtherParticipant(
   viewerUserId: string,
 ): Promise<UserSummary> {
   const viewerIsCreator = c.creatorUserId.toString() === viewerUserId;
+
+  // Admin/support thread: the creator's counterpart is the fixed support identity.
+  if (c.kind === 'admin' && viewerIsCreator) {
+    return {
+      _id: c.businessUserId ? c.businessUserId.toString() : '',
+      name: SUPPORT_NAME,
+      avatar: null,
+      role: 'admin',
+      createdAt: c.createdAt.toISOString(),
+    };
+  }
+
   if (viewerIsCreator) {
     const biz = await BusinessProfile.findById(c.businessId).select('businessName logo');
     return {
-      _id: c.businessUserId.toString(),
+      // Application threads always have a business seat (admin handled above).
+      _id: c.businessUserId ? c.businessUserId.toString() : '',
       name: biz?.businessName ?? 'Business',
       avatar: biz?.logo ?? null,
       role: 'business',
@@ -155,20 +169,28 @@ router.post(
     const { body } = sendSchema.parse(req.body);
 
     const senderUserId = req.user!._id;
-    const senderIsBusiness = c.businessUserId.toString() === senderUserId.toString();
-    const recipientUserId = senderIsBusiness ? c.creatorUserId : c.businessUserId;
+    // Recipient = the participant that isn't the sender. Works identically for the
+    // business<->creator dyad and for the support<->creator admin thread.
+    const recipientObjectId = c.participantUserIds.find(
+      (p) => p.toString() !== senderUserId.toString(),
+    );
+    if (!recipientObjectId) throw new AppError(403, 'You are not part of this conversation');
+    const recipientUserId = recipientObjectId.toString();
+    // Bump the recipient's unread column: the creator's is `unreadByCreator`, the
+    // other seat (business, or support on an admin thread) is `unreadByBusiness`.
+    const recipientIsCreator = c.creatorUserId.toString() === recipientUserId;
 
     // A block cuts contact both ways (App Store 1.2 / Play UGC). Checked here at
     // the send rather than at thread open so an existing thread stays readable —
     // history doesn't vanish, it just goes read-only for both sides.
-    if (await areBlocked(senderUserId, recipientUserId)) {
+    if (await areBlocked(senderUserId, recipientObjectId)) {
       throw new AppError(403, 'You can no longer message this account.');
     }
 
     // If the recipient is connected, the message:new below reaches their device
     // now → it's delivered (WhatsApp ✓✓ grey). Otherwise it stays "sent" (✓) until
     // they reconnect (see the delivery catch-up in lib/realtime on socket connect).
-    const recipientOnline = isUserOnline(recipientUserId.toString());
+    const recipientOnline = isUserOnline(recipientUserId);
     const message = await Message.create({
       conversationId: c._id,
       senderUserId,
@@ -181,28 +203,27 @@ router.post(
     c.lastMessage = body;
     c.lastMessageAt = message.createdAt;
     c.lastSenderUserId = senderUserId;
-    if (senderIsBusiness) c.unreadByCreator += 1;
+    if (recipientIsCreator) c.unreadByCreator += 1;
     else c.unreadByBusiness += 1;
     await c.save();
 
     const publicMessage = toPublicMessage(message);
-    // Real-time fan-out to both participants (sender echo reconciles optimistic UI).
-    emitToUser(c.businessUserId.toString(), 'message:new', {
-      conversationId: c.id,
-      message: publicMessage,
-    });
-    emitToUser(c.creatorUserId.toString(), 'message:new', {
-      conversationId: c.id,
-      message: publicMessage,
-    });
+    // Real-time fan-out to every participant (the sender echo reconciles optimistic
+    // UI). For both thread kinds this is exactly [otherParticipant, sender].
+    for (const p of c.participantUserIds) {
+      emitToUser(p.toString(), 'message:new', {
+        conversationId: c.id,
+        message: publicMessage,
+      });
+    }
 
     // Notify the recipient if they aren't actively connected (avoids push spam
     // while they're already in the thread). Best-effort — never blocks the send.
-    if (!isUserOnline(recipientUserId.toString())) {
+    if (!isUserOnline(recipientUserId)) {
       try {
         const preview = body.length > 80 ? `${body.slice(0, 79)}…` : body;
         await notify({
-          recipient: recipientUserId.toString(),
+          recipient: recipientUserId,
           type: 'new_message',
           message: `${req.user!.name}: ${preview}`,
           deepLinkPath: `/chat/${c.id}`,
@@ -228,23 +249,27 @@ router.post(
     const c = await findConversationOr404(id);
     assertParticipant(c, req);
     const viewerId = req.user!._id.toString();
-    const viewerIsBusiness = c.businessUserId.toString() === viewerId;
+    // The creator's unread lives in `unreadByCreator`; the other seat (business, or
+    // support on an admin thread) uses `unreadByBusiness`.
+    const viewerIsCreator = c.creatorUserId.toString() === viewerId;
 
     // Stamp the other side's unread messages as read, and zero my counter.
     await Message.updateMany(
       { conversationId: c._id, senderUserId: { $ne: req.user!._id }, readAt: { $exists: false } },
       { $set: { readAt: new Date() } },
     );
-    if (viewerIsBusiness) c.unreadByBusiness = 0;
-    else c.unreadByCreator = 0;
+    if (viewerIsCreator) c.unreadByCreator = 0;
+    else c.unreadByBusiness = 0;
     await c.save();
 
     // Let the other participant update read receipts live.
-    const otherUserId = viewerIsBusiness ? c.creatorUserId : c.businessUserId;
-    emitToUser(otherUserId.toString(), 'conversation:read', {
-      conversationId: c.id,
-      byUserId: viewerId,
-    });
+    const otherUserId = otherParticipantUserId(c, viewerId);
+    if (otherUserId) {
+      emitToUser(otherUserId, 'conversation:read', {
+        conversationId: c.id,
+        byUserId: viewerId,
+      });
+    }
 
     res.status(200).json({
       conversation: toPublicConversation(c, viewerId, await resolveOtherParticipant(c, viewerId)),

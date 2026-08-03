@@ -181,6 +181,26 @@ export function notifyBusinessVerified(opts: {
   );
 }
 
+/**
+ * Creator rejected by an admin → creator (push + in-app). The admin's reason is
+ * delivered verbatim so the creator knows exactly what to fix and can resubmit.
+ * Best-effort like the rest; no email template yet.
+ */
+export function notifyCreatorRejected(opts: {
+  creatorUserId: string;
+  reason: string;
+}): Promise<void> {
+  return safeNotify('creator_rejected', () =>
+    notify({
+      recipient: opts.creatorUserId,
+      type: 'creator_rejected',
+      message: `Your creator profile needs changes: ${opts.reason}`,
+      deepLinkPath: '/notifications',
+      push: { title: 'Your profile needs changes', body: opts.reason },
+    }),
+  );
+}
+
 /** Revision requested → creator (push + email). */
 export function notifyRevisionRequested(opts: {
   creatorUserId: string;

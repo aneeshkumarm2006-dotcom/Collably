@@ -9,8 +9,14 @@ import type { UserSummary } from './User';
  */
 export interface Conversation extends Timestamped {
   _id: ID;
-  applicationId: ID; // ref: Application (unique — 1:1 with the accepted collab)
-  campaignId: ID; // ref: Campaign
+  /**
+   * Thread flavour. `application` is the business<->creator collab chat; `admin`
+   * is the Local Creator Crew support thread with a creator. Absent is treated as
+   * `application` for back-compat with rows created before this field existed.
+   */
+  kind?: 'application' | 'admin';
+  applicationId?: ID; // ref: Application (unique per accepted collab; absent on admin threads)
+  campaignId?: ID; // ref: Campaign (absent on admin threads)
   /** Denormalised for list rows so we don't populate the campaign every time. */
   campaignTitle?: string;
   businessUserId: ID; // ref: User

@@ -15,6 +15,8 @@
  *   PATCH  /api/admin/businesses/:id       verify / suspend
  *   GET    /api/admin/creators            creator profiles (paginate)
  *   PATCH  /api/admin/creators/:id         suspend
+ *   GET    /api/admin/creators/:id/messages  support thread with a creator
+ *   POST   /api/admin/creators/:id/messages  message a creator as support
  *   GET    /api/admin/reports             reports queue (filter + paginate)
  *   PATCH  /api/admin/reports/:id          dismiss / act
  */
@@ -27,6 +29,7 @@ import { CreatorProfile } from '../models/CreatorProfile';
 import { Campaign } from '../models/Campaign';
 import { Application } from '../models/Application';
 import { Report, type ReportDoc } from '../models/Report';
+import { Message } from '../models/Message';
 import { USER_ROLES } from '../../../shared/constants/statuses';
 import { REPORT_STATUSES } from '../../../shared/constants/reports';
 import { adminApiKeyOrAuthenticate } from '../middleware/authenticate';
@@ -40,8 +43,14 @@ import {
   toPublicCreatorProfile,
   toPublicCampaign,
   toPublicReport,
+  toPublicConversation,
+  toPublicMessage,
 } from '../lib/serialize';
-import { notifyCreatorVerified, notifyBusinessVerified } from '../lib/triggers';
+import { notifyCreatorVerified, notifyBusinessVerified, notifyCreatorRejected } from '../lib/triggers';
+import { getOrCreateAdminConversation, getOrCreateSupportUser, SUPPORT_NAME } from '../lib/conversations';
+import { emitToUser, isUserOnline } from '../lib/realtime';
+import { notify } from '../services';
+import type { UserSummary } from '../../../shared/types/User';
 
 const router = Router();
 
@@ -402,10 +411,33 @@ const creatorPatchSchema = z
   .object({
     isVerified: z.boolean().optional(),
     isSuspended: z.boolean().optional(),
+    /** Reject the creator with a reason: unverifies + notifies them what to fix. */
+    rejectionReason: z.string().trim().min(1).max(500).optional(),
+    /** Per-platform verified toggles (trust badges on each submitted handle). */
+    platforms: z
+      .object({
+        instagram: z.boolean().optional(),
+        youtube: z.boolean().optional(),
+        tiktok: z.boolean().optional(),
+      })
+      .optional(),
   })
-  .refine((v) => v.isVerified !== undefined || v.isSuspended !== undefined, 'Nothing to update');
+  .refine(
+    (v) =>
+      v.isVerified !== undefined ||
+      v.isSuspended !== undefined ||
+      v.rejectionReason !== undefined ||
+      v.platforms !== undefined,
+    'Nothing to update',
+  );
 
-/** PATCH /api/admin/creators/:id — verify (approve/revoke) / suspend a creator. */
+/**
+ * PATCH /api/admin/creators/:id — the admin verification controls:
+ *  - `isVerified` approve/revoke the overall "can apply to campaigns" gate.
+ *  - `rejectionReason` reject with a note (unverifies + tells the creator why).
+ *  - `platforms` toggle per-platform verified badges (Instagram/YouTube/TikTok).
+ *  - `isSuspended` moderation.
+ */
 router.patch(
   '/creators/:id',
   asyncHandler(async (req, res) => {
@@ -414,15 +446,158 @@ router.patch(
     const profile = await CreatorProfile.findById(id);
     if (!profile) throw new AppError(404, 'Creator profile not found');
     const wasVerified = profile.isVerified;
-    if (data.isVerified !== undefined) profile.isVerified = data.isVerified;
+
+    // Reject: decline the creator with a reason. Keeps them unverified, stores the
+    // note, and clears any stale approval. Takes precedence over isVerified:true.
+    if (data.rejectionReason !== undefined) {
+      profile.isVerified = false;
+      profile.rejectionReason = data.rejectionReason;
+    } else if (data.isVerified !== undefined) {
+      profile.isVerified = data.isVerified;
+      // Approving clears an outstanding rejection note.
+      if (data.isVerified) profile.rejectionReason = undefined;
+    }
+
     if (data.isSuspended !== undefined) profile.isSuspended = data.isSuspended;
+
+    // Per-platform verified badges: only touch a platform that was submitted.
+    if (data.platforms) {
+      for (const key of ['instagram', 'youtube', 'tiktok'] as const) {
+        const want = data.platforms[key];
+        const handle = profile.socialHandles?.[key];
+        if (want !== undefined && handle?.handle) handle.verified = want;
+      }
+      profile.markModified('socialHandles');
+    }
+
     await profile.save();
 
     // First-time approval → notify the creator (push + in-app + live socket).
-    if (data.isVerified === true && !wasVerified) {
+    if (data.rejectionReason === undefined && data.isVerified === true && !wasVerified) {
       void notifyCreatorVerified({ creatorUserId: String(profile.userId) });
     }
+    // Rejection → tell the creator what to fix.
+    if (data.rejectionReason !== undefined) {
+      void notifyCreatorRejected({
+        creatorUserId: String(profile.userId),
+        reason: data.rejectionReason,
+      });
+    }
     res.status(200).json({ profile: toPublicCreatorProfile(profile) });
+  }),
+);
+
+// --- Admin <-> creator support chat ------------------------------------------
+
+const adminMessageSchema = z.object({
+  body: z.string().trim().min(1, 'message is required').max(4000),
+});
+
+/** The creator's summary chip for the admin-side view of a support thread. */
+async function creatorSummaryOf(creatorUserId: string): Promise<UserSummary> {
+  const user = await User.findById(creatorUserId).select('name avatar createdAt');
+  return {
+    _id: creatorUserId,
+    name: user?.name ?? 'Creator',
+    avatar: user?.avatar ?? null,
+    role: 'creator',
+    createdAt: (user?.createdAt ?? new Date()).toISOString(),
+  };
+}
+
+/**
+ * GET /api/admin/creators/:id/messages — the support thread with one creator.
+ * `:id` is the CreatorProfile id (matches PATCH /creators/:id). Resolves the
+ * creator's User, get-or-creates the single admin conversation, and returns the
+ * serialized thread plus up to 100 messages (oldest-last for straight rendering).
+ */
+router.get(
+  '/creators/:id/messages',
+  asyncHandler(async (req, res) => {
+    const id = objectIdParam(req.params.id);
+    const profile = await CreatorProfile.findById(id).select('userId');
+    if (!profile) throw new AppError(404, 'Creator profile not found');
+    const creatorUserId = String(profile.userId);
+
+    const support = await getOrCreateSupportUser();
+    const c = await getOrCreateAdminConversation(creatorUserId);
+
+    const docs = await Message.find({ conversationId: c._id }).sort({ createdAt: -1 }).limit(100);
+    const messages = docs.reverse().map(toPublicMessage);
+
+    // Serialize from the support/admin viewpoint: unreadCount reflects the
+    // support-side counter and the other participant is the creator.
+    const conversation = toPublicConversation(
+      c,
+      String(support._id),
+      await creatorSummaryOf(creatorUserId),
+    );
+    res.status(200).json({ conversation, messages });
+  }),
+);
+
+/**
+ * POST /api/admin/creators/:id/messages — send a message to the creator as the
+ * Local Creator Crew support account. Persists the message, bumps the creator's
+ * unread, pushes an in-app + push notification, and fans it out live.
+ */
+router.post(
+  '/creators/:id/messages',
+  asyncHandler(async (req, res) => {
+    const id = objectIdParam(req.params.id);
+    const { body } = adminMessageSchema.parse(req.body);
+
+    const profile = await CreatorProfile.findById(id).select('userId');
+    if (!profile) throw new AppError(404, 'Creator profile not found');
+    const creatorUserId = String(profile.userId);
+
+    const support = await getOrCreateSupportUser();
+    const c = await getOrCreateAdminConversation(creatorUserId);
+
+    const recipientOnline = isUserOnline(creatorUserId);
+    const message = await Message.create({
+      conversationId: c._id,
+      senderUserId: support._id,
+      senderRole: 'admin',
+      body,
+      ...(recipientOnline ? { deliveredAt: new Date() } : {}),
+    });
+
+    // Thread preview + bump the creator's unread counter (support -> creator).
+    c.lastMessage = body;
+    c.lastMessageAt = message.createdAt;
+    c.lastSenderUserId = support._id;
+    c.unreadByCreator += 1;
+    await c.save();
+
+    const publicMessage = toPublicMessage(message);
+    // Live fan-out to every participant (support echo + the creator's devices).
+    for (const p of c.participantUserIds) {
+      emitToUser(p.toString(), 'message:new', {
+        conversationId: c.id,
+        message: publicMessage,
+      });
+    }
+
+    // Notify the creator when they aren't actively connected. Best-effort.
+    if (!recipientOnline) {
+      try {
+        const preview = body.length > 80 ? `${body.slice(0, 79)}…` : body;
+        await notify({
+          recipient: creatorUserId,
+          type: 'new_message',
+          message: `${SUPPORT_NAME}: ${preview}`,
+          deepLinkPath: `/chat/${c.id}`,
+        });
+      } catch (err) {
+        console.error(
+          '[admin] support message notify error:',
+          err instanceof Error ? err.message : err,
+        );
+      }
+    }
+
+    res.status(201).json({ message: publicMessage });
   }),
 );
 

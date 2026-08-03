@@ -23,12 +23,20 @@ export interface YouTubeHandle {
   handle: string;
   /** Public channel URL. Required when the platform is submitted. */
   link: string;
+  /**
+   * True once an admin has reviewed this channel and marked it verified. Unlike
+   * Instagram (proven via the DM-code flow), YouTube/TikTok are verified by an
+   * admin eyeballing the submitted link. A per-platform trust signal.
+   */
+  verified?: boolean;
 }
 
 export interface TikTokHandle {
   handle: string;
   /** Public profile URL. Required when the platform is submitted. */
   link: string;
+  /** True once an admin has reviewed this profile and marked it verified. */
+  verified?: boolean;
 }
 
 export interface CreatorSocialHandles {
@@ -66,4 +74,11 @@ export interface CreatorProfile extends Timestamped {
   isVerified: boolean;
   /** Admin moderation flag (PRD §7.5, §14). */
   isSuspended: boolean;
+  /**
+   * The reason an admin last rejected this profile, if any. Set when an admin
+   * rejects (declines) the creator with a note; shown back to the creator so they
+   * know what to fix, and cleared once they are approved. Empty/undefined = no
+   * outstanding rejection.
+   */
+  rejectionReason?: string;
 }

@@ -16,8 +16,8 @@ export interface CreatorProfileDoc extends Document<Types.ObjectId> {
   location: { city?: string; state?: string; country?: string };
   socialHandles: {
     instagram?: { handle: string; link: string; followerCount?: number; verified?: boolean };
-    youtube?: { handle: string; link: string };
-    tiktok?: { handle: string; link: string };
+    youtube?: { handle: string; link: string; verified?: boolean };
+    tiktok?: { handle: string; link: string; verified?: boolean };
   };
   contentTypes: ContentType[];
   portfolio: { imageUrl: string; caption?: string; link?: string }[];
@@ -31,6 +31,8 @@ export interface CreatorProfileDoc extends Document<Types.ObjectId> {
   isVerified: boolean;
   /** Admin moderation flag (PRD §7.5, §14). Suspended profiles are hidden/locked. */
   isSuspended: boolean;
+  /** The reason an admin last rejected this profile; cleared on approval. */
+  rejectionReason?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -61,10 +63,14 @@ const creatorProfileSchema = new Schema<CreatorProfileDoc>(
       youtube: {
         handle: { type: String, trim: true },
         link: { type: String, trim: true },
+        // Admin-set trust signal (reviewer eyeballs the channel link).
+        verified: { type: Boolean, default: false },
       },
       tiktok: {
         handle: { type: String, trim: true },
         link: { type: String, trim: true },
+        // Admin-set trust signal (reviewer eyeballs the profile link).
+        verified: { type: Boolean, default: false },
       },
     },
     contentTypes: { type: [{ type: String, enum: [...CONTENT_TYPES] }], default: [] },
@@ -74,6 +80,7 @@ const creatorProfileSchema = new Schema<CreatorProfileDoc>(
     totalRewardsEarned: { type: Number, default: 0, min: 0 },
     isVerified: { type: Boolean, default: false },
     isSuspended: { type: Boolean, default: false },
+    rejectionReason: { type: String, trim: true },
   },
   { timestamps: true },
 );

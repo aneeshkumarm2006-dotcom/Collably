@@ -20,6 +20,7 @@ import { corsOrigins } from './env';
 import { User } from '../models/User';
 import { Conversation } from '../models/Conversation';
 import { Message } from '../models/Message';
+import { otherParticipantUserId } from './conversations';
 import type { UserRole } from '../../../shared/constants/statuses';
 
 interface SocketAuthData {
@@ -92,13 +93,12 @@ export function initRealtime(httpServer: HttpServer): SocketIOServer {
         void (async () => {
           try {
             const convo = await Conversation.findById(payload.conversationId).select(
-              'businessUserId creatorUserId',
+              'participantUserIds',
             );
             if (!convo) return;
-            const business = convo.businessUserId.toString();
-            const creator = convo.creatorUserId.toString();
-            if (userId !== business && userId !== creator) return; // not a participant → drop
-            const toUserId = userId === business ? creator : business;
+            if (!convo.participantUserIds.some((p) => p.toString() === userId)) return; // not a participant → drop
+            const toUserId = otherParticipantUserId(convo, userId);
+            if (!toUserId) return;
             emitToUser(toUserId, 'typing', {
               conversationId: payload.conversationId,
               fromUserId: userId,
@@ -123,7 +123,7 @@ export function initRealtime(httpServer: HttpServer): SocketIOServer {
 async function markIncomingDelivered(userId: string): Promise<void> {
   try {
     const convos = await Conversation.find({ participantUserIds: userId }).select(
-      '_id businessUserId creatorUserId',
+      '_id participantUserIds',
     );
     const now = new Date();
     for (const c of convos) {
@@ -132,11 +132,13 @@ async function markIncomingDelivered(userId: string): Promise<void> {
         { $set: { deliveredAt: now } },
       );
       if (res.modifiedCount > 0) {
-        const senderUserId =
-          c.businessUserId.toString() === userId ? c.creatorUserId : c.businessUserId;
-        emitToUser(senderUserId.toString(), 'conversation:delivered', {
-          conversationId: c._id.toString(),
-        });
+        // The sender waiting on the delivery tick is the other participant.
+        const senderUserId = otherParticipantUserId(c, userId);
+        if (senderUserId) {
+          emitToUser(senderUserId, 'conversation:delivered', {
+            conversationId: c._id.toString(),
+          });
+        }
       }
     }
   } catch (err) {
