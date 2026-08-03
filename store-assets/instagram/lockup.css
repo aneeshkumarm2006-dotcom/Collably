@@ -1,0 +1,55 @@
+/* Local Creator Crew — logo lockups, faithful to www.localcreatorcrew.com
+   Type: Space Grotesk 700, tracking -0.03em
+   Blue #1877F2 · Yellow #FFC24B · Ink #14181F
+   The "o" in Local is a map pin. The "o" in Creator is a broadcast signal. */
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body { width: 1080px; height: 1080px; overflow: hidden; }
+
+.tile {
+  width: 1080px;
+  height: 1080px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mark {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 0.92;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Glyph boxes are cropped to the artwork so the letters sit tight against them.
+   The pin only fills x 4.8-19.2 of its 24-wide viewBox, and the signal starts at
+   x 8.6, which is where the original spacing gap came from. Height and scale are
+   unchanged; only the horizontal dead space is removed. */
+.mark svg {
+  display: inline-block;
+  height: 0.78em;
+  vertical-align: -0.12em;
+}
+
+.mark svg.g-pin { width: 0.468em; margin: 0 0.035em; } /* 14.4/24 of 0.78em */
+.mark svg.g-sig { width: 0.483em; margin: 0 0.02em; }  /* 14.85/24 of 0.78em */
+
+/* stacked, for the circular profile picture.
+   205px keeps the widest line ("Creator") inside the circular crop. */
+.stack { font-size: 205px; }
+.stack .l2 { display: block; }
+.stack .l3 { display: block; }
+
+/* horizontal, for covers and headers */
+.row { font-size: 132px; }
+
+/* themes */
+.on-white { background: #ffffff; color: #14181F; }
+.on-blue  { background: #1877F2; color: #ffffff; }
+.on-ink   { background: #14181F; color: #ffffff; }
+.on-blue .accent, .on-ink .accent { color: #FFC24B; }
