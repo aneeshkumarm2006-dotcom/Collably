@@ -15,11 +15,23 @@ export function InboxClient({ conversations }: { conversations: AdminConversatio
   const [selectedId, setSelectedId] = useState<string | null>(openable[0]?._id ?? null);
   const selected = conversations.find((c) => c._id === selectedId) ?? null;
 
+  // Single-pane control for mobile: the list and the thread share the viewport
+  // below `md`, so we track whether the user has drilled into a thread. Desktop
+  // (md+) shows both panes at once and ignores this flag. `selectedId` stays set
+  // (first openable) so the desktop thread is preselected as before.
+  const [threadOpenMobile, setThreadOpenMobile] = useState(false);
+
+  function openConversation(id: string) {
+    setSelectedId(id);
+    setThreadOpenMobile(true);
+  }
+
   return (
     <div className="flex h-full min-h-0 overflow-hidden rounded-2xl border border-hair bg-card shadow-card">
-      {/* LEFT: conversation list */}
+      {/* LEFT: conversation list — full width on mobile; hidden there once a
+          thread is open. Always visible from md up. */}
       <aside
-        className="flex w-full max-w-[360px] shrink-0 flex-col border-r border-hair"
+        className={`${threadOpenMobile ? 'hidden' : 'flex'} w-full shrink-0 flex-col border-r border-hair md:flex md:max-w-[360px]`}
         aria-label="Conversations"
       >
         <ul className="min-h-0 flex-1 overflow-y-auto py-2">
@@ -33,7 +45,7 @@ export function InboxClient({ conversations }: { conversations: AdminConversatio
               <li key={c._id}>
                 <button
                   type="button"
-                  onClick={() => openableRow && setSelectedId(c._id)}
+                  onClick={() => openableRow && openConversation(c._id)}
                   disabled={!openableRow}
                   aria-current={active ? 'true' : undefined}
                   title={
@@ -92,14 +104,41 @@ export function InboxClient({ conversations }: { conversations: AdminConversatio
         </ul>
       </aside>
 
-      {/* RIGHT: active thread or empty state */}
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+      {/* RIGHT: active thread or empty state — hidden on mobile until a thread
+          is opened; always visible from md up. */}
+      <div
+        className={`${threadOpenMobile ? 'flex' : 'hidden'} min-h-0 min-w-0 flex-1 flex-col md:flex`}
+      >
         {selected && selected.creatorProfileId ? (
-          <InboxThread
-            key={selected.creatorProfileId}
-            creatorId={selected.creatorProfileId}
-            creatorName={selected.creatorName?.trim() || 'Unknown creator'}
-          />
+          <>
+            {/* Mobile-only return control back to the conversation list. */}
+            <button
+              type="button"
+              onClick={() => setThreadOpenMobile(false)}
+              className="flex shrink-0 items-center gap-1.5 border-b border-hair px-4 py-3 text-[13.5px] font-semibold text-muted transition hover:text-ink md:hidden"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-4 w-4"
+                aria-hidden="true"
+              >
+                <path d="m15 18-6-6 6-6" />
+              </svg>
+              Back to inbox
+            </button>
+            <div className="min-h-0 flex-1">
+              <InboxThread
+                key={selected.creatorProfileId}
+                creatorId={selected.creatorProfileId}
+                creatorName={selected.creatorName?.trim() || 'Unknown creator'}
+              />
+            </div>
+          </>
         ) : (
           <div className="m-auto flex max-w-xs flex-col items-center gap-3 px-6 text-center">
             <span

@@ -48,7 +48,7 @@ export function TopNav() {
   }
 
   return (
-    <header className="flex h-[62px] items-center gap-5 border-b border-hair bg-card px-4 md:px-8">
+    <header className="flex h-[62px] items-center gap-3 border-b border-hair bg-card px-4 md:gap-5 md:px-8">
       <div className="flex shrink-0 items-center gap-3">
         <span className="grid h-9 w-9 place-items-center rounded-[10px] bg-[linear-gradient(150deg,#2D88FF,#1877F2)] text-white shadow-[0_4px_12px_rgba(24,119,242,0.35)]">
           <svg viewBox="0 0 24 24" fill="none" className="h-[18px] w-[18px]">
@@ -68,7 +68,10 @@ export function TopNav() {
         </span>
       </div>
 
-      <nav className="hidden items-center gap-0.5 md:flex" aria-label="Primary">
+      <nav
+        className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:flex-none md:overflow-visible"
+        aria-label="Primary"
+      >
         {NAV.map((n) => {
           const active = n.href ? pathname.startsWith(n.href) : false;
           const glyph = (
@@ -85,7 +88,7 @@ export function TopNav() {
             </svg>
           );
           const base =
-            'flex items-center gap-2 rounded-[9px] px-3 py-2 text-[13.5px] font-bold transition';
+            'flex shrink-0 items-center gap-2 rounded-[9px] px-3 py-2 text-[13.5px] font-bold transition';
           if (!n.href) {
             return (
               <span
@@ -117,7 +120,7 @@ export function TopNav() {
         })}
       </nav>
 
-      <div className="ml-auto flex items-center gap-3">
+      <div className="ml-auto flex shrink-0 items-center gap-3">
         <div className="relative hidden items-center sm:flex">
           <svg
             viewBox="0 0 24 24"
