@@ -12,7 +12,23 @@ import { Text, View, type TextInput as RNTextInput, type TextInputProps } from '
 import { Pressable } from '@/components/ui/SafePressable';
 import { TextInput } from '@/components/ui/SafeTextInput';
 import { useTheme } from '@/components/ThemeProvider';
-import { Icon, type IconName } from '@/components/ui';
+import { Icon, type IconName, useOnDarkSurface } from '@/components/ui';
+
+// Blue-black "story" palette, reused from the onboarding StoryInput so the auth
+// fields feel like one system when they sit on the cinematic dark ground.
+const D = {
+  blue: '#2D88FF',
+  surface: 'rgba(255,255,255,0.055)',
+  border: 'rgba(255,255,255,0.12)',
+  iconIdleBg: 'rgba(255,255,255,0.06)',
+  iconFocusBg: 'rgba(45,136,255,0.18)',
+  text: '#FFFFFF',
+  placeholder: 'rgba(255,255,255,0.36)',
+  label: 'rgba(255,255,255,0.72)',
+  iconIdle: 'rgba(255,255,255,0.5)',
+  iconFocus: '#5AA0FF',
+  danger: '#FF8B8B',
+};
 
 export type AuthInputProps = {
   label: string;
@@ -54,12 +70,25 @@ export const AuthInput = forwardRef<RNTextInput, AuthInputProps>(function AuthIn
   ref,
 ) {
   const { colors } = useTheme();
+  const onDark = useOnDarkSurface();
   const [hidden, setHidden] = useState(secure);
   const [focused, setFocused] = useState(false);
 
-  // Premium focus treatment: green ring + highlighted icon when active; red on error.
-  const borderColor = error ? colors.danger : focused ? colors.brandGreen : colors.hairStrong;
-  const iconColor = error ? colors.danger : focused ? colors.brandGreenText : colors.text3;
+  // Premium focus treatment: blue ring + highlighted icon when active; red on error.
+  // On the cinematic dark ground we swap to the translucent "story" glass surface.
+  const dangerColor = onDark ? D.danger : colors.danger;
+  const borderColor = error
+    ? dangerColor
+    : focused
+      ? D.blue
+      : onDark
+        ? D.border
+        : colors.hairStrong;
+  const iconColor = error
+    ? dangerColor
+    : focused
+      ? onDark ? D.iconFocus : colors.brandGreenText
+      : onDark ? D.iconIdle : colors.text3;
 
   return (
     <View style={{ marginBottom: 16 }}>
@@ -67,7 +96,7 @@ export const AuthInput = forwardRef<RNTextInput, AuthInputProps>(function AuthIn
         style={{
           fontSize: 13,
           fontWeight: '600',
-          color: colors.text2,
+          color: onDark ? D.label : colors.text2,
           marginBottom: 7,
           letterSpacing: -0.1,
         }}
@@ -79,12 +108,16 @@ export const AuthInput = forwardRef<RNTextInput, AuthInputProps>(function AuthIn
         style={{
           flexDirection: 'row',
           alignItems: 'center',
-          backgroundColor: colors.cardSunk,
+          backgroundColor: onDark ? D.surface : colors.cardSunk,
           // Constant 1.5px border (no width change on focus → no flicker/jump).
           borderWidth: 1.5,
           borderColor,
           borderRadius: 14,
           paddingHorizontal: 14,
+          // Soft blue focus ring (iOS glow; Android falls back to the border).
+          ...(focused && !error && onDark
+            ? { shadowColor: D.blue, shadowOpacity: 0.35, shadowRadius: 8, shadowOffset: { width: 0, height: 0 } }
+            : {}),
         }}
       >
         {icon && (
@@ -95,7 +128,9 @@ export const AuthInput = forwardRef<RNTextInput, AuthInputProps>(function AuthIn
               borderRadius: 9,
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: focused && !error ? colors.brandGreenSoft : colors.card,
+              backgroundColor: onDark
+                ? focused && !error ? D.iconFocusBg : D.iconIdleBg
+                : focused && !error ? colors.brandGreenSoft : colors.card,
             }}
           >
             <Icon name={icon} size={17} color={iconColor} strokeWidth={1.9} />
@@ -108,7 +143,7 @@ export const AuthInput = forwardRef<RNTextInput, AuthInputProps>(function AuthIn
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           placeholder={placeholder}
-          placeholderTextColor={colors.text3}
+          placeholderTextColor={onDark ? D.placeholder : colors.text3}
           secureTextEntry={hidden}
           keyboardType={keyboardType}
           autoCapitalize={autoCapitalize}
@@ -120,14 +155,14 @@ export const AuthInput = forwardRef<RNTextInput, AuthInputProps>(function AuthIn
           maxLength={maxLength}
           // Kill Android's default green accent underline (the "green stripe").
           underlineColorAndroid="transparent"
-          selectionColor={colors.brandGreen}
-          cursorColor={colors.brandGreen}
+          selectionColor={onDark ? D.blue : colors.brandGreen}
+          cursorColor={onDark ? D.blue : colors.brandGreen}
           style={{
             flex: 1,
             paddingVertical: 14,
             paddingLeft: icon ? 11 : 0,
             fontSize: 16,
-            color: colors.text,
+            color: onDark ? D.text : colors.text,
           }}
         />
         {secure && (
@@ -138,13 +173,18 @@ export const AuthInput = forwardRef<RNTextInput, AuthInputProps>(function AuthIn
             accessibilityLabel={hidden ? 'Show password' : 'Hide password'}
             style={({ pressed }) => ({ padding: 4, opacity: pressed ? 0.6 : 1 })}
           >
-            <Icon name="eye" size={19} color={hidden ? colors.text3 : colors.brandGreenText} strokeWidth={1.9} />
+            <Icon
+              name="eye"
+              size={19}
+              color={hidden ? (onDark ? D.iconIdle : colors.text3) : onDark ? D.iconFocus : colors.brandGreenText}
+              strokeWidth={1.9}
+            />
           </Pressable>
         )}
       </View>
 
       {error && (
-        <Text style={{ fontSize: 12.5, color: colors.danger, marginTop: 6 }}>{error}</Text>
+        <Text style={{ fontSize: 12.5, color: dangerColor, marginTop: 6 }}>{error}</Text>
       )}
     </View>
   );

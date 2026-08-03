@@ -186,28 +186,60 @@ export default function CreatorProfileScreen() {
             </View>
           </View>
 
-          {/* Verification status: under review until an admin approves. */}
+          {/* Verification status. If an admin rejected the profile with a note, show
+              the reason (danger) so the creator knows what to fix; otherwise the
+              generic "under review" (warn) message. */}
           {data && !data.isVerified && (
-            <View
-              style={{
-                flexDirection: 'row',
-                gap: 12,
-                alignItems: 'flex-start',
-                backgroundColor: colors.warnSoft,
-                borderWidth: 1,
-                borderColor: colors.warn,
-                borderRadius: 14,
-                padding: 14,
-              }}
-            >
-              <Icon name="clock" size={20} color={colors.warn} />
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 14, fontWeight: '800', color: colors.text }}>Profile under review</Text>
-                <Text style={{ fontSize: 13, color: colors.text2, marginTop: 2, lineHeight: 18 }}>
-                  You can explore campaigns, but you can&apos;t apply until an admin verifies your account.
-                </Text>
+            data.rejectionReason ? (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  gap: 12,
+                  alignItems: 'flex-start',
+                  backgroundColor: 'rgba(250,56,62,0.08)',
+                  borderWidth: 1,
+                  borderColor: colors.danger,
+                  borderRadius: 14,
+                  padding: 14,
+                }}
+              >
+                <Icon name="alert" size={20} color={colors.danger} />
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 14, fontWeight: '800', color: colors.text }}>Your profile needs changes</Text>
+                  <Text style={{ fontSize: 13, color: colors.text2, marginTop: 2, lineHeight: 18 }}>
+                    {data.rejectionReason}
+                  </Text>
+                  <Pressable
+                    onPress={() => router.push('/(creator)/profile/edit')}
+                    style={{ marginTop: 8 }}
+                    hitSlop={8}
+                  >
+                    <Text style={{ fontSize: 13.5, fontWeight: '800', color: colors.accent }}>Edit profile →</Text>
+                  </Pressable>
+                </View>
               </View>
-            </View>
+            ) : (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  gap: 12,
+                  alignItems: 'flex-start',
+                  backgroundColor: colors.warnSoft,
+                  borderWidth: 1,
+                  borderColor: colors.warn,
+                  borderRadius: 14,
+                  padding: 14,
+                }}
+              >
+                <Icon name="clock" size={20} color={colors.warn} />
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 14, fontWeight: '800', color: colors.text }}>Profile under review</Text>
+                  <Text style={{ fontSize: 13, color: colors.text2, marginTop: 2, lineHeight: 18 }}>
+                    You can explore campaigns, but you can&apos;t apply until an admin verifies your account.
+                  </Text>
+                </View>
+              </View>
+            )
           )}
 
           {/* Bio */}
@@ -238,6 +270,7 @@ export default function CreatorProfileScreen() {
                     count=""
                     colors={colors}
                     first={!social.instagram?.handle}
+                    verified={social.youtube.verified}
                   />
                 )}
                 {social.tiktok?.handle && (
@@ -247,6 +280,7 @@ export default function CreatorProfileScreen() {
                     count=""
                     colors={colors}
                     first={!social.instagram?.handle && !social.youtube?.handle}
+                    verified={social.tiktok.verified}
                   />
                 )}
               </View>

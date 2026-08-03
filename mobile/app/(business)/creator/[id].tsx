@@ -107,10 +107,10 @@ export default function ApplicantProfileScreen() {
                 <SocialRow icon="instagram" handle={social.instagram.handle} count={social.instagram.verified && social.instagram.followerCount != null ? `${formatCompactNumber(social.instagram.followerCount)} followers · Verified` : ''} colors={colors} first />
               )}
               {social.youtube && (
-                <SocialRow icon="youtube" handle={social.youtube.handle} count="" colors={colors} />
+                <SocialRow icon="youtube" handle={social.youtube.handle} count={social.youtube.verified ? 'Verified' : ''} colors={colors} />
               )}
               {social.tiktok && (
-                <SocialRow icon="play" handle={social.tiktok.handle} count="" colors={colors} />
+                <SocialRow icon="play" handle={social.tiktok.handle} count={social.tiktok.verified ? 'Verified' : ''} colors={colors} />
               )}
             </Card>
           </Section>

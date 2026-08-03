@@ -7,7 +7,7 @@
 import { type ReactNode } from 'react';
 import { Linking, Text, View } from 'react-native';
 import { useTheme } from '@/components/ThemeProvider';
-import { Icon } from '@/components/ui';
+import { Icon, useOnDarkSurface } from '@/components/ui';
 
 // Both stores require a reachable privacy policy (the app collects accounts,
 // push tokens, location, photos). These must be live, hosted pages before
@@ -24,36 +24,40 @@ export type AuthFooterProps = {
 
 export function AuthFooter({ social, showTerms }: AuthFooterProps) {
   const { colors } = useTheme();
+  const onDark = useOnDarkSurface();
+  const hair = onDark ? 'rgba(255,255,255,0.12)' : colors.hair;
+  const muted = onDark ? 'rgba(255,255,255,0.5)' : colors.text3;
+  const link = onDark ? 'rgba(255,255,255,0.82)' : colors.text2;
   return (
     <>
       {social ? (
         <>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginVertical: 22 }}>
-            <View style={{ flex: 1, height: 1, backgroundColor: colors.hair }} />
-            <Text style={{ fontSize: 12.5, color: colors.text3, fontWeight: '600' }}>or continue with</Text>
-            <View style={{ flex: 1, height: 1, backgroundColor: colors.hair }} />
+            <View style={{ flex: 1, height: 1, backgroundColor: hair }} />
+            <Text style={{ fontSize: 12.5, color: muted, fontWeight: '600' }}>or continue with</Text>
+            <View style={{ flex: 1, height: 1, backgroundColor: hair }} />
           </View>
           {social}
         </>
       ) : null}
 
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, marginTop: 22 }}>
-        <Icon name="lock" size={13} color={colors.text3} />
-        <Text style={{ fontSize: 12.5, color: colors.text3 }}>Secured · we never post without your say-so</Text>
+        <Icon name="lock" size={13} color={muted} />
+        <Text style={{ fontSize: 12.5, color: muted }}>Secured · we never post without your say-so</Text>
       </View>
 
       {showTerms ? (
-        <Text style={{ textAlign: 'center', fontSize: 11.5, color: colors.text3, lineHeight: 17, marginTop: 8, marginHorizontal: 12 }}>
+        <Text style={{ textAlign: 'center', fontSize: 11.5, color: muted, lineHeight: 17, marginTop: 8, marginHorizontal: 12 }}>
           By creating an account you agree to our{' '}
           <Text
-            style={{ color: colors.text2, fontWeight: '600' }}
+            style={{ color: link, fontWeight: '600' }}
             onPress={() => void Linking.openURL(TERMS_URL)}
           >
             Terms
           </Text>{' '}
           &{' '}
           <Text
-            style={{ color: colors.text2, fontWeight: '600' }}
+            style={{ color: link, fontWeight: '600' }}
             onPress={() => void Linking.openURL(PRIVACY_URL)}
           >
             Privacy Policy

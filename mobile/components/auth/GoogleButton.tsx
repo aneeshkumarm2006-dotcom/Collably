@@ -8,6 +8,7 @@ import { ActivityIndicator, Text } from 'react-native';
 import { Pressable } from '@/components/ui/SafePressable';
 import Svg, { Path } from 'react-native-svg';
 import { useTheme } from '@/components/ThemeProvider';
+import { useOnDarkSurface } from '@/components/ui';
 
 function GoogleMark({ size = 18 }: { size?: number }) {
   return (
@@ -41,7 +42,13 @@ export type GoogleButtonProps = {
 
 export function GoogleButton({ onPress, loading = false, disabled = false }: GoogleButtonProps) {
   const { colors } = useTheme();
+  const onDark = useOnDarkSurface();
   const isDisabled = disabled || loading;
+
+  // Translucent "glass" on the cinematic dark ground; a light outline button off it.
+  const bg = onDark ? 'rgba(255,255,255,0.08)' : colors.card;
+  const border = onDark ? 'rgba(255,255,255,0.16)' : colors.hairStrong;
+  const fg = onDark ? '#FFFFFF' : colors.text;
 
   return (
     <Pressable
@@ -59,17 +66,17 @@ export function GoogleButton({ onPress, loading = false, disabled = false }: Goo
         paddingHorizontal: 18,
         borderRadius: 13,
         borderWidth: 1.5,
-        borderColor: colors.hairStrong,
-        backgroundColor: colors.card,
+        borderColor: border,
+        backgroundColor: bg,
         opacity: isDisabled ? 0.5 : pressed ? 0.85 : 1,
       })}
     >
       {loading ? (
-        <ActivityIndicator size="small" color={colors.text} />
+        <ActivityIndicator size="small" color={fg} />
       ) : (
         <>
           <GoogleMark size={19} />
-          <Text style={{ color: colors.text, fontSize: 15.5, fontWeight: '600', letterSpacing: -0.2 }}>
+          <Text style={{ color: fg, fontSize: 15.5, fontWeight: '600', letterSpacing: -0.2 }}>
             Continue with Google
           </Text>
         </>

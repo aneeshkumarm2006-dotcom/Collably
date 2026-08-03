@@ -5,7 +5,7 @@
  */
 import { Text, View } from 'react-native';
 import { useTheme } from '@/components/ThemeProvider';
-import { Icon, type IconName } from '@/components/ui';
+import { Icon, type IconName, useOnDarkSurface } from '@/components/ui';
 
 export type FormBannerProps = {
   message: string;
@@ -14,12 +14,21 @@ export type FormBannerProps = {
 
 export function FormBanner({ message, tone = 'error' }: FormBannerProps) {
   const { colors } = useTheme();
+  const onDark = useOnDarkSurface();
 
-  const styles: Record<NonNullable<FormBannerProps['tone']>, { bg: string; fg: string; icon: IconName }> = {
-    error: { bg: `${colors.danger}1A`, fg: colors.danger, icon: 'alert' },
-    success: { bg: colors.successSoft, fg: colors.success, icon: 'checkcircle' },
-    info: { bg: colors.accentSoft, fg: colors.accent, icon: 'info' },
-  };
+  // On the cinematic dark ground, use higher-contrast tonal tints so the message
+  // stays legible; off it, keep the light-surface palette.
+  const styles: Record<NonNullable<FormBannerProps['tone']>, { bg: string; fg: string; icon: IconName }> = onDark
+    ? {
+        error: { bg: 'rgba(255,92,92,0.16)', fg: '#FF9B9B', icon: 'alert' },
+        success: { bg: 'rgba(69,189,98,0.16)', fg: '#6FD089', icon: 'checkcircle' },
+        info: { bg: 'rgba(45,136,255,0.16)', fg: '#7FB4FF', icon: 'info' },
+      }
+    : {
+        error: { bg: `${colors.danger}1A`, fg: colors.danger, icon: 'alert' },
+        success: { bg: colors.successSoft, fg: colors.success, icon: 'checkcircle' },
+        info: { bg: colors.accentSoft, fg: colors.accent, icon: 'info' },
+      };
   const s = styles[tone];
 
   return (

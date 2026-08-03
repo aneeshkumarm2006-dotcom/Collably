@@ -29,7 +29,22 @@ const lightTheme: Theme = {
   radii: RADII,
 };
 
-const ThemeContext = createContext<Theme>(lightTheme);
+const darkTheme: Theme = {
+  name: 'dark',
+  isDark: true,
+  colors: DARK,
+  shadows: SHADOWS,
+  radii: RADII,
+};
+
+/** A ready-made dark theme value. Used to force a dark palette onto a subtree
+ *  (e.g. the cinematic auth ground) without flipping the whole app's scheme, so
+ *  inline theme-driven text stays legible on a dark background. */
+export const DARK_THEME = darkTheme;
+
+/** The raw theme context — exported so a subtree can override the active palette
+ *  via `<ThemeContext.Provider value={DARK_THEME}>` (see `PremiumAuthLayout`). */
+export const ThemeContext = createContext<Theme>(lightTheme);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   // NativeWind tracks the active scheme and drives `dark:` variants; the user's
