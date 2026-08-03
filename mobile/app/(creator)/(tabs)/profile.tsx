@@ -66,11 +66,9 @@ export default function CreatorProfileScreen() {
   };
 
   const social = data?.socialHandles;
-  // Headline reach: followers/subscribers across every connected platform.
-  const reach =
-    (social?.instagram?.followerCount ?? 0) +
-    (social?.youtube?.subscriberCount ?? 0) +
-    (social?.tiktok?.followerCount ?? 0);
+  // Headline reach: only Instagram's verified (Meta-real) follower count counts —
+  // creators can't self-report followers, so nothing else is a trustworthy number.
+  const reach = social?.instagram?.verified ? (social.instagram.followerCount ?? 0) : 0;
   const locationLabel = [data?.location?.city, data?.location?.state].filter(Boolean).join(', ');
 
   return (
@@ -227,7 +225,7 @@ export default function CreatorProfileScreen() {
                   <SocialRow
                     icon="instagram"
                     handle={social.instagram.handle}
-                    count={social.instagram.followerCount != null ? `${formatCompactNumber(social.instagram.followerCount)} followers` : ''}
+                    count={social.instagram.verified && social.instagram.followerCount != null ? `${formatCompactNumber(social.instagram.followerCount)} followers` : ''}
                     colors={colors}
                     first
                     verified={social.instagram.verified}
@@ -237,7 +235,7 @@ export default function CreatorProfileScreen() {
                   <SocialRow
                     icon="youtube"
                     handle={social.youtube.handle}
-                    count={social.youtube.subscriberCount != null ? `${formatCompactNumber(social.youtube.subscriberCount)} subscribers` : ''}
+                    count=""
                     colors={colors}
                     first={!social.instagram?.handle}
                   />
@@ -246,7 +244,7 @@ export default function CreatorProfileScreen() {
                   <SocialRow
                     icon="play"
                     handle={social.tiktok.handle}
-                    count={social.tiktok.followerCount != null ? `${formatCompactNumber(social.tiktok.followerCount)} followers` : ''}
+                    count=""
                     colors={colors}
                     first={!social.instagram?.handle && !social.youtube?.handle}
                   />

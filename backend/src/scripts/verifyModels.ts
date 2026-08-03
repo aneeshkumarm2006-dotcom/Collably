@@ -121,7 +121,7 @@ async function createReadRoundTrip(): Promise<void> {
     niche: ['Food', 'Lifestyle'],
     contentTypes: ['Reel', 'UGC'],
     socialHandles: {
-      instagram: { handle: '@ada.eats', followerCount: 12000, engagementRate: 4.2 },
+      instagram: { handle: '@ada.eats', link: 'https://instagram.com/ada.eats', followerCount: 12000, verified: true },
     },
   });
   ok(`Created BusinessProfile + CreatorProfile (${business.id}, ${creator.id})`);

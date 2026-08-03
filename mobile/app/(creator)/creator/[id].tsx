@@ -103,13 +103,13 @@ export default function PublicCreatorProfileScreen() {
           <Section title="Social reach" colors={colors}>
             <Card padding={0}>
               {social.instagram && (
-                <SocialRow icon="instagram" handle={social.instagram.handle} count={social.instagram.followerCount != null ? `${formatCompactNumber(social.instagram.followerCount)} followers` : ''} colors={colors} first />
+                <SocialRow icon="instagram" handle={social.instagram.handle} count={social.instagram.verified && social.instagram.followerCount != null ? `${formatCompactNumber(social.instagram.followerCount)} followers · Verified` : ''} colors={colors} first />
               )}
               {social.youtube && (
-                <SocialRow icon="youtube" handle={social.youtube.handle} count={social.youtube.subscriberCount != null ? `${formatCompactNumber(social.youtube.subscriberCount)} subscribers` : ''} colors={colors} />
+                <SocialRow icon="youtube" handle={social.youtube.handle} count="" colors={colors} />
               )}
               {social.tiktok && (
-                <SocialRow icon="play" handle={social.tiktok.handle} count={social.tiktok.followerCount != null ? `${formatCompactNumber(social.tiktok.followerCount)} followers` : ''} colors={colors} />
+                <SocialRow icon="play" handle={social.tiktok.handle} count="" colors={colors} />
               )}
             </Card>
           </Section>

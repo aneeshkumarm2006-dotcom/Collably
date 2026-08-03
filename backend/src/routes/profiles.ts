@@ -98,13 +98,13 @@ router.put(
 
 // --- Creator profile ----------------------------------------------------------
 
-const handleNumber = z.coerce.number().min(0);
 /** A creator's public profile URL for a platform — required when that platform is submitted. */
 const socialLink = z.string().trim().min(1, 'A profile link is required').max(2048);
 
 /**
  * Creators must submit at least one social handle (Instagram, TikTok or YouTube),
- * each with a `handle` **and** a `link`; follower/subscriber counts are optional.
+ * each with a `handle` **and** a `link`. Follower counts are NOT self-reported;
+ * Instagram's `followerCount`/`verified` are set only by the verification flow.
  * `socialHandles` is required and refined to ensure ≥1 platform is present.
  */
 const creatorProfileSchema = z
@@ -117,22 +117,18 @@ const creatorProfileSchema = z
         .object({
           handle: z.string().trim().min(1).max(120),
           link: socialLink,
-          followerCount: handleNumber.optional(),
-          engagementRate: handleNumber.optional(),
         })
         .optional(),
       youtube: z
         .object({
           handle: z.string().trim().min(1).max(120),
           link: socialLink,
-          subscriberCount: handleNumber.optional(),
         })
         .optional(),
       tiktok: z
         .object({
           handle: z.string().trim().min(1).max(120),
           link: socialLink,
-          followerCount: handleNumber.optional(),
         })
         .optional(),
     }),

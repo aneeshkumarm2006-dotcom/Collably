@@ -21,12 +21,10 @@ import type { CreatorProfile, UserSummary } from '@/types';
 
 type AdminCreator = CreatorProfile & { user?: UserSummary | null };
 
-/** Total reach across the creator's linked social handles. */
+/** Reach = Instagram's verified (Meta-real) follower count only; nothing self-reported. */
 function totalReach(p: CreatorProfile): number {
-  const s = p.socialHandles;
-  return (
-    (s.instagram?.followerCount ?? 0) + (s.youtube?.subscriberCount ?? 0) + (s.tiktok?.followerCount ?? 0)
-  );
+  const ig = p.socialHandles.instagram;
+  return ig?.verified ? (ig.followerCount ?? 0) : 0;
 }
 
 export default function AdminCreatorsScreen() {

@@ -19,8 +19,6 @@ import { useFetch } from '@/lib/useFetch';
 import { pickAndUploadImage, ImagePermissionError } from '@/lib/imageUpload';
 
 const MAX_PORTFOLIO = 6;
-const digits = (s: string) => s.replace(/[^0-9]/g, '');
-const toNum = (s: string) => (s ? Number(s) : 0);
 
 type Form = {
   bio: string;
@@ -29,21 +27,15 @@ type Form = {
   social: {
     igHandle: string;
     igLink: string;
-    igFollowers: string;
-    igEngagement: string;
     ytHandle: string;
     ytLink: string;
-    ytSubs: string;
     ttHandle: string;
     ttLink: string;
-    ttFollowers: string;
   };
   contentTypes: ContentType[];
   isUGCOnly: boolean;
   portfolio: PortfolioItem[];
 };
-
-const numStr = (n?: number) => (n != null ? String(n) : '');
 
 function fromProfile(p: CreatorProfile): Form {
   const s = p.socialHandles;
@@ -54,14 +46,10 @@ function fromProfile(p: CreatorProfile): Form {
     social: {
       igHandle: s.instagram?.handle ?? '',
       igLink: s.instagram?.link ?? '',
-      igFollowers: numStr(s.instagram?.followerCount),
-      igEngagement: numStr(s.instagram?.engagementRate),
       ytHandle: s.youtube?.handle ?? '',
       ytLink: s.youtube?.link ?? '',
-      ytSubs: numStr(s.youtube?.subscriberCount),
       ttHandle: s.tiktok?.handle ?? '',
       ttLink: s.tiktok?.link ?? '',
-      ttFollowers: numStr(s.tiktok?.followerCount),
     },
     contentTypes: [...p.contentTypes],
     isUGCOnly: p.isUGCOnly,
@@ -86,35 +74,17 @@ function toPayload(f: Form) {
     ...(f.location.country?.trim() ? { country: f.location.country.trim() } : {}),
   };
   const s = f.social;
-  // Only include a platform when it has BOTH a handle and a link; counts optional.
+  // Only include a platform when it has BOTH a handle and a link. Follower counts
+  // are NOT self-reported — Instagram's verified count is set by the DM-code flow.
   const socialHandles = {
     ...(s.igHandle.trim() && s.igLink.trim()
-      ? {
-          instagram: {
-            handle: s.igHandle.trim(),
-            link: s.igLink.trim(),
-            ...(s.igFollowers ? { followerCount: toNum(s.igFollowers) } : {}),
-            ...(s.igEngagement.trim() ? { engagementRate: Number(s.igEngagement) } : {}),
-          },
-        }
+      ? { instagram: { handle: s.igHandle.trim(), link: s.igLink.trim() } }
       : {}),
     ...(s.ytHandle.trim() && s.ytLink.trim()
-      ? {
-          youtube: {
-            handle: s.ytHandle.trim(),
-            link: s.ytLink.trim(),
-            ...(s.ytSubs ? { subscriberCount: toNum(s.ytSubs) } : {}),
-          },
-        }
+      ? { youtube: { handle: s.ytHandle.trim(), link: s.ytLink.trim() } }
       : {}),
     ...(s.ttHandle.trim() && s.ttLink.trim()
-      ? {
-          tiktok: {
-            handle: s.ttHandle.trim(),
-            link: s.ttLink.trim(),
-            ...(s.ttFollowers ? { followerCount: toNum(s.ttFollowers) } : {}),
-          },
-        }
+      ? { tiktok: { handle: s.ttHandle.trim(), link: s.ttLink.trim() } }
       : {}),
   };
   return {
@@ -255,18 +225,6 @@ function EditForm({ initial }: { initial: Form }) {
         <Field label="Profile link">
           <TextField value={form.social.igLink} onChangeText={(igLink) => setSocial({ igLink })} placeholder="https://instagram.com/yourhandle" autoCapitalize="none" keyboardType="url" maxLength={2048} />
         </Field>
-        <View style={{ flexDirection: 'row', gap: 12 }}>
-          <View style={{ flex: 1 }}>
-            <Field label="Followers (optional)">
-              <TextField value={form.social.igFollowers} onChangeText={(v) => setSocial({ igFollowers: digits(v) })} placeholder="0" keyboardType="numeric" />
-            </Field>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Field label="Engagement %">
-              <TextField value={form.social.igEngagement} onChangeText={(v) => setSocial({ igEngagement: v.replace(/[^0-9.]/g, '') })} placeholder="e.g. 3.5" keyboardType="numeric" />
-            </Field>
-          </View>
-        </View>
 
         <SectionLabel colors={colors}>YouTube</SectionLabel>
         <Field label="Handle">
@@ -275,9 +233,6 @@ function EditForm({ initial }: { initial: Form }) {
         <Field label="Channel link">
           <TextField value={form.social.ytLink} onChangeText={(ytLink) => setSocial({ ytLink })} placeholder="https://youtube.com/@yourchannel" autoCapitalize="none" keyboardType="url" maxLength={2048} />
         </Field>
-        <Field label="Subscribers (optional)">
-          <TextField value={form.social.ytSubs} onChangeText={(v) => setSocial({ ytSubs: digits(v) })} placeholder="0" keyboardType="numeric" />
-        </Field>
 
         <SectionLabel colors={colors}>TikTok</SectionLabel>
         <Field label="Handle">
@@ -285,9 +240,6 @@ function EditForm({ initial }: { initial: Form }) {
         </Field>
         <Field label="Profile link">
           <TextField value={form.social.ttLink} onChangeText={(ttLink) => setSocial({ ttLink })} placeholder="https://tiktok.com/@yourhandle" autoCapitalize="none" keyboardType="url" maxLength={2048} />
-        </Field>
-        <Field label="Followers (optional)">
-          <TextField value={form.social.ttFollowers} onChangeText={(v) => setSocial({ ttFollowers: digits(v) })} placeholder="0" keyboardType="numeric" />
         </Field>
 
         <SectionLabel colors={colors}>Content</SectionLabel>

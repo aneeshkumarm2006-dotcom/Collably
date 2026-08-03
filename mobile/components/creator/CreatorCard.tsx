@@ -1,6 +1,6 @@
 /**
  * Creator profile summary card (PRD §7.4 applicant lists, §7.3 public profiles).
- * Avatar + name, niche chips, a follower/engagement line, and completed-collabs
+ * Avatar + name, niche chips, a verified-reach line, and completed-collabs
  * stat. Pass `footer` to inject actions (e.g. Accept/Reject when a business reviews
  * an applicant) and `onPress` to open the full profile.
  */
@@ -20,12 +20,13 @@ export type CreatorCardProps = {
   footer?: React.ReactNode;
 };
 
-/** Total reach across the creator's connected handles. */
+/**
+ * Reach = Instagram's verified (Meta-real) follower count only. Followers aren't
+ * self-reported, so an unverified handle contributes no number here.
+ */
 function totalReach(c: CreatorProfile): number {
-  const ig = c.socialHandles.instagram?.followerCount ?? 0;
-  const yt = c.socialHandles.youtube?.subscriberCount ?? 0;
-  const tt = c.socialHandles.tiktok?.followerCount ?? 0;
-  return ig + yt + tt;
+  const ig = c.socialHandles.instagram;
+  return ig?.verified ? (ig.followerCount ?? 0) : 0;
 }
 
 export function CreatorCard({ creator, name, avatar, onPress, footer }: CreatorCardProps) {

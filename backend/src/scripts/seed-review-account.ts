@@ -20,8 +20,8 @@ import mongoose from 'mongoose';
 import { User, CreatorProfile } from '../models';
 import { hashPassword } from '../lib/password';
 
-const EMAIL = 'appreview@localshout.app';
-const PASSWORD = 'ReviewLocalShout!2026';
+const EMAIL = 'appreview@localcreatorcrew.com';
+const PASSWORD = 'CreatorCrew!Review26';
 const NAME = 'App Review';
 // A real-format Canadian number. It's never texted — the account is pre-verified.
 const PHONE = '+14165550142';
@@ -66,7 +66,8 @@ async function main(): Promise<void> {
     { upsert: true, new: true },
   );
 
-  console.log('\n✅ Reviewer demo account ready — paste these into App Store Connect:\n');
+  console.log('\n✅ Reviewer demo account ready — paste into Play Console → App access');
+  console.log('   (and App Store Connect → App Review Information):\n');
   console.log(`   Email:    ${EMAIL}`);
   console.log(`   Password: ${PASSWORD}\n`);
   console.log('   (email + phone pre-verified, onboarded, admin-approved)\n');

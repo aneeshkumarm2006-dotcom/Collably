@@ -6,8 +6,11 @@ export interface InstagramHandle {
   handle: string;
   /** Public profile URL (e.g. https://instagram.com/yourhandle). Required when the platform is submitted. */
   link: string;
+  /**
+   * Meta's real follower count, populated by Instagram verification. Only present
+   * (and only trustworthy) when `verified` is true — creators cannot self-report it.
+   */
   followerCount?: number;
-  engagementRate?: number;
   /**
    * True once ownership was proven via the DM-code flow. When set, `followerCount`
    * is Meta's number (not self-reported). Verifying does NOT gate anything — it's a
@@ -20,14 +23,12 @@ export interface YouTubeHandle {
   handle: string;
   /** Public channel URL. Required when the platform is submitted. */
   link: string;
-  subscriberCount?: number;
 }
 
 export interface TikTokHandle {
   handle: string;
   /** Public profile URL. Required when the platform is submitted. */
   link: string;
-  followerCount?: number;
 }
 
 export interface CreatorSocialHandles {

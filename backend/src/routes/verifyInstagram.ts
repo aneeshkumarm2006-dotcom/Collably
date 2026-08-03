@@ -140,7 +140,6 @@ router.post(
         handle: session.claimedHandle,
         link: `https://instagram.com/${session.claimedHandle}`,
         followerCount: session.followerCount ?? profile.socialHandles.instagram?.followerCount,
-        engagementRate: profile.socialHandles.instagram?.engagementRate,
         verified: true,
       };
       await profile.save();

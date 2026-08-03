@@ -5,8 +5,9 @@ import { geoLocationSchema } from './common';
 
 /**
  * Creator-side profile, 1:1 with a User of role "creator" (PRD §5.3).
- * Follower/engagement numbers are self-reported in v1 (PRD §15 future scope:
- * automated verification via platform APIs).
+ * Creators do NOT self-report follower/engagement numbers. The only stored
+ * count is `instagram.followerCount`, populated by Instagram verification with
+ * Meta's real number (and gated on `instagram.verified`).
  */
 export interface CreatorProfileDoc extends Document<Types.ObjectId> {
   userId: Types.ObjectId;
@@ -14,9 +15,9 @@ export interface CreatorProfileDoc extends Document<Types.ObjectId> {
   niche: Niche[];
   location: { city?: string; state?: string; country?: string };
   socialHandles: {
-    instagram?: { handle: string; link: string; followerCount?: number; engagementRate?: number; verified?: boolean };
-    youtube?: { handle: string; link: string; subscriberCount?: number };
-    tiktok?: { handle: string; link: string; followerCount?: number };
+    instagram?: { handle: string; link: string; followerCount?: number; verified?: boolean };
+    youtube?: { handle: string; link: string };
+    tiktok?: { handle: string; link: string };
   };
   contentTypes: ContentType[];
   portfolio: { imageUrl: string; caption?: string; link?: string }[];
@@ -53,19 +54,17 @@ const creatorProfileSchema = new Schema<CreatorProfileDoc>(
       instagram: {
         handle: { type: String, trim: true },
         link: { type: String, trim: true },
+        // Populated by Instagram verification with Meta's real follower count.
         followerCount: { type: Number, min: 0 },
-        engagementRate: { type: Number, min: 0 },
         verified: { type: Boolean, default: false },
       },
       youtube: {
         handle: { type: String, trim: true },
         link: { type: String, trim: true },
-        subscriberCount: { type: Number, min: 0 },
       },
       tiktok: {
         handle: { type: String, trim: true },
         link: { type: String, trim: true },
-        followerCount: { type: Number, min: 0 },
       },
     },
     contentTypes: { type: [{ type: String, enum: [...CONTENT_TYPES] }], default: [] },

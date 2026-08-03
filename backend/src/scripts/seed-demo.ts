@@ -118,9 +118,9 @@ async function main(): Promise<void> {
         handle: 'prem.creates',
         link: 'https://instagram.com/prem.creates',
         followerCount: 12500,
-        engagementRate: 5.4,
+        verified: true,
       },
-      youtube: { handle: 'PremCreates', link: 'https://youtube.com/@PremCreates', subscriberCount: 5200 },
+      youtube: { handle: 'PremCreates', link: 'https://youtube.com/@PremCreates' },
     },
     contentTypes: ['Reel', 'Review', 'UGC'],
     portfolio: [
