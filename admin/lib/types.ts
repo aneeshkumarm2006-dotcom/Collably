@@ -69,6 +69,38 @@ export interface AdminMessage {
   createdAt: string;
 }
 
+/** A user-submitted report awaiting admin triage. */
+export interface Report {
+  _id: string;
+  reporterId: string;
+  reporterName: string;
+  reporterEmail: string;
+  targetType: 'campaign' | 'business' | 'creator' | 'user';
+  targetId: string;
+  targetLabel: string;
+  reason: string;
+  status: 'open' | 'dismissed' | 'actioned';
+  /** Set when an admin resolves the report (dismiss / action). */
+  resolvedAt?: string | null;
+  createdAt: string;
+}
+
+/**
+ * One thread in the admin support inbox (admin↔creator). `creatorProfileId` is
+ * the creator profile id used to open the thread; null when the counterpart has
+ * no creator profile (thread is not openable).
+ */
+export interface AdminConversation {
+  _id: string;
+  creatorProfileId: string | null;
+  creatorName: string;
+  creatorAvatar?: string | null;
+  lastMessage: string;
+  lastMessageAt: string;
+  lastSenderUserId: string;
+  unread: number;
+}
+
 export interface BusinessRow {
   _id: string;
   userId: string;
