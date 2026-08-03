@@ -66,6 +66,8 @@ export interface AdminMessage {
   _id: string;
   senderRole: 'admin' | 'creator';
   body: string;
+  /** Set when the message carries an image (a Cloudinary secure_url). */
+  imageUrl?: string;
   createdAt: string;
 }
 

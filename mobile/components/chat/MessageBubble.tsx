@@ -7,11 +7,11 @@
  * blue-white once actually read. Also exports a small animated typing bubble, plus
  * the shared blue verified check + gradient avatar used across the chat surface.
  */
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Reanimated, { cancelAnimation, Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withTiming } from 'react-native-reanimated';
-import { Icon } from '@/components/ui';
+import { Icon, RemoteImage } from '@/components/ui';
 import { initials as toInitials } from '@/lib/utils';
 import type { Message } from '@/types';
 import { shortTime } from './time';
@@ -29,8 +29,15 @@ export function MessageBubble({
 }) {
   const p = useChatPalette();
 
+  const hasImage = typeof message.imageUrl === 'string' && message.imageUrl.length > 0;
+  const hasText = typeof message.body === 'string' && message.body.trim().length > 0;
+  // Image-only bubbles hug the image (minimal padding); a text/mixed bubble keeps
+  // the roomier chat padding.
+  const padH = hasImage && !hasText ? 4 : 13;
+  const padTop = hasImage ? 4 : 8;
+
   const meta = (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, alignSelf: 'flex-end', marginTop: 2 }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, alignSelf: 'flex-end', marginTop: 2, paddingRight: hasImage && !hasText ? 9 : 0, paddingBottom: hasImage && !hasText ? 2 : 0 }}>
       <Text style={{ fontSize: 10.5, color: mine ? p.metaOut : p.metaIn }}>{shortTime(message.createdAt)}</Text>
       {mine ? (
         // ✓ sent · ✓✓ delivered (grey/white) · ✓✓ read (blue) — colour never lies.
@@ -39,6 +46,18 @@ export function MessageBubble({
         </Text>
       ) : null}
     </View>
+  );
+
+  const content = (
+    <>
+      {hasImage ? <ChatImage uri={message.imageUrl as string} /> : null}
+      {hasText ? (
+        <Text style={{ fontSize: 15, lineHeight: 20, color: mine ? p.outText : p.inText, marginTop: hasImage ? 6 : 0 }}>
+          {message.body}
+        </Text>
+      ) : null}
+      {meta}
+    </>
   );
 
   return (
@@ -52,8 +71,8 @@ export function MessageBubble({
             maxWidth: '80%',
             borderRadius: 17,
             borderBottomRightRadius: 5,
-            paddingHorizontal: 13,
-            paddingTop: 8,
+            paddingHorizontal: padH,
+            paddingTop: padTop,
             paddingBottom: 6,
             shadowColor: p.accent,
             shadowOpacity: p.isDark ? 0 : 0.28,
@@ -62,8 +81,7 @@ export function MessageBubble({
             elevation: 2,
           }}
         >
-          <Text style={{ fontSize: 15, lineHeight: 20, color: p.outText }}>{message.body}</Text>
-          {meta}
+          {content}
         </LinearGradient>
       ) : (
         <View
@@ -74,16 +92,42 @@ export function MessageBubble({
             borderColor: p.inBorder,
             borderRadius: 17,
             borderBottomLeftRadius: 5,
-            paddingHorizontal: 13,
-            paddingTop: 8,
+            paddingHorizontal: padH,
+            paddingTop: padTop,
             paddingBottom: 6,
           }}
         >
-          <Text style={{ fontSize: 15, lineHeight: 20, color: p.inText }}>{message.body}</Text>
-          {meta}
+          {content}
         </View>
       )}
     </View>
+  );
+}
+
+/**
+ * Image attached to a chat message. Sized to a fixed chat width with the natural
+ * aspect ratio preserved (learned from the first onLoad; a 4:3 default keeps the
+ * bubble from jumping before the bytes arrive). Top corners are rounded to match
+ * the bubble; a broken URL just leaves the blur-up placeholder from RemoteImage.
+ */
+function ChatImage({ uri }: { uri: string }) {
+  const [ratio, setRatio] = useState(4 / 3);
+  return (
+    <RemoteImage
+      source={{ uri }}
+      contentFit="cover"
+      onLoad={(e) => {
+        const { width, height } = e.source ?? {};
+        if (width && height) setRatio(width / height);
+      }}
+      style={{
+        width: 220,
+        aspectRatio: ratio,
+        borderRadius: 6,
+        borderTopLeftRadius: 14,
+        borderTopRightRadius: 14,
+      }}
+    />
   );
 }
 
