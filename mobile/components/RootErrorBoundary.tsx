@@ -75,7 +75,7 @@ export function RootErrorBoundary({ error, retry }: ErrorBoundaryProps) {
           textAlign: 'center',
         }}
       >
-        The app hit an unexpected error. Your account and data are safe — try again.
+        The app hit an unexpected error. Your account and data are safe. Try again.
       </Text>
 
       {/* Dev-only detail. In release the message could carry internals (or user

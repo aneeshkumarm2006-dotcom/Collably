@@ -254,7 +254,7 @@ function PhoneStep({ onLogout }: { onLogout: () => void }) {
         <VerifyHeading
           icon="phone"
           title="Verify your phone"
-          subtitle="Almost there — we'll text you a 6-digit code to confirm your number."
+          subtitle="Almost there. We'll text you a 6-digit code to confirm your number."
         />
         <PhoneNumberField
           country={country}

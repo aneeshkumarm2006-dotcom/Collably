@@ -23,7 +23,7 @@ import { useAppleSignIn } from '@/lib/appleAuth';
 import { useAuthStore, type AuthPayload } from '@/store/authStore';
 import { validateEmail } from '@/lib/validation';
 
-export function LoginForm() {
+export function LoginForm({ onNeedSignup }: { onNeedSignup?: () => void } = {}) {
   const { colors } = useTheme();
   const signIn = useAuthStore((s) => s.signIn);
   const passwordRef = useRef<TextInput>(null);
@@ -34,8 +34,21 @@ export function LoginForm() {
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const google = useGoogleSignIn({ onError: setFormError });
-  const apple = useAppleSignIn({ onError: setFormError });
+  // Google login is role-less (existing accounts only). If the Google account
+  // isn't registered yet, the backend can't create it without a role — so instead
+  // of the raw "role required" error, bounce the user to Sign up (where the role
+  // picker lives) with a friendly nudge.
+  const handleSocialError = (msg: string) => {
+    if (/role.*required|required to create a new account/i.test(msg)) {
+      onNeedSignup?.();
+      setFormError('No account found for that Google account. Choose Creator or Business above to sign up.');
+    } else {
+      setFormError(msg);
+    }
+  };
+
+  const google = useGoogleSignIn({ onError: handleSocialError });
+  const apple = useAppleSignIn({ onError: handleSocialError });
 
   const submit = async () => {
     setFormError(null);

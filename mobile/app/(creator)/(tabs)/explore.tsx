@@ -414,7 +414,7 @@ export default function ExploreScreen() {
               body={
                 activeFilters > 0 || debouncedSearch
                   ? 'Try clearing some filters or searching for something else.'
-                  : 'Check back soon — new campaigns are added all the time.'
+                  : 'Check back soon. New campaigns are added all the time.'
               }
               action={activeFilters > 0 ? 'Clear filters' : undefined}
               onAction={activeFilters > 0 ? () => setFilters({}) : undefined}

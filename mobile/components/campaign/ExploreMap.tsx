@@ -390,7 +390,7 @@ export function ExploreMap({
       {pins.length === 0 ? (
         <View style={overlayBox(colors)}>
           <Text style={{ fontSize: 12.5, color: colors.text2, textAlign: 'center' }}>
-            No campaigns have a map location yet — switch to the list to see all {loadedTotal}.
+            No campaigns have a map location yet. Switch to the list to see all {loadedTotal}.
           </Text>
         </View>
       ) : pins.length < loadedTotal ? (

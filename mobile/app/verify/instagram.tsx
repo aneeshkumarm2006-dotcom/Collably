@@ -176,7 +176,7 @@ export default function VerifyInstagramScreen() {
         <VerifyHeading
           icon="instagram"
           title="Verify your Instagram"
-          subtitle="Enter your handle or profile link — we'll confirm it's yours with a quick DM."
+          subtitle="Enter your handle or profile link. We'll confirm it's yours with a quick DM."
         />
 
         <View

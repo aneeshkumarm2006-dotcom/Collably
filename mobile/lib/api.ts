@@ -150,7 +150,7 @@ function toApiError(error: AxiosError): ApiError {
     extractMessage((data?.error as { message?: unknown } | undefined)?.message) ??
     extractMessage(data?.message) ??
     extractMessage(data?.error) ??
-    (status === 0 ? 'Network error — check your connection.' : 'Something went wrong.');
+    (status === 0 ? 'Network error. Check your connection.' : 'Something went wrong.');
   // Network failures (no HTTP response) get a global toast — screens surface HTTP
   // errors inline (FormBanner/ErrorState), but a dropped connection can happen on
   // any request, so it's raised app-wide here (PRD §8.5).

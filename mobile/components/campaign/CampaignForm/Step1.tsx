@@ -16,7 +16,7 @@ export type CampaignStepProps = {
 export function Step1({ value, patch }: CampaignStepProps) {
   return (
     <ScrollView contentContainerStyle={{ padding: 16 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-      <Field label="Campaign title" hint="Keep it punchy — this is the headline creators see first.">
+      <Field label="Campaign title" hint="Keep it punchy. This is the headline creators see first.">
         <TextField
           value={value.title}
           onChangeText={(title) => patch({ title })}

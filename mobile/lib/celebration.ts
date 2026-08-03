@@ -24,7 +24,7 @@ export const CELEBRATION_TYPES = new Set(['creator_verified', 'business_verified
 
 const LAST_KEY = 'collably.lastCelebratedNotificationId';
 const TITLE = "You're verified! 🎉";
-const FALLBACK = 'Your account has been approved — welcome aboard!';
+const FALLBACK = 'Your account has been approved. Welcome aboard!';
 
 // Synchronous in-session guard so two near-simultaneous triggers (e.g. the
 // socket event and the on-open replay racing) can't both pass the async check.

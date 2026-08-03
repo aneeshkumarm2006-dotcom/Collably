@@ -25,11 +25,11 @@ import { useAuthStore } from '@/store/authStore';
 const TOTAL_STEPS = 5;
 /** Big per-step headline + supporting line shown above the live preview's inputs. */
 const STEP_QUESTIONS: { q: string; h: string }[] = [
-  { q: 'Tell us about your brand', h: 'Your name and category — this is what creators see first.' },
+  { q: 'Tell us about your brand', h: 'Your name and category. This is what creators see first.' },
   { q: 'Where are you located?', h: 'Helps creators find local collabs. Add a website if you have one.' },
   { q: 'Link your socials', h: 'So creators can check out your brand. All optional.' },
   { q: 'Add your logo', h: 'Makes your campaigns stand out. You can skip and add it later.' },
-  { q: 'All set — ready to launch?', h: 'Review your brand. You can edit anything later.' },
+  { q: 'All set. Ready to launch?', h: 'Review your brand. You can edit anything later.' },
 ];
 
 type BusinessForm = {

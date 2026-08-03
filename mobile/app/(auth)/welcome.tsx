@@ -38,14 +38,14 @@ const SLIDES: Slide[] = [
     img: '1504674900247-0877df9cc836',
     eyebrow: 'REAL REWARDS',
     title: 'Earn perks worth real money',
-    body: 'Every campaign spells out exactly what you earn — from tasting menus to skincare sets — with the value up front.',
+    body: 'Every campaign spells out exactly what you earn, from tasting menus to skincare sets, with the value up front.',
   },
   {
     category: 'Fashion',
     img: '1490481651871-ab68de25d43d',
     eyebrow: 'NO GATEKEEPING',
     title: 'No follower minimums, ever',
-    body: 'Nano and UGC creators welcome. Brands match on fit and quality — not vanity metrics or agency rosters.',
+    body: 'Nano and UGC creators welcome. Brands match on fit and quality, not vanity metrics or agency rosters.',
   },
   {
     category: 'Cafe',
@@ -66,7 +66,7 @@ const BUSINESS_SLIDES: Slide[] = [
     img: '1552566626-52f8b828add9',
     eyebrow: 'REACH LOCALS',
     title: 'Get seen by your neighbourhood',
-    body: 'Local creators post to the exact audience that walks past your door — real reach, no ad spend.',
+    body: 'Local creators post to the exact audience that walks past your door: real reach, no ad spend.',
   },
   {
     category: 'Salon & Spa',

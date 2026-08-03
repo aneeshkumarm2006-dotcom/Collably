@@ -22,7 +22,7 @@ export function Step4({ value, patch }: CampaignStepProps) {
         </View>
       </Field>
 
-      <Field label="What the creator gets" hint="Be specific — e.g. 'Tasting menu for two + a gift voucher'.">
+      <Field label="What the creator gets" hint="Be specific: e.g. 'Tasting menu for two + a gift voucher'.">
         <TextField
           value={value.reward.description}
           onChangeText={(description) => setReward({ description })}

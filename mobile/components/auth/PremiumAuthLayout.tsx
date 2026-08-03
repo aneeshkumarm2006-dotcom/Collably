@@ -45,7 +45,7 @@ export type PremiumAuthLayoutProps = {
 function headlineFor(mode: PremiumAuthMode, role: PremiumAuthRole): string {
   if (mode === 'signin') return 'Welcome back.\nLet’s get to it.';
   if (role === 'creator') return 'Get paid in perks for\ncontent you already make.';
-  if (role === 'business') return 'Find creators who fit\nyour brand — fast.';
+  if (role === 'business') return 'Find creators who fit\nyour brand, fast.';
   return 'Create your\nLocal Creator Crew account.';
 }
 
@@ -162,7 +162,7 @@ export function PremiumAuthLayout({ initialMode, initialRole = null, onBack }: P
           {mode === 'signup' ? (
             <SignupForm role={role} onPickRole={setPickedRole} />
           ) : (
-            <LoginForm />
+            <LoginForm onNeedSignup={() => setMode('signup')} />
           )}
 
           {/* Bottom switch: "New to Local Creator Crew? Sign up" ⇄ "Already have an account? Sign in" */}

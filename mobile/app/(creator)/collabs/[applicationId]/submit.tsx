@@ -142,7 +142,7 @@ export default function SubmitContentScreen() {
 
         {!submittable && (
           <View style={{ marginBottom: 16 }}>
-            <FormBanner message={`This collab is ${data.status} — there's nothing to submit right now.`} />
+            <FormBanner message={`This collab is ${data.status}. There's nothing to submit right now.`} />
           </View>
         )}
 

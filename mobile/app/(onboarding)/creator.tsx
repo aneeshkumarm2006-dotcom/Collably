@@ -11,7 +11,7 @@
  * root gate routes to the creator home. No exit until complete.
  */
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Text, View } from 'react-native';
+import { Modal, Text, View } from 'react-native';
 import Reanimated, {
   Easing,
   FadeInDown,
@@ -27,6 +27,7 @@ import { Pressable } from '@/components/ui/SafePressable';
 import { Icon, RemoteImage, type IconName } from '@/components/ui';
 import {
   ChoiceTile,
+  SelectChip,
   NextPill,
   SkipLink,
   StoryInput,
@@ -52,17 +53,21 @@ const PANELS = ['welcome', 'niche', 'content', 'ugc', 'location', 'socials', 'bi
 const TOTAL = PANELS.length;
 const REVEAL = TOTAL - 1;
 
-// Per-panel cinematic background gradient (dark so white chrome reads).
+// One consistent blue-black cinematic ground across every panel (approved
+// redesign): a blue-biased near-black with the Meta-blue glow at the top, so the
+// whole flow reads as one system instead of shifting colour per step. The reveal
+// keeps a brighter blue to feel celebratory. Ken-Burns adds subtle ambient drift.
+const GROUND: Grad = ['#16233F', '#0B0C11'];
 const PANEL_BG: Grad[] = [
-  ['#1D2671', '#0B1026'], // welcome
-  ['#3A1C71', '#15093D'], // niche
-  ['#0F3460', '#0A1A33'], // content
-  ['#16414F', '#0A2027'], // ugc
-  ['#134E5E', '#071A21'], // location
-  ['#41295A', '#120A1F'], // socials
-  ['#23202E', '#0D0B14'], // bio
-  ['#42275A', '#16091F'], // portfolio
-  ['#0A3DC9', '#041437'], // reveal
+  GROUND, // welcome
+  GROUND, // niche
+  GROUND, // content
+  GROUND, // ugc
+  GROUND, // location
+  GROUND, // socials
+  GROUND, // bio
+  GROUND, // portfolio
+  ['#0A3DC9', '#05122E'], // reveal — brighter blue for the finish
 ];
 
 type CreatorForm = {
@@ -72,14 +77,10 @@ type CreatorForm = {
   social: {
     igHandle: string;
     igLink: string;
-    igFollowers: string;
-    igEngagement: string;
     ytHandle: string;
     ytLink: string;
-    ytSubs: string;
     ttHandle: string;
     ttLink: string;
-    ttFollowers: string;
   };
   contentTypes: ContentType[];
   isUGCOnly: boolean;
@@ -94,14 +95,10 @@ function emptyForm(): CreatorForm {
     social: {
       igHandle: '',
       igLink: '',
-      igFollowers: '',
-      igEngagement: '',
       ytHandle: '',
       ytLink: '',
-      ytSubs: '',
       ttHandle: '',
       ttLink: '',
-      ttFollowers: '',
     },
     contentTypes: [],
     isUGCOnly: false,
@@ -109,8 +106,12 @@ function emptyForm(): CreatorForm {
   };
 }
 
-/** A profile link must look like a real URL (scheme optional), not just any text. */
-const looksLikeUrl = (s: string) => /^(https?:\/\/)?([\w-]+\.)+[\w-]{2,}(\/\S*)?$/i.test(s.trim());
+/**
+ * A profile link must point at an actual profile, not just a bare domain — a
+ * link like "instagram.com" can't be verified, so we require a non-empty path
+ * after the host (e.g. instagram.com/yourhandle). Scheme stays optional.
+ */
+const looksLikeUrl = (s: string) => /^(https?:\/\/)?([\w-]+\.)+[\w-]{2,}\/\S+$/i.test(s.trim());
 /** Add https:// when the user omitted the scheme, so the backend stores a real URL. */
 const normalizeUrl = (s: string) => {
   const t = s.trim();
@@ -131,15 +132,6 @@ function hasOneSocial(f: CreatorForm): boolean {
   );
 }
 
-const digits = (s: string) => s.replace(/[^0-9]/g, '');
-/** Parse a numeric input to a finite number, or `undefined` so the field is omitted
- *  entirely — never send NaN/null, which the backend rejects ("Expected number"). */
-const numOrUndef = (s: string): number | undefined => {
-  const t = (s ?? '').trim();
-  if (!t) return undefined;
-  const n = Number(t);
-  return Number.isFinite(n) ? n : undefined;
-};
 
 /** Map the form to the `PUT /api/profile/creator` body, dropping empty fields. */
 function toPayload(f: CreatorForm) {
@@ -150,28 +142,18 @@ function toPayload(f: CreatorForm) {
   };
 
   const s = f.social;
-  // Parse numeric fields up front — only finite numbers are included.
-  const igF = numOrUndef(s.igFollowers);
-  const igE = numOrUndef(s.igEngagement);
-  const ytS = numOrUndef(s.ytSubs);
-  const ttF = numOrUndef(s.ttFollowers);
   // Only include a platform when it's valid (handle + real URL); normalize links.
+  // Follower/engagement counts are NOT self-reported anymore — they'd be unverifiable
+  // and gameable. The authoritative follower count comes from Instagram verification.
   const socialHandles = {
     ...(platformValid(s.igHandle, s.igLink)
-      ? {
-          instagram: {
-            handle: s.igHandle.trim(),
-            link: normalizeUrl(s.igLink),
-            ...(igF !== undefined ? { followerCount: igF } : {}),
-            ...(igE !== undefined ? { engagementRate: igE } : {}),
-          },
-        }
+      ? { instagram: { handle: s.igHandle.trim(), link: normalizeUrl(s.igLink) } }
       : {}),
     ...(platformValid(s.ytHandle, s.ytLink)
-      ? { youtube: { handle: s.ytHandle.trim(), link: normalizeUrl(s.ytLink), ...(ytS !== undefined ? { subscriberCount: ytS } : {}) } }
+      ? { youtube: { handle: s.ytHandle.trim(), link: normalizeUrl(s.ytLink) } }
       : {}),
     ...(platformValid(s.ttHandle, s.ttLink)
-      ? { tiktok: { handle: s.ttHandle.trim(), link: normalizeUrl(s.ttLink), ...(ttF !== undefined ? { followerCount: ttF } : {}) } }
+      ? { tiktok: { handle: s.ttHandle.trim(), link: normalizeUrl(s.ttLink) } }
       : {}),
   };
 
@@ -200,6 +182,7 @@ export default function CreatorOnboardingScreen({ initialIndex = 0 }: { initialI
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const firstName = (user?.name ?? '').split(' ')[0];
   const tileW = useTileWidth();
@@ -221,14 +204,7 @@ export default function CreatorOnboardingScreen({ initialIndex = 0 }: { initialI
   // what we verify against, so a typo here means they simply can't be verified —
   // cheaper to catch now than to have them wonder why verification never lands.
   const confirmSocials = () => {
-    Alert.alert(
-      'Double-check your handles',
-      'Make sure every handle and profile link is exactly right. If anything is wrong, we can’t verify you and brands won’t see you as verified.',
-      [
-        { text: 'Let me check', style: 'cancel' },
-        { text: 'It’s correct', style: 'default', onPress: next },
-      ],
-    );
+    setShowConfirm(true);
   };
 
   // Auto-advance after a UGC pick; track the timer so it's cleared on unmount.
@@ -299,6 +275,14 @@ export default function CreatorOnboardingScreen({ initialIndex = 0 }: { initialI
       celebrate={index === REVEAL}
     >
       {renderPanel()}
+      <ConfirmHandlesCard
+        visible={showConfirm}
+        onCheck={() => setShowConfirm(false)}
+        onConfirm={() => {
+          setShowConfirm(false);
+          next();
+        }}
+      />
     </StoryOnboarding>
   );
 
@@ -320,24 +304,19 @@ export default function CreatorOnboardingScreen({ initialIndex = 0 }: { initialI
         return (
           <StoryPanel
             title="What do you create?"
-            subtitle="Tap the topics you post about — brands match collabs to these."
+            subtitle="Tap the topics you post about. Brands match collabs to these."
             footer={<NextPill label="Continue" count={form.niche.length} onPress={next} disabled={form.niche.length < 1} />}
           >
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
-              {NICHES.map((n) => {
-                const v = optionVisual(n);
-                return (
-                  <ChoiceTile
-                    key={n}
-                    width={tileW}
-                    label={n}
-                    icon={v.icon}
-                    colors={v.colors}
-                    selected={form.niche.includes(n)}
-                    onPress={() => patch({ niche: toggle(form.niche, n) })}
-                  />
-                );
-              })}
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 9 }}>
+              {NICHES.map((n) => (
+                <SelectChip
+                  key={n}
+                  label={n}
+                  icon={optionVisual(n).icon}
+                  selected={form.niche.includes(n)}
+                  onPress={() => patch({ niche: toggle(form.niche, n) })}
+                />
+              ))}
             </View>
           </StoryPanel>
         );
@@ -354,33 +333,28 @@ export default function CreatorOnboardingScreen({ initialIndex = 0 }: { initialI
               </View>
             }
           >
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
-              {CONTENT_TYPES.map((ct) => {
-                const v = optionVisual(ct);
-                return (
-                  <ChoiceTile
-                    key={ct}
-                    width={tileW}
-                    label={ct}
-                    icon={v.icon}
-                    colors={v.colors}
-                    selected={form.contentTypes.includes(ct)}
-                    onPress={() => patch({ contentTypes: toggle(form.contentTypes, ct) })}
-                  />
-                );
-              })}
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 9 }}>
+              {CONTENT_TYPES.map((ct) => (
+                <SelectChip
+                  key={ct}
+                  label={ct}
+                  icon={optionVisual(ct).icon}
+                  selected={form.contentTypes.includes(ct)}
+                  onPress={() => patch({ contentTypes: toggle(form.contentTypes, ct) })}
+                />
+              ))}
             </View>
           </StoryPanel>
         );
 
       case 'ugc':
         return (
-          <StoryPanel title="Are you a UGC creator?" subtitle="UGC creators make content for brands to post — no big public following needed." scroll={false}>
+          <StoryPanel title="Are you a UGC creator?" subtitle="UGC creators make content for brands to post. No big public following needed." scroll={false}>
             <View style={{ flex: 1, justifyContent: 'center', gap: 14 }}>
               <ChoiceTile
                 width="100%"
                 height={120}
-                label="Yes — I make UGC for brands"
+                label="Yes, I make UGC for brands"
                 icon="phone"
                 colors={['#16C79A', '#0A7B68']}
                 selected={ugcPick === 'yes'}
@@ -389,7 +363,7 @@ export default function CreatorOnboardingScreen({ initialIndex = 0 }: { initialI
               <ChoiceTile
                 width="100%"
                 height={120}
-                label="No — I post on my own channels"
+                label="No, I post on my own channels"
                 icon="users"
                 colors={['#2D88FF', '#0A3DC9']}
                 selected={ugcPick === 'no'}
@@ -442,34 +416,24 @@ export default function CreatorOnboardingScreen({ initialIndex = 0 }: { initialI
         return (
           <StoryPanel
             title="Where can brands find you?"
-            subtitle="Connect the platforms you post on — we verify these so brands trust your reach."
+            subtitle="Connect the platforms you post on. We verify these so brands trust your reach."
             footer={<NextPill label="Continue" onPress={confirmSocials} disabled={!hasOneSocial(form)} />}
           >
             <SocialCard icon="instagram" badge={['#F9CE34', '#EE2A7B', '#6228D7']} name="Instagram" sub="Photos, Reels & Stories" complete={platformValid(form.social.igHandle, form.social.igLink)}>
               <StoryInput label="Handle" value={form.social.igHandle} placeholder="@yourhandle" maxLength={120} onChangeText={(igHandle) => setSocial({ igHandle })} />
-              <StoryInput label="Profile link" value={form.social.igLink} placeholder="https://instagram.com/yourhandle" keyboardType="url" maxLength={2048} onChangeText={(igLink) => setSocial({ igLink })} />
-              <View style={{ flexDirection: 'row', gap: 10 }}>
-                <View style={{ flex: 1 }}>
-                  <StoryInput label="Followers" value={form.social.igFollowers} placeholder="0" keyboardType="numeric" onChangeText={(v) => setSocial({ igFollowers: digits(v) })} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <StoryInput label="Engagement %" value={form.social.igEngagement} placeholder="e.g. 3.5" keyboardType="numeric" onChangeText={(v) => setSocial({ igEngagement: v.replace(/[^0-9.]/g, '') })} />
-                </View>
-              </View>
+              <StoryInput label="Profile link" value={form.social.igLink} placeholder="https://instagram.com/yourhandle" keyboardType="url" maxLength={2048} valid={looksLikeUrl(form.social.igLink)} onChangeText={(igLink) => setSocial({ igLink })} />
               <LinkHint show={platformStarted(form.social.igHandle, form.social.igLink) && !platformValid(form.social.igHandle, form.social.igLink)} platform="instagram.com/you" />
             </SocialCard>
 
             <SocialCard icon="youtube" badge={['#FF0000', '#C40000']} name="YouTube" sub="Long videos & Shorts" complete={platformValid(form.social.ytHandle, form.social.ytLink)}>
               <StoryInput label="Handle" value={form.social.ytHandle} placeholder="Channel name" maxLength={120} onChangeText={(ytHandle) => setSocial({ ytHandle })} />
-              <StoryInput label="Channel link" value={form.social.ytLink} placeholder="https://youtube.com/@yourchannel" keyboardType="url" maxLength={2048} onChangeText={(ytLink) => setSocial({ ytLink })} />
-              <StoryInput label="Subscribers" value={form.social.ytSubs} placeholder="0" keyboardType="numeric" onChangeText={(v) => setSocial({ ytSubs: digits(v) })} />
+              <StoryInput label="Channel link" value={form.social.ytLink} placeholder="https://youtube.com/@yourchannel" keyboardType="url" maxLength={2048} valid={looksLikeUrl(form.social.ytLink)} onChangeText={(ytLink) => setSocial({ ytLink })} />
               <LinkHint show={platformStarted(form.social.ytHandle, form.social.ytLink) && !platformValid(form.social.ytHandle, form.social.ytLink)} platform="youtube.com/@you" />
             </SocialCard>
 
             <SocialCard icon="music" badge={['#25F4EE', '#000000', '#FE2C55']} name="TikTok" sub="Short-form video" complete={platformValid(form.social.ttHandle, form.social.ttLink)}>
               <StoryInput label="Handle" value={form.social.ttHandle} placeholder="@yourhandle" maxLength={120} onChangeText={(ttHandle) => setSocial({ ttHandle })} />
-              <StoryInput label="Profile link" value={form.social.ttLink} placeholder="https://tiktok.com/@yourhandle" keyboardType="url" maxLength={2048} onChangeText={(ttLink) => setSocial({ ttLink })} />
-              <StoryInput label="Followers" value={form.social.ttFollowers} placeholder="0" keyboardType="numeric" onChangeText={(v) => setSocial({ ttFollowers: digits(v) })} />
+              <StoryInput label="Profile link" value={form.social.ttLink} placeholder="https://tiktok.com/@yourhandle" keyboardType="url" maxLength={2048} valid={looksLikeUrl(form.social.ttLink)} onChangeText={(ttLink) => setSocial({ ttLink })} />
               <LinkHint show={platformStarted(form.social.ttHandle, form.social.ttLink) && !platformValid(form.social.ttHandle, form.social.ttLink)} platform="tiktok.com/@you" />
             </SocialCard>
           </StoryPanel>
@@ -749,5 +713,105 @@ function RecapStat({ value, label }: { value: number; label: string }) {
       <Text style={{ fontFamily: 'monospace', fontSize: 19, fontWeight: '800', color: '#1C1E21', letterSpacing: -0.5 }}>{shown}</Text>
       <Text style={{ fontSize: 10.5, color: '#8A8D91', marginTop: 2 }}>{label}</Text>
     </View>
+  );
+}
+
+// ── "Double-check your handles" confirmation ─────────────────────────────────
+// A premium dark card (replaces the flat native Alert) shown before leaving the
+// socials step — handles/links are what we verify against, so a typo means no
+// verification. Matches the cinematic onboarding: scrim + glass card + one clear
+// primary action.
+function ConfirmHandlesCard({
+  visible,
+  onCheck,
+  onConfirm,
+}: {
+  visible: boolean;
+  onCheck: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onCheck} statusBarTranslucent>
+      <View style={{ flex: 1, backgroundColor: 'rgba(6,7,12,0.72)', alignItems: 'center', justifyContent: 'center', padding: 28 }}>
+        <View
+          style={{
+            width: '100%',
+            maxWidth: 380,
+            backgroundColor: '#171922',
+            borderRadius: 26,
+            borderWidth: 1,
+            borderColor: 'rgba(255,255,255,0.1)',
+            padding: 24,
+            shadowColor: '#000',
+            shadowOpacity: 0.5,
+            shadowRadius: 30,
+            shadowOffset: { width: 0, height: 20 },
+          }}
+        >
+          {/* icon medallion */}
+          <View
+            style={{
+              width: 52,
+              height: 52,
+              borderRadius: 16,
+              backgroundColor: 'rgba(45,136,255,0.16)',
+              borderWidth: 1,
+              borderColor: 'rgba(90,160,255,0.4)',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: 16,
+            }}
+          >
+            <Icon name="badge" size={26} color="#5AA0FF" strokeWidth={2.2} />
+          </View>
+
+          <Text style={{ fontSize: 20, fontWeight: '800', color: '#fff', letterSpacing: -0.3, marginBottom: 8 }}>
+            Double-check your handles
+          </Text>
+          <Text style={{ fontSize: 14.5, lineHeight: 21, color: '#A7ADB8' }}>
+            Make sure every handle and profile link is exactly right. If anything is wrong, we can’t verify you and
+            brands won’t see you as verified.
+          </Text>
+
+          <View style={{ marginTop: 22, gap: 10 }}>
+            {/* primary */}
+            <Pressable
+              onPress={onConfirm}
+              accessibilityRole="button"
+              style={({ pressed }) => ({
+                height: 52,
+                borderRadius: 15,
+                backgroundColor: '#2D88FF',
+                alignItems: 'center',
+                justifyContent: 'center',
+                opacity: pressed ? 0.9 : 1,
+                shadowColor: '#2D88FF',
+                shadowOpacity: 0.35,
+                shadowRadius: 14,
+                shadowOffset: { width: 0, height: 6 },
+              })}
+            >
+              <Text style={{ fontSize: 16, fontWeight: '700', color: '#fff' }}>It’s all correct</Text>
+            </Pressable>
+            {/* secondary */}
+            <Pressable
+              onPress={onCheck}
+              accessibilityRole="button"
+              style={({ pressed }) => ({
+                height: 48,
+                borderRadius: 15,
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderWidth: 1,
+                borderColor: 'rgba(255,255,255,0.14)',
+                opacity: pressed ? 0.6 : 1,
+              })}
+            >
+              <Text style={{ fontSize: 15, fontWeight: '600', color: '#C9CED7' }}>Let me check again</Text>
+            </Pressable>
+          </View>
+        </View>
+      </View>
+    </Modal>
   );
 }

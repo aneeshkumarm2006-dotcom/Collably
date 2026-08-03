@@ -329,7 +329,7 @@ function BlinkBizCard({ campaign, onPress }: { campaign: Campaign; onPress: () =
 
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 15, marginBottom: 7 }}>
         <Text style={{ fontSize: 12, color: colors.text2 }}>
-          {isOpen ? 'Open to applications' : 'Closed — review your approved creators'}
+          {isOpen ? 'Open to applications' : 'Closed: review your approved creators'}
         </Text>
       </View>
 

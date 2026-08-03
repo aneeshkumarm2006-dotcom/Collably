@@ -108,7 +108,7 @@ export function CreatorPreviewCard({ name, form }: { name: string; form: Creator
         {/* niche tags fly in as picked */}
         <Reanimated.View layout={LinearTransition} style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 11 }}>
           {form.niche.length === 0 ? (
-            <MutedHint>Pick your niches — they'll appear here</MutedHint>
+            <MutedHint>Pick your niches, they'll appear here</MutedHint>
           ) : (
             form.niche.slice(0, 6).map((n) => (
               <Reanimated.View

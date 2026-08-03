@@ -215,7 +215,7 @@ function EditForm({ initial }: { initial: Form }) {
         </Field>
 
         <Text style={{ fontSize: 13, color: colors.text2, marginTop: 6, marginBottom: 2, lineHeight: 18 }}>
-          At least one platform with a handle and a profile link is required — this is what we verify.
+          At least one platform with a handle and a profile link is required. This is what we verify.
         </Text>
 
         <SectionLabel colors={colors}>Instagram</SectionLabel>

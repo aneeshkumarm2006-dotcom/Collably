@@ -93,7 +93,11 @@ export async function pickAndUploadImage(
 
   const picked = await ImagePicker.launchImageLibraryAsync({
     mediaTypes: ['images'],
-    allowsEditing: true,
+    // Only force the system cropper when a specific `aspect` is required (avatars,
+    // logos → square). Android's built-in crop tool otherwise locks to landscape/
+    // square and mangles portrait images — so for content/portfolio uploads we skip
+    // editing entirely and keep the full portrait image (own compression below).
+    allowsEditing: aspect != null,
     aspect,
     quality: 1, // we do our own compression below for a predictable size
   });

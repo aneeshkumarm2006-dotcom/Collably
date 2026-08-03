@@ -220,6 +220,13 @@ function useAuthGate(booted: boolean): void {
     const currentGroup = segments[0];
     if (currentGroup === target.group) return;
 
+    // Shared standalone screens (reachable from either role's Settings) live at the
+    // app root, not inside a role group — don't bounce an authenticated user off
+    // them back to their tabs. Without this, opening e.g. "Blocked accounts" flashes
+    // the screen then redirects Home.
+    const SHARED_STANDALONE = ['blocked'];
+    if (status === 'authenticated' && SHARED_STANDALONE.includes(currentGroup as string)) return;
+
     // A guest mid-login may legitimately sit in (auth) — don't yank them out.
     if (status === 'guest' && currentGroup === '(auth)') return;
 

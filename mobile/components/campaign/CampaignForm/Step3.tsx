@@ -48,7 +48,7 @@ export function Step3({ value, patch }: CampaignStepProps) {
       <View style={{ marginBottom: 16 }}>
         <SwitchRow
           label="Remote / Online"
-          hint="Creators can join from anywhere — no in-person visit needed."
+          hint="Creators can join from anywhere. No in-person visit needed."
           value={value.isRemote}
           onValueChange={(isRemote) => patch({ isRemote })}
         />
@@ -142,7 +142,7 @@ function PinPicker({ value, patch }: CampaignStepProps) {
     try {
       const hit = await forwardGeocode(q);
       if (!hit) {
-        showToast({ message: 'No match for that address — try tapping the map.', type: 'info' });
+        showToast({ message: 'No match for that address. Try tapping the map.', type: 'info' });
         return;
       }
       patch({
@@ -176,7 +176,7 @@ function PinPicker({ value, patch }: CampaignStepProps) {
         <MapPlaceholder
           height={170}
           label="Pin-drop coming soon"
-          hint="Set the city below for now — you'll be able to drop an exact map pin once maps are enabled."
+          hint="Set the city below for now. You'll be able to drop an exact map pin once maps are enabled."
         />
       </View>
     );

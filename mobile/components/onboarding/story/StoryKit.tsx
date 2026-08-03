@@ -67,15 +67,35 @@ const FALLBACK_VISUAL: TileVisual = { icon: 'sparkles', colors: ['#2D88FF', '#0A
 export const optionVisual = (label: string): TileVisual =>
   NICHE_VISUAL[label] ?? CONTENT_VISUAL[label] ?? FALLBACK_VISUAL;
 
-// ── story progress bar (white segments over the photo) ───────────────────────
+// ── story progress bar (segments over the photo; current one glows) ──────────
 export function StoryProgress({ current, total }: { current: number; total: number }) {
   return (
     <View style={{ flexDirection: 'row', gap: 5 }}>
-      {Array.from({ length: total }).map((_, i) => (
-        <View key={i} style={{ flex: 1, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.28)', overflow: 'hidden' }}>
-          {i < current ? <View style={{ flex: 1, backgroundColor: '#fff', borderRadius: 2 }} /> : null}
-        </View>
-      ))}
+      {Array.from({ length: total }).map((_, i) => {
+        const done = i < current;
+        const isCurrent = i === current - 1;
+        return (
+          <View
+            key={i}
+            style={{
+              flex: 1,
+              height: 4,
+              borderRadius: 2,
+              overflow: 'hidden',
+              backgroundColor: done ? 'transparent' : 'rgba(255,255,255,0.16)',
+              // The active segment gets a soft blue glow so "where am I" reads
+              // instantly without counting filled bars.
+              ...(isCurrent
+                ? { shadowColor: '#2D88FF', shadowOpacity: 0.9, shadowRadius: 6, shadowOffset: { width: 0, height: 0 }, elevation: 4 }
+                : {}),
+            }}
+          >
+            {done ? (
+              <LinearGradient colors={['#2D88FF', '#5AA0FF']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ flex: 1 }} />
+            ) : null}
+          </View>
+        );
+      })}
     </View>
   );
 }
@@ -208,6 +228,47 @@ export function ChoiceTile({
   );
 }
 
+// ── select chip (niche / content) — matches the approved redesign ────────────
+// A compact wrap-flow pill that fills brand-blue with a check when selected.
+// Replaces the big colour-medallion tiles so the whole flow stays cohesive
+// (blue as the only accent). A subtle monochrome icon keeps each option
+// recognisable without a rainbow of per-item colours.
+export function SelectChip({
+  label,
+  icon,
+  selected,
+  onPress,
+}: {
+  label: string;
+  icon: IconName;
+  selected: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityState={{ selected }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 8,
+          paddingVertical: 11,
+          paddingHorizontal: 14,
+          borderRadius: 14,
+          borderWidth: 1.5,
+          borderColor: selected ? 'rgba(90,160,255,0.7)' : 'rgba(255,255,255,0.12)',
+          backgroundColor: selected ? 'rgba(45,136,255,0.16)' : 'rgba(255,255,255,0.04)',
+        }}
+      >
+        <Icon name={icon} size={16} color={selected ? '#fff' : 'rgba(255,255,255,0.5)'} strokeWidth={2} />
+        <Text style={{ fontSize: 14, fontWeight: selected ? '700' : '600', color: selected ? '#fff' : '#C9CED7', letterSpacing: -0.1 }}>
+          {label}
+        </Text>
+        {selected ? <Icon name="check" size={14} color="#5AA0FF" strokeWidth={3} /> : null}
+      </View>
+    </Pressable>
+  );
+}
+
 // ── floating bottom action pill ──────────────────────────────────────────────
 export function NextPill({
   label,
@@ -224,6 +285,22 @@ export function NextPill({
   count?: number;
   icon?: IconName;
 }) {
+  // Brand-blue gradient CTA with a soft glow (approved redesign) — one confident
+  // primary action per panel, in the Meta blue, on the cinematic dark ground.
+  const content = (
+    <>
+      {typeof count === 'number' && count > 0 ? (
+        <View style={{ minWidth: 24, height: 24, paddingHorizontal: 7, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ color: '#fff', fontSize: 12.5, fontWeight: '800' }}>{count}</Text>
+        </View>
+      ) : null}
+      <Text style={{ fontSize: 16.5, fontWeight: '800', color: '#fff', letterSpacing: -0.2 }}>
+        {loading ? 'Please wait…' : label}
+      </Text>
+      {!loading && <Icon name={icon} size={18} color="#fff" strokeWidth={2.4} />}
+    </>
+  );
+
   return (
     <Reanimated.View entering={FadeInUp.duration(220)}>
       <Pressable
@@ -231,32 +308,50 @@ export function NextPill({
         accessibilityRole="button"
         accessibilityState={{ disabled: disabled || loading }}
         style={({ pressed }) => ({
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 8,
-          height: 56,
           borderRadius: 18,
-          backgroundColor: disabled ? 'rgba(255,255,255,0.35)' : '#fff',
-          opacity: pressed ? 0.85 : 1,
-          ...(disabled ? {} : { shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 14, shadowOffset: { width: 0, height: 6 } }),
+          opacity: pressed ? 0.9 : 1,
+          ...(disabled
+            ? {}
+            : { shadowColor: '#2D88FF', shadowOpacity: 0.4, shadowRadius: 16, shadowOffset: { width: 0, height: 8 } }),
         })}
       >
-        {typeof count === 'number' && count > 0 ? (
-          <View style={{ minWidth: 24, height: 24, paddingHorizontal: 7, borderRadius: 999, backgroundColor: '#111', alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ color: '#fff', fontSize: 12.5, fontWeight: '800' }}>{count}</Text>
+        {disabled ? (
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              height: 56,
+              borderRadius: 18,
+              backgroundColor: 'rgba(255,255,255,0.08)',
+            }}
+          >
+            <Text style={{ fontSize: 16.5, fontWeight: '800', color: 'rgba(255,255,255,0.35)', letterSpacing: -0.2 }}>{label}</Text>
+            <Icon name={icon} size={18} color="rgba(255,255,255,0.35)" strokeWidth={2.4} />
           </View>
-        ) : null}
-        <Text style={{ fontSize: 16.5, fontWeight: '800', color: disabled ? 'rgba(0,0,0,0.4)' : '#111', letterSpacing: -0.2 }}>
-          {loading ? 'Please wait…' : label}
-        </Text>
-        {!loading && <Icon name={icon} size={18} color={disabled ? 'rgba(0,0,0,0.4)' : '#111'} strokeWidth={2.4} />}
+        ) : (
+          <LinearGradient
+            colors={['#2D88FF', '#1877F2']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 56, borderRadius: 18 }}
+          >
+            {content}
+          </LinearGradient>
+        )}
       </Pressable>
     </Reanimated.View>
   );
 }
 
 // ── dark-canvas text input ───────────────────────────────────────────────────
+// A solid, premium field (not a flat translucent box): the surface deepens, the
+// border picks up the brand blue on focus, and a `valid` field shows an inline
+// green check so the user gets validation feedback right where they typed.
+const STORY_BLUE = '#2D88FF';
+const STORY_GREEN = '#45BD62';
+
 export function StoryInput({
   label,
   value,
@@ -266,6 +361,7 @@ export function StoryInput({
   autoCapitalize = 'none',
   maxLength,
   multiline = false,
+  valid = false,
 }: {
   label?: string;
   value: string;
@@ -275,34 +371,53 @@ export function StoryInput({
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
   maxLength?: number;
   multiline?: boolean;
+  /** When true, shows an inline green check (e.g. a validated profile URL). */
+  valid?: boolean;
 }) {
+  const [focused, setFocused] = useState(false);
+  const borderColor = focused ? STORY_BLUE : valid ? 'rgba(69,189,98,0.55)' : 'rgba(255,255,255,0.16)';
+
   return (
     <View style={{ marginBottom: 14 }}>
       {label ? (
-        <Text style={{ fontSize: 12.5, fontWeight: '700', color: 'rgba(255,255,255,0.72)', marginBottom: 7, letterSpacing: 0.2 }}>{label}</Text>
+        <Text style={{ fontSize: 11.5, fontWeight: '700', color: 'rgba(255,255,255,0.6)', marginBottom: 7, letterSpacing: 0.5, textTransform: 'uppercase' }}>{label}</Text>
       ) : null}
-      <TextInput
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-        placeholderTextColor="rgba(255,255,255,0.42)"
-        keyboardType={keyboardType}
-        autoCapitalize={autoCapitalize}
-        maxLength={maxLength}
-        multiline={multiline}
-        style={{
-          backgroundColor: 'rgba(255,255,255,0.12)',
-          borderWidth: 1,
-          borderColor: 'rgba(255,255,255,0.2)',
-          borderRadius: 14,
-          paddingHorizontal: 14,
-          paddingVertical: multiline ? 12 : 13,
-          minHeight: multiline ? 100 : undefined,
-          textAlignVertical: multiline ? 'top' : 'center',
-          fontSize: 16,
-          color: '#fff',
-        }}
-      />
+      <View style={{ position: 'relative', justifyContent: 'center' }}>
+        <TextInput
+          value={value}
+          onChangeText={onChangeText}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          placeholder={placeholder}
+          placeholderTextColor="rgba(255,255,255,0.36)"
+          keyboardType={keyboardType}
+          autoCapitalize={autoCapitalize}
+          maxLength={maxLength}
+          multiline={multiline}
+          style={{
+            backgroundColor: 'rgba(255,255,255,0.055)',
+            borderWidth: 1.5,
+            borderColor,
+            borderRadius: 14,
+            paddingLeft: 14,
+            paddingRight: valid && !multiline ? 40 : 14,
+            paddingVertical: multiline ? 12 : 13,
+            minHeight: multiline ? 100 : undefined,
+            textAlignVertical: multiline ? 'top' : 'center',
+            fontSize: 16,
+            color: '#fff',
+            // Soft focus ring via shadow (Android falls back to the border color).
+            ...(focused
+              ? { shadowColor: STORY_BLUE, shadowOpacity: 0.35, shadowRadius: 8, shadowOffset: { width: 0, height: 0 } }
+              : {}),
+          }}
+        />
+        {valid && !multiline ? (
+          <View style={{ position: 'absolute', right: 12, width: 20, height: 20, borderRadius: 999, backgroundColor: STORY_GREEN, alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name="check" size={12} color="#fff" strokeWidth={3.4} />
+          </View>
+        ) : null}
+      </View>
     </View>
   );
 }
@@ -443,101 +558,84 @@ export function useTileWidth(pad = 24, gap = 12, cols = 2): number {
   return Math.floor((width - pad * 2 - gap * (cols - 1)) / cols);
 }
 
-// ── welcome hero: fanning profile-card deck ──────────────────────────────────
-// Three glass cards start stacked, then fan out + settle with a spring (once).
-// The front card previews the creator profile the user is about to build.
-function DeckCard({
-  tx,
-  ty,
-  rot,
-  delay,
-  z,
-  children,
-}: {
-  tx: number;
-  ty: number;
-  rot: number;
-  delay: number;
-  z: number;
-  children: React.ReactNode;
-}) {
-  const reduced = useReducedMotion();
-  const p = useSharedValue(0);
-  useEffect(() => {
-    p.value = withDelay(delay, reduced ? withTiming(1, { duration: 1 }) : withSpring(1, { damping: 14, stiffness: 110, mass: 0.9 }));
-  }, [p, delay, reduced]);
-  const style = useAnimatedStyle(() => ({
-    opacity: interpolate(p.value, [0, 0.35], [0, 1], Extrapolation.CLAMP),
-    transform: [
-      { translateX: tx * p.value },
-      { translateY: ty * p.value },
-      { rotate: `${rot * p.value}deg` },
-      { scale: interpolate(p.value, [0, 1], [0.94, 1], Extrapolation.CLAMP) },
-    ],
-  }));
-  return <Reanimated.View style={[{ position: 'absolute', top: 18, left: 12, width: 200, zIndex: z }, style]}>{children}</Reanimated.View>;
-}
+// ── welcome hero: one premium "profile preview" card ─────────────────────────
+// A single clean card previewing the creator profile the user is about to build.
+// Cohesive with the blue-black flow: a Meta-blue banner, a blue-lit avatar, and
+// an honest "verified creator" row (no fabricated reach/engagement numbers). The
+// card springs up + fades in once on mount, over a soft blue shadow-glow.
+const CARD_SURFACE = '#141830';
 
-// Near-solid premium card surfaces (not translucent) so the deck reads as real
-// stacked cards, not ghosts. Front is a touch lighter than the two behind it.
-const DECK_CARD = {
-  borderRadius: 22,
-  overflow: 'hidden' as const,
-  backgroundColor: '#1C1E38',
-  borderWidth: 1,
-  borderColor: 'rgba(255,255,255,0.16)',
-  shadowColor: '#000',
-  shadowOpacity: 0.5,
-  shadowRadius: 26,
-  shadowOffset: { width: 0, height: 18 },
-  elevation: 14,
-};
-
-function GhostCard({ banner }: { banner: Grad }) {
-  const line = (w: string | number, mt = 0) => (
-    <View style={{ height: 7, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.18)', width: w as ViewStyle['width'], marginTop: mt }} />
-  );
-  return (
-    <View style={[DECK_CARD, { backgroundColor: '#141528', elevation: 6 }]}>
-      <LinearGradient colors={banner} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ height: 46 }} />
-      <View style={{ padding: 13 }}>
-        <View style={{ width: 46, height: 46, borderRadius: 999, marginTop: -23, backgroundColor: 'rgba(255,255,255,0.25)', borderWidth: 3, borderColor: 'rgba(255,255,255,0.5)' }} />
-        {line('60%', 12)}
-        {line('85%', 8)}
-        <View style={{ marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.18)' }}>{line('45%')}</View>
-      </View>
-    </View>
-  );
-}
-
-function FrontCard({ name }: { name: string }) {
+function ProfilePreviewCard({ name }: { name: string }) {
   const initial = (name.trim()[0] ?? 'Y').toUpperCase();
   return (
-    <View style={DECK_CARD}>
-      <LinearGradient colors={['#7C5CFF', '#C026D3']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ height: 46 }} />
-      <View style={{ paddingHorizontal: 13, paddingBottom: 14 }}>
-        <View style={{ marginTop: -23 }}>
-          <LinearGradient colors={['#FF7A45', '#D7263D']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 46, height: 46, borderRadius: 999, borderWidth: 3, borderColor: 'rgba(255,255,255,0.9)', alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ fontSize: 18, fontWeight: '800', color: '#fff' }}>{initial}</Text>
-          </LinearGradient>
-          <View style={{ position: 'absolute', bottom: -2, left: 32, width: 18, height: 18, borderRadius: 999, backgroundColor: '#2D88FF', borderWidth: 2.5, borderColor: '#fff', alignItems: 'center', justifyContent: 'center' }}>
-            <Icon name="check" size={9} color="#fff" strokeWidth={3.5} />
+    <View
+      style={{
+        borderRadius: 26,
+        overflow: 'hidden',
+        backgroundColor: CARD_SURFACE,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.10)',
+        // Blue shadow reads as a soft glow (iOS); grey elevation on Android.
+        shadowColor: '#1877F2',
+        shadowOpacity: 0.55,
+        shadowRadius: 34,
+        shadowOffset: { width: 0, height: 22 },
+        elevation: 18,
+      }}
+    >
+      {/* Meta-blue banner with a diagonal sheen */}
+      <LinearGradient colors={['#2D88FF', '#1877F2']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 76 }}>
+        <LinearGradient
+          colors={['rgba(255,255,255,0.35)', 'rgba(255,255,255,0)']}
+          start={{ x: 0.85, y: 0 }}
+          end={{ x: 0.4, y: 0.95 }}
+          style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+          pointerEvents="none"
+        />
+      </LinearGradient>
+
+      <View style={{ paddingHorizontal: 18, paddingBottom: 18 }}>
+        {/* avatar (overlaps banner) + "open to collabs" tag on the same line */}
+        <View style={{ marginTop: -36, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+          <View>
+            <View style={{ width: 70, height: 70, borderRadius: 999, borderWidth: 3.5, borderColor: CARD_SURFACE }}>
+              <LinearGradient colors={['#5AA0FF', '#1877F2']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1, borderRadius: 999, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontSize: 27, fontWeight: '800', color: '#fff' }}>{initial}</Text>
+              </LinearGradient>
+            </View>
+            <View style={{ position: 'absolute', bottom: 0, right: 0, width: 23, height: 23, borderRadius: 999, backgroundColor: '#2D88FF', borderWidth: 2.5, borderColor: CARD_SURFACE, alignItems: 'center', justifyContent: 'center' }}>
+              <Icon name="check" size={11} color="#fff" strokeWidth={3.5} />
+            </View>
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(45,136,255,0.16)', borderWidth: 1, borderColor: 'rgba(90,160,255,0.38)', borderRadius: 999, paddingHorizontal: 11, paddingVertical: 5, marginBottom: 4 }}>
+            <View style={{ width: 6, height: 6, borderRadius: 999, backgroundColor: '#5AA0FF' }} />
+            <Text style={{ fontSize: 11, fontWeight: '700', color: '#9CC4FF' }}>Open to collabs</Text>
           </View>
         </View>
-        <Text numberOfLines={1} style={{ fontSize: 14.5, fontWeight: '800', color: '#fff', letterSpacing: -0.3, marginTop: 8 }}>{name || 'Your name'}</Text>
-        <Text style={{ fontSize: 11, color: 'rgba(255,255,255,0.65)', marginTop: 1 }}>Creator profile</Text>
-        <View style={{ flexDirection: 'row', gap: 5, marginTop: 9 }}>
+
+        <Text numberOfLines={1} style={{ fontSize: 20, fontWeight: '800', color: '#fff', letterSpacing: -0.4, marginTop: 12 }}>
+          {name || 'Your name'}
+        </Text>
+        <Text style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.55)', marginTop: 2 }}>Creator profile</Text>
+
+        {/* niche chips */}
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 14 }}>
           {['Fashion', 'Beauty', 'Food'].map((c) => (
-            <View key={c} style={{ backgroundColor: 'rgba(255,255,255,0.18)', borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3 }}>
-              <Text style={{ fontSize: 10, fontWeight: '700', color: '#fff' }}>{c}</Text>
+            <View key={c} style={{ backgroundColor: 'rgba(255,255,255,0.07)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.10)', borderRadius: 999, paddingHorizontal: 11, paddingVertical: 5 }}>
+              <Text style={{ fontSize: 11.5, fontWeight: '700', color: 'rgba(255,255,255,0.85)' }}>{c}</Text>
             </View>
           ))}
         </View>
-        <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 5, marginTop: 11, paddingTop: 9, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.18)' }}>
-          <Text style={{ fontSize: 15, fontWeight: '800', color: '#fff', letterSpacing: -0.3 }}>128K</Text>
-          <Text style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.6)' }}>reach</Text>
-          <Text style={{ fontSize: 15, fontWeight: '800', color: '#fff', letterSpacing: -0.3, marginLeft: 10 }}>4.2%</Text>
-          <Text style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.6)' }}>eng.</Text>
+
+        {/* Honest trust row: the verified badge comes from the Instagram DM
+            ownership check, not a self-reported follower/engagement number. */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 16, paddingTop: 14, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.08)' }}>
+          <View style={{ width: 20, height: 20, borderRadius: 999, backgroundColor: '#2D88FF', alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name="check" size={11} color="#fff" strokeWidth={3.5} />
+          </View>
+          <Text style={{ fontSize: 13, fontWeight: '700', color: '#fff' }}>Verified creator</Text>
+          <View style={{ flex: 1 }} />
+          <Text style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.4)' }}>via Instagram</Text>
         </View>
       </View>
     </View>
@@ -545,19 +643,32 @@ function FrontCard({ name }: { name: string }) {
 }
 
 export function WelcomeDeck({ name }: { name: string }) {
+  const reduced = useReducedMotion();
+  const { width } = useWindowDimensions();
+  const cardW = Math.min(width - 56, 330);
+  const p = useSharedValue(0);
+  useEffect(() => {
+    p.value = reduced ? withTiming(1, { duration: 1 }) : withDelay(90, withSpring(1, { damping: 15, stiffness: 120, mass: 0.9 }));
+  }, [p, reduced]);
+  const cardStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(p.value, [0, 0.5], [0, 1], Extrapolation.CLAMP),
+    transform: [
+      { translateY: interpolate(p.value, [0, 1], [28, 0], Extrapolation.CLAMP) },
+      { scale: interpolate(p.value, [0, 1], [0.96, 1], Extrapolation.CLAMP) },
+    ],
+  }));
   return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-      <View style={{ width: 224, height: 300 }}>
-        <DeckCard tx={-52} ty={18} rot={-10} delay={0} z={1}>
-          <GhostCard banner={['#2D88FF', '#0A3DC9']} />
-        </DeckCard>
-        <DeckCard tx={52} ty={12} rot={9} delay={80} z={2}>
-          <GhostCard banner={['#FF5EA0', '#B4126B']} />
-        </DeckCard>
-        <DeckCard tx={0} ty={0} rot={0} delay={160} z={3}>
-          <FrontCard name={name} />
-        </DeckCard>
+      {/* context caption: tells the user what this card represents */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 20 }}>
+        <View style={{ height: 1, width: 20, backgroundColor: 'rgba(255,255,255,0.18)' }} />
+        <Text style={{ fontSize: 10.5, fontWeight: '800', letterSpacing: 1.6, color: 'rgba(255,255,255,0.5)' }}>THIS IS WHAT BRANDS SEE</Text>
+        <View style={{ height: 1, width: 20, backgroundColor: 'rgba(255,255,255,0.18)' }} />
       </View>
+
+      <Reanimated.View style={[{ width: cardW }, cardStyle]}>
+        <ProfilePreviewCard name={name} />
+      </Reanimated.View>
     </View>
   );
 }

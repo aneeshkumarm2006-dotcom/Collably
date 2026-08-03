@@ -7,6 +7,7 @@ export {
   StoryPanel,
   StoryHeadline,
   ChoiceTile,
+  SelectChip,
   NextPill,
   SkipLink,
   StoryInput,
