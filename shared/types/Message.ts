@@ -11,6 +11,8 @@ export interface Message {
   senderUserId: ID; // ref: User
   senderRole: UserRole;
   body: string;
+  /** Hosted image URL when the message carries an image. */
+  imageUrl?: string;
   /** Set once the message has reached the recipient's device (WhatsApp ✓✓ grey). */
   deliveredAt?: ISODateString;
   /** Set once the recipient has opened the thread (WhatsApp ✓✓ blue). */

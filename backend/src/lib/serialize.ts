@@ -374,6 +374,7 @@ export function toPublicMessage(m: MessageDoc): Message {
     senderUserId: refId(m.senderUserId as Ref<unknown>),
     senderRole: m.senderRole,
     body: m.body,
+    ...(m.imageUrl ? { imageUrl: m.imageUrl } : {}),
     deliveredAt: iso(m.deliveredAt),
     readAt: iso(m.readAt),
     createdAt: m.createdAt.toISOString(),

@@ -51,7 +51,7 @@ import {
 import { notifyCreatorVerified, notifyBusinessVerified, notifyCreatorRejected } from '../lib/triggers';
 import { getOrCreateAdminConversation, getOrCreateSupportUser, SUPPORT_NAME } from '../lib/conversations';
 import { emitToUser, isUserOnline } from '../lib/realtime';
-import { notify } from '../services';
+import { notify, createSignedUpload } from '../services';
 import type { UserSummary } from '../../../shared/types/User';
 
 const router = Router();
@@ -491,9 +491,12 @@ router.patch(
 
 // --- Admin <-> creator support chat ------------------------------------------
 
-const adminMessageSchema = z.object({
-  body: z.string().trim().min(1, 'message is required').max(4000),
-});
+const adminMessageSchema = z
+  .object({
+    body: z.string().trim().max(4000).optional(),
+    imageUrl: z.string().trim().url().max(600).optional(),
+  })
+  .refine((v) => (v.body && v.body.length > 0) || v.imageUrl, 'A message or an image is required');
 
 /** The creator's summary chip for the admin-side view of a support thread. */
 async function creatorSummaryOf(creatorUserId: string): Promise<UserSummary> {
@@ -564,7 +567,8 @@ router.post(
   '/creators/:id/messages',
   asyncHandler(async (req, res) => {
     const id = objectIdParam(req.params.id);
-    const { body } = adminMessageSchema.parse(req.body);
+    const { body, imageUrl } = adminMessageSchema.parse(req.body);
+    const text = body ?? '';
 
     const profile = await CreatorProfile.findById(id).select('userId');
     if (!profile) throw new AppError(404, 'Creator profile not found');
@@ -578,12 +582,13 @@ router.post(
       conversationId: c._id,
       senderUserId: support._id,
       senderRole: 'admin',
-      body,
+      body: text,
+      ...(imageUrl ? { imageUrl } : {}),
       ...(recipientOnline ? { deliveredAt: new Date() } : {}),
     });
 
     // Thread preview + bump the creator's unread counter (support -> creator).
-    c.lastMessage = body;
+    c.lastMessage = text || '📷 Photo';
     c.lastMessageAt = message.createdAt;
     c.lastSenderUserId = support._id;
     c.unreadByCreator += 1;
@@ -605,7 +610,7 @@ router.post(
     // notify() writes the in-app record, emits the live bell event, and pushes
     // (if they have a valid token + opted in). Best-effort.
     try {
-      const preview = body.length > 80 ? `${body.slice(0, 79)}…` : body;
+      const preview = !text && imageUrl ? 'sent a photo' : text.length > 80 ? `${text.slice(0, 79)}…` : text;
       await notify({
         recipient: creatorUserId,
         type: 'new_message',
@@ -620,6 +625,18 @@ router.post(
     }
 
     res.status(201).json({ message: publicMessage });
+  }),
+);
+
+/**
+ * POST /api/admin/upload/sign — signed params so the dashboard can upload a chat
+ * image straight to Cloudinary. Mirrors the app's /api/upload/sign; the API secret
+ * never leaves the server. Support images land in the shared "submissions" folder.
+ */
+router.post(
+  '/upload/sign',
+  asyncHandler((_req, res) => {
+    res.status(200).json(createSignedUpload({ folder: 'submissions' }));
   }),
 );
 
