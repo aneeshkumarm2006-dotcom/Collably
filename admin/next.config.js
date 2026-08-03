@@ -18,7 +18,9 @@ const nextConfig = {
       "img-src 'self' data: https://res.cloudinary.com",
       "style-src 'self' 'unsafe-inline'",
       "script-src 'self' 'unsafe-inline'",
-      "connect-src 'self'",
+      // Allow the direct signed image upload to Cloudinary (the support-chat image
+      // send POSTs the file straight to Cloudinary's upload endpoint).
+      "connect-src 'self' https://api.cloudinary.com",
     ].join('; ');
     return [
       {
