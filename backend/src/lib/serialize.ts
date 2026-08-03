@@ -342,6 +342,11 @@ export function toPublicConversation(
   // Unread is viewer-relative. The creator's counter is `unreadByCreator`; the
   // other seat (business, or support on an admin thread) is `unreadByBusiness`.
   const viewerIsCreator = creatorUserId === viewerUserId;
+  // Has the OTHER party read the viewer's last message? True when the other seat's
+  // unread counter is zero. Only meaningful when the viewer sent last (the client
+  // gates the read-receipt tick on that), so it powers "grey delivered vs blue read"
+  // without leaking a false "read" before the other side actually opened the thread.
+  const otherUnread = viewerIsCreator ? c.unreadByBusiness : c.unreadByCreator;
   return {
     _id: c.id,
     kind: c.kind,
@@ -356,6 +361,7 @@ export function toPublicConversation(
     lastMessageAt: iso(c.lastMessageAt),
     lastSenderUserId: c.lastSenderUserId ? refId(c.lastSenderUserId as Ref<unknown>) : undefined,
     unreadCount: viewerIsCreator ? c.unreadByCreator : c.unreadByBusiness,
+    lastReadByOther: otherUnread === 0,
     createdAt: c.createdAt.toISOString(),
     updatedAt: c.updatedAt.toISOString(),
   };

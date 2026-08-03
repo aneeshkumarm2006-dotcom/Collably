@@ -31,4 +31,10 @@ export interface Conversation extends Timestamped {
   lastSenderUserId?: ID;
   /** Unread messages for the calling user (0 for the other participant's view). */
   unreadCount: number;
+  /**
+   * True when the OTHER participant has read the viewer's last message (their unread
+   * counter is 0). Powers the list read-receipt tick: grey double-tick (delivered)
+   * until this flips true, then blue (read). Only meaningful when the viewer sent last.
+   */
+  lastReadByOther?: boolean;
 }

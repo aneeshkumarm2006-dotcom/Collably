@@ -522,6 +522,23 @@ router.get(
     const support = await getOrCreateSupportUser();
     const c = await getOrCreateAdminConversation(creatorUserId);
 
+    // Opening the thread means the support team actually read it. Stamp the
+    // creator's unread messages as read, clear the support-side counter, and tell
+    // the creator's app so their sent-message ticks flip to blue (read). Only when
+    // there is something unread, so re-opening an empty/read thread is a no-op.
+    if (c.unreadByBusiness > 0) {
+      await Message.updateMany(
+        { conversationId: c._id, senderUserId: { $ne: support._id }, readAt: { $exists: false } },
+        { $set: { readAt: new Date() } },
+      );
+      c.unreadByBusiness = 0;
+      await c.save();
+      emitToUser(creatorUserId, 'conversation:read', {
+        conversationId: c.id,
+        byUserId: String(support._id),
+      });
+    }
+
     const docs = await Message.find({ conversationId: c._id }).sort({ createdAt: -1 }).limit(100);
     const messages = docs.reverse().map(toPublicMessage);
 
