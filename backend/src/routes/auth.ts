@@ -141,8 +141,14 @@ router.post(
 
     // passwordHash is select:false — opt in explicitly for the comparison.
     const user = await User.findOne({ email }).select('+passwordHash');
+    // Service accounts (e.g. the support identity) carry a non-password `disabled:`
+    // hash and must never be able to log in, regardless of what's submitted.
     // Same generic message whether the email or password is wrong (no enumeration).
-    if (!user || !(await verifyPassword(password, user.passwordHash))) {
+    if (
+      !user ||
+      user.passwordHash?.startsWith('disabled:') ||
+      !(await verifyPassword(password, user.passwordHash))
+    ) {
       throw new AppError(401, 'Invalid email or password');
     }
 
@@ -182,11 +188,14 @@ router.post(
   '/forgot-password',
   asyncHandler(async (req, res) => {
     const { email } = forgotPasswordSchema.parse(req.body);
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select('+passwordHash');
 
     const generic = { message: 'If an account exists for that email, a reset link has been sent.' };
 
-    if (!user) {
+    // No user, or a service account (non-password `disabled:` hash, e.g. the support
+    // identity): respond generically and issue NO reset token. This keeps the
+    // support admin account non-loginable even if its mailbox is reachable.
+    if (!user || user.passwordHash?.startsWith('disabled:')) {
       res.status(200).json(generic);
       return;
     }

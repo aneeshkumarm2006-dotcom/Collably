@@ -494,7 +494,21 @@ router.patch(
 const adminMessageSchema = z
   .object({
     body: z.string().trim().max(4000).optional(),
-    imageUrl: z.string().trim().url().max(600).optional(),
+    // Only accept an https URL on our own Cloudinary host. Blocks javascript:/data:
+    // schemes (zod .url() would allow them) and off-Cloudinary/relay hosts.
+    imageUrl: z
+      .string()
+      .trim()
+      .max(600)
+      .refine((u) => {
+        try {
+          const p = new URL(u);
+          return p.protocol === 'https:' && p.hostname === 'res.cloudinary.com';
+        } catch {
+          return false;
+        }
+      }, 'Image URL must be an https Cloudinary link')
+      .optional(),
   })
   .refine((v) => (v.body && v.body.length > 0) || v.imageUrl, 'A message or an image is required');
 
