@@ -154,9 +154,9 @@ export function notifyCreatorVerified(opts: {
     notify({
       recipient: opts.creatorUserId,
       type: 'creator_verified',
-      message: `You're verified${who}! Your creator profile is live — you can now apply to campaigns.`,
+      message: `You're verified${who}! Your creator profile is live, and you can now apply to campaigns.`,
       deepLinkPath: '/notifications',
-      push: { title: "You're verified! 🎉", body: 'Your creator profile is live. Start applying to campaigns.' },
+      push: { title: "You're verified!", body: 'Your creator profile is live. Start applying to campaigns.' },
     }),
   );
 }
@@ -176,7 +176,7 @@ export function notifyBusinessVerified(opts: {
       type: 'business_verified',
       message: `You're verified${who}! You can now publish campaigns and start collaborating with creators.`,
       deepLinkPath: '/notifications',
-      push: { title: "You're verified! 🎉", body: 'You can now publish campaigns and find creators.' },
+      push: { title: "You're verified!", body: 'You can now publish campaigns and find creators.' },
     }),
   );
 }
