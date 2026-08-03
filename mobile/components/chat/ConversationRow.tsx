@@ -1,8 +1,13 @@
 /**
- * One row in the conversations list — WhatsApp-premium: avatar, name + time on top,
- * a one-line preview (prefixed with a ✓/✓✓ tick when you sent the last message),
- * the collab it's about as a subtle chip, and a green unread pill. Unread rows get
- * bolder text + a brighter timestamp.
+ * One row in the conversations list: avatar, a one-line name (with a blue verified
+ * check for the official support thread), a one-line preview (prefixed with a ✓✓
+ * delivery tick when you sent the last message), the collab it's about as a subtle
+ * chip, and a fixed-width time/unread column so it never gets squeezed. Unread rows
+ * get bolder text + a brighter timestamp.
+ *
+ * Tick honesty: the preview ✓✓ is GREY (delivered) by default and only turns BLUE
+ * once `lastReadByOther` is true — the other participant has actually read your last
+ * message. No fabricated "read" state.
  */
 import { Text, View } from 'react-native';
 import { Pressable } from '@/components/ui/SafePressable';
@@ -10,6 +15,7 @@ import { Avatar, Icon } from '@/components/ui';
 import type { Conversation } from '@/types';
 import { relativeStamp } from './time';
 import { useChatPalette } from './chatTheme';
+import { VerifiedCheck } from './MessageBubble';
 
 export function ConversationRow({
   conversation,
@@ -26,7 +32,9 @@ export function ConversationRow({
   const other = conversation.otherParticipant;
   const unread = conversation.unreadCount ?? 0;
   const hasUnread = unread > 0;
+  const isOfficial = conversation.kind === 'admin';
   const sentLast = !!mineId && conversation.lastSenderUserId === mineId;
+  const readByOther = conversation.lastReadByOther === true;
 
   return (
     <Pressable
@@ -40,42 +48,52 @@ export function ConversationRow({
         backgroundColor: pressed ? colors.cardSunk : 'transparent',
       })}
     >
-      <Avatar src={other?.avatar} name={other?.name} size={54} />
+      <Avatar src={other?.avatar} name={other?.name} size={52} />
+
       <View style={{ flex: 1, minWidth: 0 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-          <Text numberOfLines={1} style={{ flex: 1, fontSize: 16, fontWeight: hasUnread ? '800' : '600', color: colors.text, letterSpacing: -0.2 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+          <Text
+            numberOfLines={1}
+            style={{ flexShrink: 1, fontSize: 16, fontWeight: hasUnread ? '800' : '600', color: colors.text, letterSpacing: -0.2 }}
+          >
             {other?.name ?? 'Conversation'}
           </Text>
-          {!!conversation.lastMessageAt && (
-            <Text style={{ fontSize: 12, fontWeight: hasUnread ? '800' : '500', color: hasUnread ? p.accentDeep : colors.text3 }}>
-              {relativeStamp(conversation.lastMessageAt)}
-            </Text>
-          )}
+          {isOfficial && <VerifiedCheck size={15} />}
         </View>
 
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 3 }}>
           {sentLast && (
-            <Text style={{ fontSize: 12, fontWeight: '700', color: p.accent }}>✓✓</Text>
+            // Always ✓✓ (delivered); grey until actually read, then blue.
+            <Text style={{ fontSize: 12, fontWeight: '700', color: readByOther ? p.rowTickRead : p.rowTickDelivered }}>✓✓</Text>
           )}
           <Text
             numberOfLines={1}
-            style={{ flex: 1, fontSize: 13.5, color: hasUnread ? colors.text : colors.text2, fontWeight: hasUnread ? '600' : '400' }}
+            style={{ flexShrink: 1, fontSize: 13.5, color: hasUnread ? colors.text : colors.text2, fontWeight: hasUnread ? '600' : '400' }}
           >
             {conversation.lastMessage ?? 'Say hello 👋'}
           </Text>
-          {hasUnread && (
-            <View style={{ minWidth: 20, height: 20, borderRadius: 10, paddingHorizontal: 6, backgroundColor: p.accent, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ fontSize: 11, fontWeight: '800', color: '#fff' }}>{unread > 99 ? '99+' : unread}</Text>
-            </View>
-          )}
         </View>
 
-        {!!conversation.campaignTitle && (
+        {!!conversation.campaignTitle && !isOfficial && (
           <View style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 4, marginTop: 6, backgroundColor: colors.accentSoft, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
             <Icon name="briefcase" size={10} color={colors.accent} strokeWidth={2.2} />
             <Text numberOfLines={1} style={{ fontSize: 11, fontWeight: '700', color: colors.accent, maxWidth: 200 }}>
               {conversation.campaignTitle}
             </Text>
+          </View>
+        )}
+      </View>
+
+      {/* Fixed-width right rail: time on top, unread badge below — never squeezed. */}
+      <View style={{ width: 56, alignItems: 'flex-end', gap: 5 }}>
+        {!!conversation.lastMessageAt && (
+          <Text numberOfLines={1} style={{ fontSize: 12, fontWeight: hasUnread ? '800' : '500', color: hasUnread ? p.accentDeep : colors.text3 }}>
+            {relativeStamp(conversation.lastMessageAt)}
+          </Text>
+        )}
+        {hasUnread && (
+          <View style={{ minWidth: 20, height: 20, borderRadius: 10, paddingHorizontal: 6, backgroundColor: p.accent, alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={{ fontSize: 11, fontWeight: '800', color: '#fff' }}>{unread > 99 ? '99+' : unread}</Text>
           </View>
         )}
       </View>

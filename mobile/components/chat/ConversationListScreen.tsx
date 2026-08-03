@@ -87,7 +87,7 @@ export function ConversationListScreen({ group }: { group: '(creator)' | '(busin
         renderItem={({ item }) => (
           <ConversationRow conversation={item} mineId={myId} onPress={() => router.push(`/${group}/chat/${item._id}` as Href)} />
         )}
-        ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: colors.hair, marginLeft: 83 }} />}
+        ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: colors.hair, marginLeft: 81 }} />}
         contentContainerStyle={{ paddingBottom: insets.bottom + 16, flexGrow: 1 }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"

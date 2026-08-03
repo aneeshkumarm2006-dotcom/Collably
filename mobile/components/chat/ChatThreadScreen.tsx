@@ -17,8 +17,9 @@ import {
 } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Header, SafetyMenu } from '@/components/shared';
-import { ErrorState, Icon } from '@/components/ui';
+import { SafetyMenu } from '@/components/shared';
+import { Avatar, ErrorState, Icon } from '@/components/ui';
+import { Pressable } from '@/components/ui/SafePressable';
 import { useTheme } from '@/components/ThemeProvider';
 import { api, isApiError } from '@/lib/api';
 import { showToast } from '@/lib/toast';
@@ -26,7 +27,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
 import { getSocket } from '@/lib/socket';
 import type { Conversation, Message } from '@/types';
-import { MessageBubble, TypingBubble } from './MessageBubble';
+import { GradientAvatar, MessageBubble, TypingBubble, VerifiedCheck } from './MessageBubble';
 import { ChatComposer } from './ChatComposer';
 import { useChatPalette } from './chatTheme';
 import { dayLabel, sameDay } from './time';
@@ -166,7 +167,9 @@ export function ChatThreadScreen() {
   }, [id, loadingMore, hasMore, messages]);
 
   const title = conv?.otherParticipant?.name ?? 'Chat';
-  const subtitle = typingFromOther ? 'typing…' : conv?.campaignTitle;
+  // The official Local Creator Crew support thread — verified identity, no collab strip.
+  const isOfficial = conv?.kind === 'admin';
+  const headerSubtitle = typingFromOther ? 'typing…' : isOfficial ? 'Official account · Support' : undefined;
 
   return (
     // The KeyboardAvoidingView wraps the WHOLE screen (header included) so its top
@@ -182,27 +185,66 @@ export function ChatThreadScreen() {
       style={{ flex: 1, backgroundColor: pal.chatBg }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <Header
-        title={title}
-        subtitle={subtitle}
-        onBack={() => router.back()}
-        variant="card"
-        // Report/block lives on the thread itself — the surface both stores check
-        // first for a UGC app. Blocking pops back to the list: the thread stays
-        // readable, but there's nothing more to do in it.
-        right={
-          conv?.otherParticipant ? (
-            <SafetyMenu
-              userId={String(conv.otherParticipant._id)}
-              name={conv.otherParticipant.name}
-              onBlocked={() => router.back()}
-            />
-          ) : null
-        }
-      />
+      {/* Custom thread header: back, identity avatar, name (+ verified check for the
+          official support thread), a subtitle, and the safety (report/block) menu. */}
+      <View
+        style={{
+          paddingTop: insets.top + 8,
+          paddingBottom: 10,
+          paddingHorizontal: 12,
+          backgroundColor: colors.bgElev,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.hair,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 10,
+        }}
+      >
+        <Pressable
+          onPress={() => router.back()}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+          hitSlop={8}
+          style={({ pressed }) => ({ padding: 4, marginLeft: -4, opacity: pressed ? 0.6 : 1 })}
+        >
+          <Icon name={Platform.OS === 'android' ? 'arrowL' : 'chevL'} size={Platform.OS === 'android' ? 23 : 24} color={colors.text} strokeWidth={2} />
+        </Pressable>
 
-      {/* collab-context strip — reminds you what this thread is about */}
-      {conv?.campaignTitle ? (
+        {isOfficial ? (
+          <GradientAvatar name={title} size={38} />
+        ) : (
+          <Avatar src={conv?.otherParticipant?.avatar} name={title} size={38} />
+        )}
+
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+            <Text numberOfLines={1} style={{ flexShrink: 1, fontSize: 16, fontWeight: '800', color: colors.text, letterSpacing: -0.2 }}>
+              {title}
+            </Text>
+            {isOfficial && <VerifiedCheck size={15} />}
+          </View>
+          {!!headerSubtitle && (
+            <Text numberOfLines={1} style={{ fontSize: 12, color: colors.text2, marginTop: 1 }}>
+              {headerSubtitle}
+            </Text>
+          )}
+        </View>
+
+        {/* Report/block lives on the thread itself — the surface both stores check
+            first for a UGC app. Blocking pops back to the list: the thread stays
+            readable, but there's nothing more to do in it. */}
+        {conv?.otherParticipant ? (
+          <SafetyMenu
+            userId={String(conv.otherParticipant._id)}
+            name={conv.otherParticipant.name}
+            onBlocked={() => router.back()}
+          />
+        ) : null}
+      </View>
+
+      {/* collab-context strip — reminds you what this thread is about (not on the
+          official support thread, which has no campaign). */}
+      {conv?.campaignTitle && !isOfficial ? (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 14, paddingVertical: 8, backgroundColor: colors.accentSoft }}>
           <Icon name="briefcase" size={13} color={colors.accent} strokeWidth={2.2} />
           <Text numberOfLines={1} style={{ flex: 1, fontSize: 12.5, fontWeight: '700', color: colors.accent }}>
@@ -238,8 +280,14 @@ export function ChatThreadScreen() {
             onEndReachedThreshold={0.3}
             // Inverted: ListHeader renders at the BOTTOM — perfect for the typing bubble.
             ListHeaderComponent={typingFromOther ? <TypingBubble /> : null}
+            // Inverted: ListFooter renders at the TOP. Show the paging spinner while
+            // loading older history, otherwise the official-thread intro card.
             ListFooterComponent={
-              loadingMore ? <ActivityIndicator size="small" color={colors.text3} style={{ marginVertical: 12 }} /> : null
+              loadingMore ? (
+                <ActivityIndicator size="small" color={colors.text3} style={{ marginVertical: 12 }} />
+              ) : isOfficial ? (
+                <WelcomeCard name={title} />
+              ) : null
             }
             ListEmptyComponent={loading ? <ActivityIndicator size="small" color={colors.text3} style={{ marginTop: 40 }} /> : null}
           />
@@ -247,6 +295,27 @@ export function ChatThreadScreen() {
         </View>
       )}
     </KeyboardAvoidingView>
+  );
+}
+
+/**
+ * Intro card at the very top of the official Local Creator Crew support thread —
+ * a big gradient avatar, the verified name, and a short welcome line. Only rendered
+ * for `kind === 'admin'` conversations.
+ */
+function WelcomeCard({ name }: { name: string }) {
+  const { colors } = useTheme();
+  return (
+    <View style={{ alignItems: 'center', paddingHorizontal: 24, paddingTop: 18, paddingBottom: 8, gap: 9 }}>
+      <GradientAvatar name={name} size={60} />
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+        <Text style={{ fontSize: 16, fontWeight: '800', color: colors.text, letterSpacing: -0.2 }}>{name}</Text>
+        <VerifiedCheck size={15} />
+      </View>
+      <Text style={{ fontSize: 13, lineHeight: 19, color: colors.text2, textAlign: 'center', maxWidth: 260 }}>
+        This is your direct line to the Local Creator Crew team. We'll message you here about your profile and collabs.
+      </Text>
+    </View>
   );
 }
 

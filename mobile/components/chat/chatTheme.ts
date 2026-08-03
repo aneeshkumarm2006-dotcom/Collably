@@ -1,10 +1,14 @@
 /**
  * Chat palette — premium messenger feel in the app's BLUE brand (not WhatsApp
- * green). Outgoing bubbles are solid accent blue with white text (iMessage-style);
- * incoming sit on the card surface; the thread uses a clean neutral canvas.
- * Centralised so row, bubble, composer and thread stay consistent + theme-aware.
+ * green). Outgoing bubbles are a brand-blue gradient with white text
+ * (iMessage-style); incoming sit on the card surface with a hairline border; the
+ * thread uses a clean neutral canvas. Centralised so row, bubble, composer and
+ * thread stay consistent + theme-aware.
  */
 import { useTheme } from '@/components/ThemeProvider';
+
+/** Outgoing bubble gradient — fixed brand blue in both themes for a premium feel. */
+export const OUT_GRADIENT = ['#2D88FF', '#1877F2'] as const;
 
 export function useChatPalette() {
   const { colors, isDark } = useTheme();
@@ -13,19 +17,24 @@ export function useChatPalette() {
     isDark,
     /** Thread background (clean neutral, not WhatsApp cream). */
     chatBg: isDark ? colors.bg : '#EBEEF3',
-    /** Outgoing bubble — solid brand blue, white text. */
-    outBg: colors.accent,
+    /** Outgoing bubble gradient stops (top -> bottom). */
+    outGradient: OUT_GRADIENT,
     outText: '#FFFFFF',
-    /** Incoming bubble. */
+    /** Incoming bubble + its hairline border. */
     inBg: colors.card,
     inText: colors.text,
-    /** Accents (send button, unread pill, active filter, row ticks). */
+    inBorder: colors.hair,
+    /** Accents (send button, unread pill, active filter, verified check). */
     accent: colors.accent,
     accentDeep: isDark ? '#2D88FF' : '#0A5DC9',
-    /** Ticks/time ON the blue outgoing bubble (light). */
-    metaOut: 'rgba(255,255,255,0.72)',
-    tickOut: 'rgba(255,255,255,0.65)',
-    tickOutRead: '#CDE5FF',
+    /** Ticks/time ON the blue outgoing bubble. */
+    metaOut: 'rgba(255,255,255,0.8)',
+    /** Delivered (light white) vs read (bright blue-white) — both readable on blue. */
+    tickOut: 'rgba(255,255,255,0.85)',
+    tickOutRead: '#7FD0FF',
+    /** Row ticks (on the neutral list surface): grey delivered, blue read. */
+    rowTickDelivered: colors.text3,
+    rowTickRead: colors.accent,
     /** Time on incoming bubble. */
     metaIn: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(11,20,26,0.45)',
     /** Centered date / system pill. */
