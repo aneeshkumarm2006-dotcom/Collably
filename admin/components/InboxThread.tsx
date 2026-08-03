@@ -49,6 +49,9 @@ export function InboxThread({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
+  // Image staged for sending: uploaded to Cloudinary on pick, but only sent when
+  // the admin clicks Send (optionally with a caption). null = nothing staged.
+  const [stagedImage, setStagedImage] = useState<string | null>(null);
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
@@ -109,14 +112,18 @@ export function InboxThread({
     [creatorId],
   );
 
-  async function sendText() {
+  async function send() {
     const body = draft.trim();
-    if (!body || sending || uploading) return;
+    if ((!body && !stagedImage) || sending || uploading) return;
     setSending(true);
     setError(null);
     try {
-      await sendMessage({ body });
+      await sendMessage({
+        ...(body ? { body } : {}),
+        ...(stagedImage ? { imageUrl: stagedImage } : {}),
+      });
       setDraft('');
+      setStagedImage(null);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -166,8 +173,9 @@ export function InboxThread({
       const json = (await upRes.json()) as { secure_url?: string };
       if (!json.secure_url) throw new Error('Cloudinary did not return a secure_url.');
 
-      // 3. Send the message referencing the hosted image.
-      await sendMessage({ imageUrl: json.secure_url });
+      // 3. Stage the hosted image for a preview. It is sent when the admin clicks
+      // Send (so they can add a caption first), not automatically on upload.
+      setStagedImage(json.secure_url);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -176,7 +184,7 @@ export function InboxThread({
   }
 
   const busy = sending || uploading;
-  const canSend = draft.trim().length > 0 && !busy;
+  const canSend = (draft.trim().length > 0 || !!stagedImage) && !busy;
 
   return (
     <section className="flex h-full min-h-0 flex-col" aria-label={`Chat with ${creatorName}`}>
@@ -263,6 +271,21 @@ export function InboxThread({
             {error}
           </p>
         )}
+        {stagedImage && (
+          <div className="mb-2 inline-flex items-center gap-2 rounded-lg border border-hair bg-elev p-1.5">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={stagedImage} alt="Attachment preview" className="h-14 w-14 rounded-md object-cover" />
+            <button
+              type="button"
+              onClick={() => setStagedImage(null)}
+              disabled={sending}
+              aria-label="Remove image"
+              className="grid h-6 w-6 place-items-center rounded-full bg-ink/70 text-white transition hover:bg-ink disabled:opacity-50"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" className="h-3.5 w-3.5" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+            </button>
+          </div>
+        )}
         <div className="flex items-end gap-2">
           <input
             ref={fileRef}
@@ -302,7 +325,7 @@ export function InboxThread({
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                void sendText();
+                void send();
               }
             }}
             placeholder={`Message ${creatorName}…`}
@@ -312,7 +335,7 @@ export function InboxThread({
           />
           <button
             type="button"
-            onClick={() => void sendText()}
+            onClick={() => void send()}
             disabled={!canSend}
             className="h-10 shrink-0 rounded-lg bg-brand px-4 text-sm font-semibold text-white transition hover:brightness-95 disabled:opacity-50"
           >

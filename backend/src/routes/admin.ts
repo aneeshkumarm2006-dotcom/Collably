@@ -588,7 +588,7 @@ router.post(
     });
 
     // Thread preview + bump the creator's unread counter (support -> creator).
-    c.lastMessage = text || '📷 Photo';
+    c.lastMessage = text || 'Photo';
     c.lastMessageAt = message.createdAt;
     c.lastSenderUserId = support._id;
     c.unreadByCreator += 1;
