@@ -1,28 +1,63 @@
 import Link from 'next/link';
 
-const TABS: { key?: string; label: string }[] = [
-  { key: undefined, label: 'All' },
-  { key: 'pending', label: 'Under review' },
-  { key: 'approved', label: 'Verified' },
+export type FilterCounts = {
+  total: number;
+  pending: number;
+  approved: number;
+  rejected: number;
+};
+
+type Tab = { key?: string; label: string; countKey: keyof FilterCounts };
+
+const BASE_TABS: Tab[] = [
+  { key: undefined, label: 'All', countKey: 'total' },
+  { key: 'pending', label: 'Under review', countKey: 'pending' },
+  { key: 'approved', label: 'Verified', countKey: 'approved' },
 ];
 
-export function FilterTabs({ base, current }: { base: string; current?: string }) {
+const REJECTED_TAB: Tab = { key: 'rejected', label: 'Rejected', countKey: 'rejected' };
+
+export function FilterTabs({
+  base,
+  current,
+  counts,
+  showRejected = false,
+}: {
+  base: string;
+  current?: string;
+  counts?: FilterCounts | null;
+  showRejected?: boolean;
+}) {
+  const tabs = showRejected ? [...BASE_TABS, REJECTED_TAB] : BASE_TABS;
+
   return (
-    <div className="mb-5 flex gap-1 border-b border-hair">
-      {TABS.map((t) => {
+    <div className="mb-6 flex gap-1 border-b border-hair" role="tablist">
+      {tabs.map((t) => {
         const active = (current ?? undefined) === t.key;
         const href = t.key ? `${base}?filter=${t.key}` : base;
+        const n = counts ? counts[t.countKey] : undefined;
         return (
           <Link
             key={t.label}
             href={href}
-            className={
+            role="tab"
+            aria-selected={active}
+            className={`relative px-3.5 pb-3 pt-2.5 text-[13.5px] font-bold transition after:absolute after:inset-x-2 after:-bottom-px after:h-[2.5px] after:rounded-full after:content-[''] ${
               active
-                ? 'border-b-2 border-brand px-4 py-2.5 text-sm font-semibold text-brand'
-                : 'border-b-2 border-transparent px-4 py-2.5 text-sm font-semibold text-muted hover:text-ink'
-            }
+                ? 'text-brand-deep after:bg-brand'
+                : 'text-muted after:bg-transparent hover:text-ink'
+            }`}
           >
             {t.label}
+            {typeof n === 'number' && (
+              <span
+                className={`ml-1.5 font-semibold tabular-nums ${
+                  active ? 'text-brand' : 'text-faint'
+                }`}
+              >
+                {n}
+              </span>
+            )}
           </Link>
         );
       })}

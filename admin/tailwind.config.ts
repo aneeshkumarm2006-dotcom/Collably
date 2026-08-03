@@ -10,17 +10,21 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: '#1C1E21',
-        muted: '#65676B',
-        faint: '#8A8D91',
-        hair: '#DADDE1',
-        page: '#F0F2F5',
-        elev: '#F7F8FA',
+        ink: '#101828',
+        muted: '#566173',
+        faint: '#8A93A3',
+        hair: '#E3E8F1',
+        // Softer inner hairline (mockup --line-2) for list rows / dividers.
+        hair2: '#EDF0F6',
+        page: '#EEF1F7',
+        elev: '#F6F8FC',
         card: '#FFFFFF',
-        brand: { DEFAULT: '#1877F2', soft: '#E7F0FF' },
+        brand: { DEFAULT: '#1877F2', deep: '#0E5FD1', soft: '#E8F1FE' },
         success: { DEFAULT: '#31A24C', soft: '#E3F1E6' },
-        warn: { DEFAULT: '#F3A608', soft: '#FCF1DA' },
-        danger: { DEFAULT: '#FA383E', soft: '#FDE7E8' },
+        // Semantic status tokens matched to the approved mockup.
+        good: { DEFAULT: '#158A5B', soft: '#E2F5EC' },
+        warn: { DEFAULT: '#B26F12', soft: '#FBF0DC' },
+        danger: { DEFAULT: '#D23636', soft: '#FBE8E8' },
       },
       fontFamily: {
         sans: [

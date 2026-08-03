@@ -41,12 +41,26 @@ export function PlatformVerifyControl({
       onClick={toggle}
       className={
         verified
-          ? 'shrink-0 rounded-full bg-brand-soft px-2.5 py-1 text-xs font-semibold text-brand transition hover:brightness-95 disabled:opacity-50'
-          : 'shrink-0 rounded-full border border-hair bg-white px-2.5 py-1 text-xs font-semibold text-muted transition hover:text-ink disabled:opacity-50'
+          ? 'inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-transparent bg-brand-soft px-2.5 py-1 text-[11.5px] font-bold text-brand-deep transition hover:brightness-95 disabled:opacity-50'
+          : 'inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-hair bg-white px-2.5 py-1 text-[11.5px] font-bold text-muted transition hover:border-faint hover:text-ink disabled:opacity-50'
       }
       title={verified ? 'Click to unverify this platform' : 'Mark this platform verified'}
     >
-      {busy ? '…' : verified ? '✓ Verified' : 'Verify'}
+      {verified && !busy && (
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={3}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="h-3 w-3"
+          aria-hidden="true"
+        >
+          <path d="m5 12 5 5L20 7" />
+        </svg>
+      )}
+      {busy ? '…' : verified ? 'Verified' : 'Verify'}
     </button>
   );
 }
