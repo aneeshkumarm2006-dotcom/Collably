@@ -1,6 +1,8 @@
 import type { CreatorRow, SocialHandle } from '@/lib/types';
 import { StatusBadge } from './StatusBadge';
 import { ApproveControl } from './ApproveControl';
+import { PlatformVerifyControl } from './PlatformVerifyControl';
+import { MessageThread } from './MessageThread';
 
 const PLATFORMS: { key: 'instagram' | 'tiktok' | 'youtube'; label: string }[] = [
   { key: 'instagram', label: 'Instagram' },
@@ -43,8 +45,18 @@ export function CreatorCard({ creator }: { creator: CreatorRow }) {
             {creator.createdAt ? ` · joined ${formatDate(creator.createdAt)}` : ''}
           </p>
         </div>
-        <ApproveControl kind="creators" id={creator._id} isVerified={creator.isVerified} />
+        <div className="flex shrink-0 flex-col items-end gap-2">
+          <ApproveControl kind="creators" id={creator._id} isVerified={creator.isVerified} />
+          <MessageThread creatorId={creator._id} creatorName={name} />
+        </div>
       </header>
+
+      {/* Outstanding rejection note (what the creator was told to fix). */}
+      {creator.rejectionReason && (
+        <p className="mt-3 rounded-md border border-danger/30 bg-danger/5 px-3 py-2 text-sm text-danger">
+          <span className="font-semibold">Rejected:</span> {creator.rejectionReason}
+        </p>
+      )}
 
       {/* Submitted social handles — the focus of creator verification. */}
       <div className="mt-4">
@@ -74,14 +86,21 @@ export function CreatorCard({ creator }: { creator: CreatorRow }) {
                     </span>
                   )}
                 </div>
-                <a
-                  href={s.handle.link}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="shrink-0 text-sm font-medium text-brand underline underline-offset-2"
-                >
-                  Open link ↗
-                </a>
+                <div className="flex shrink-0 items-center gap-3">
+                  <a
+                    href={s.handle.link}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-sm font-medium text-brand underline underline-offset-2"
+                  >
+                    Open link ↗
+                  </a>
+                  <PlatformVerifyControl
+                    id={creator._id}
+                    platform={s.key}
+                    verified={Boolean(s.handle.verified)}
+                  />
+                </div>
               </li>
             ))}
           </ul>

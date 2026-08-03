@@ -29,6 +29,8 @@ export interface SocialHandle {
   followerCount?: number;
   subscriberCount?: number;
   engagementRate?: number;
+  /** Admin-set (or DM-verified, for Instagram) per-platform trust badge. */
+  verified?: boolean;
 }
 
 export interface GeoLocation {
@@ -52,9 +54,19 @@ export interface CreatorRow {
   isUGCOnly: boolean;
   isVerified: boolean;
   isSuspended: boolean;
+  /** Set when an admin last rejected this creator with a note; cleared on approval. */
+  rejectionReason?: string;
   createdAt: string;
   /** Owner account (name + email), attached by the admin list endpoint. */
   user: AdminUser | null;
+}
+
+/** A single message in an admin↔creator conversation thread. */
+export interface AdminMessage {
+  _id: string;
+  senderRole: 'admin' | 'creator';
+  body: string;
+  createdAt: string;
 }
 
 export interface BusinessRow {
