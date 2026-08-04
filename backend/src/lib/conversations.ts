@@ -81,26 +81,29 @@ export async function getOrCreateSupportUser(): Promise<UserDoc> {
 }
 
 /**
- * Idempotently open (or fetch) the ADMIN support thread for one creator. Keyed by
+ * Idempotently open (or fetch) the ADMIN support thread for one MEMBER — a creator
+ * OR a business owner (identified by their User id). Keyed by
  * `{ kind:'admin', creatorUserId }` (unique partial index) so concurrent opens
- * can't fork the thread. The support user occupies the "business" seat
- * (`businessUserId`) so the existing dyad plumbing resolves it as the other side
- * without special-casing.
+ * can't fork the thread; `creatorUserId` is the generic "member" seat here (user
+ * ids never collide across roles). The support user occupies the "business" seat
+ * (`businessUserId`) so the existing dyad plumbing — unread columns, recipient
+ * resolution, serializer — resolves it as the other side without special-casing
+ * whether the member is a creator or a business.
  */
 export async function getOrCreateAdminConversation(
-  creatorUserId: Types.ObjectId | string,
+  memberUserId: Types.ObjectId | string,
 ): Promise<ConversationDoc> {
   const support = await getOrCreateSupportUser();
   const supportUserId = support._id;
 
   const convo = await Conversation.findOneAndUpdate(
-    { kind: 'admin', creatorUserId },
+    { kind: 'admin', creatorUserId: memberUserId },
     {
       $setOnInsert: {
         kind: 'admin',
-        creatorUserId,
+        creatorUserId: memberUserId,
         businessUserId: supportUserId,
-        participantUserIds: [supportUserId, creatorUserId],
+        participantUserIds: [supportUserId, memberUserId],
       },
     },
     { upsert: true, new: true, setDefaultsOnInsert: true },

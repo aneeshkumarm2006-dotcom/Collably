@@ -19,7 +19,7 @@ export default async function MessagesPage() {
     <div className="flex h-[calc(100dvh-10.5rem)] min-h-[460px] flex-col">
       <PageHeader
         title="Messages"
-        subtitle="Support inbox for creator conversations, newest activity first."
+        subtitle="Support inbox for creator and business conversations, newest activity first."
         count={error ? undefined : rows.length}
       />
       {error ? (

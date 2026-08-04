@@ -1,6 +1,7 @@
 import type { BusinessRow } from '@/lib/types';
 import { StatusBadge } from './StatusBadge';
 import { ApproveControl } from './ApproveControl';
+import { MessageThread } from './MessageThread';
 
 function formatDate(iso: string): string {
   const d = new Date(iso);
@@ -94,8 +95,9 @@ export function BusinessCard({ business }: { business: BusinessRow }) {
               </p>
             </div>
           </div>
-          <div className="shrink-0">
+          <div className="flex shrink-0 flex-col items-end gap-2">
             <ApproveControl kind="businesses" id={business._id} isVerified={business.isVerified} />
+            <MessageThread id={business._id} name={name} memberType="business" />
           </div>
         </header>
 

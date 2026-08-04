@@ -61,10 +61,10 @@ export interface CreatorRow {
   user: AdminUser | null;
 }
 
-/** A single message in an admin↔creator conversation thread. */
+/** A single message in an admin↔member (creator or business) conversation thread. */
 export interface AdminMessage {
   _id: string;
-  senderRole: 'admin' | 'creator';
+  senderRole: 'admin' | 'creator' | 'business';
   body: string;
   /** Set when the message carries an image (a Cloudinary secure_url). */
   imageUrl?: string;
@@ -88,12 +88,18 @@ export interface Report {
 }
 
 /**
- * One thread in the admin support inbox (admin↔creator). `creatorProfileId` is
- * the creator profile id used to open the thread; null when the counterpart has
- * no creator profile (thread is not openable).
+ * One thread in the admin support inbox (admin↔member). The member is a creator
+ * OR a business. `memberType` labels which; `profileId` is the CreatorProfile /
+ * BusinessProfile id used to open the thread (null when the profile was deleted →
+ * not openable). `creatorProfileId`/`creatorName`/`creatorAvatar` are kept for
+ * back-compat and only populated for creator threads.
  */
 export interface AdminConversation {
   _id: string;
+  memberType: 'creator' | 'business';
+  profileId: string | null;
+  name: string;
+  avatar?: string | null;
   creatorProfileId: string | null;
   creatorName: string;
   creatorAvatar?: string | null;

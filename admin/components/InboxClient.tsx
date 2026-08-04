@@ -11,7 +11,7 @@ import { InboxThread } from './InboxThread';
  * server component's `adminGet('/conversations')`.
  */
 export function InboxClient({ conversations }: { conversations: AdminConversation[] }) {
-  const openable = conversations.filter((c) => Boolean(c.creatorProfileId));
+  const openable = conversations.filter((c) => Boolean(c.profileId));
   const [selectedId, setSelectedId] = useState<string | null>(openable[0]?._id ?? null);
   const selected = conversations.find((c) => c._id === selectedId) ?? null;
 
@@ -36,11 +36,12 @@ export function InboxClient({ conversations }: { conversations: AdminConversatio
       >
         <ul className="min-h-0 flex-1 overflow-y-auto py-2">
           {conversations.map((c) => {
-            const name = c.creatorName?.trim() || 'Unknown creator';
+            const name = c.name?.trim() || (c.memberType === 'business' ? 'Unknown business' : 'Unknown creator');
             const initial = name.charAt(0).toUpperCase() || '?';
             const hasUnread = typeof c.unread === 'number' && c.unread > 0;
-            const openableRow = Boolean(c.creatorProfileId);
+            const openableRow = Boolean(c.profileId);
             const active = c._id === selectedId;
+            const isBusiness = c.memberType === 'business';
             return (
               <li key={c._id}>
                 <button
@@ -49,7 +50,9 @@ export function InboxClient({ conversations }: { conversations: AdminConversatio
                   disabled={!openableRow}
                   aria-current={active ? 'true' : undefined}
                   title={
-                    openableRow ? undefined : 'This conversation has no creator profile to open.'
+                    openableRow
+                      ? undefined
+                      : `This conversation has no ${isBusiness ? 'business' : 'creator'} profile to open.`
                   }
                   className={`flex w-full items-center gap-3 px-4 py-3 text-left transition ${
                     active
@@ -69,6 +72,13 @@ export function InboxClient({ conversations }: { conversations: AdminConversatio
                     <span className="flex items-center gap-2">
                       <span className="truncate text-[14.5px] font-extrabold tracking-tight text-ink">
                         {name}
+                      </span>
+                      <span
+                        className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+                          isBusiness ? 'bg-brand-soft text-brand' : 'bg-elev text-muted'
+                        }`}
+                      >
+                        {isBusiness ? 'Business' : 'Creator'}
                       </span>
                       {c.lastMessageAt && (
                         <time
@@ -109,7 +119,7 @@ export function InboxClient({ conversations }: { conversations: AdminConversatio
       <div
         className={`${threadOpenMobile ? 'flex' : 'hidden'} min-h-0 min-w-0 flex-1 flex-col md:flex`}
       >
-        {selected && selected.creatorProfileId ? (
+        {selected && selected.profileId ? (
           <>
             {/* Mobile-only return control back to the conversation list. */}
             <button
@@ -133,9 +143,13 @@ export function InboxClient({ conversations }: { conversations: AdminConversatio
             </button>
             <div className="min-h-0 flex-1">
               <InboxThread
-                key={selected.creatorProfileId}
-                creatorId={selected.creatorProfileId}
-                creatorName={selected.creatorName?.trim() || 'Unknown creator'}
+                key={selected.profileId}
+                id={selected.profileId}
+                name={
+                  selected.name?.trim() ||
+                  (selected.memberType === 'business' ? 'Unknown business' : 'Unknown creator')
+                }
+                memberType={selected.memberType}
               />
             </div>
           </>
@@ -159,7 +173,7 @@ export function InboxClient({ conversations }: { conversations: AdminConversatio
             </span>
             <p className="text-[15px] font-bold text-ink">Select a conversation</p>
             <p className="text-[13px] text-muted">
-              Pick a creator on the left to view the thread and reply.
+              Pick a creator or business on the left to view the thread and reply.
             </p>
           </div>
         )}

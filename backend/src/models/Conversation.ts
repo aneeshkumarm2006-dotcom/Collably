@@ -13,7 +13,8 @@ export interface ConversationDoc extends Document<Types.ObjectId> {
   /**
    * Thread flavour. `application` is the business<->creator collab chat (the
    * default, keyed by a unique applicationId). `admin` is the support thread
-   * between the Local Creator Crew support account and a single creator.
+   * between the Local Creator Crew support account and a single *member* — a
+   * creator OR a business (the same plumbing serves both).
    */
   kind: 'application' | 'admin';
   applicationId?: Types.ObjectId;
@@ -23,6 +24,12 @@ export interface ConversationDoc extends Document<Types.ObjectId> {
   businessId?: Types.ObjectId; // BusinessProfile
   creatorId?: Types.ObjectId; // CreatorProfile
   businessUserId?: Types.ObjectId; // User (for admin threads: the support user)
+  /**
+   * User (for admin threads this is the non-support MEMBER — a creator or a
+   * business owner — occupying the "member" seat so the dyad plumbing, unread
+   * columns and serializer resolve support as the counterpart without
+   * special-casing per role).
+   */
   creatorUserId: Types.ObjectId; // User
   participantUserIds: Types.ObjectId[];
   lastMessage?: string;
@@ -83,7 +90,10 @@ conversationSchema.index(
   { unique: true, partialFilterExpression: { applicationId: { $type: 'objectId' } } },
 );
 
-// One admin/support thread per creator — idempotent get-or-create relies on this.
+// One admin/support thread per member — idempotent get-or-create relies on this.
+// `creatorUserId` holds the non-support member (a creator OR a business owner);
+// user ids never collide across roles, so this single key uniquely identifies the
+// one admin thread for that member. No parallel business index or migration needed.
 conversationSchema.index(
   { kind: 1, creatorUserId: 1 },
   { unique: true, partialFilterExpression: { kind: 'admin' } },

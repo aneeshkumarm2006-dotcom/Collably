@@ -4,11 +4,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AdminMessage } from '@/lib/types';
 
 /**
- * Always-visible admin<->creator chat panel for the two-pane inbox. Fills the
- * right pane: a scrolling message timeline plus a composer that sends text and
- * images. Data is self-contained: the thread is fetched on mount, polled while
- * open, and refetched after each send, so no socket is needed. All calls go
- * through same-origin proxies (`/api/creators/:id/messages`, `/api/upload/sign`)
+ * Always-visible admin<->member (creator or business) chat panel for the two-pane
+ * inbox. Fills the right pane: a scrolling message timeline plus a composer that
+ * sends text and images. Data is self-contained: the thread is fetched on mount,
+ * polled while open, and refetched after each send, so no socket is needed. All
+ * calls go through same-origin proxies (`/api/creators/:id/messages` or
+ * `/api/businesses/:id/messages`, chosen by `memberType`, plus `/api/upload/sign`)
  * — the browser never touches the backend or Cloudinary secret directly.
  */
 
@@ -37,12 +38,16 @@ function safeImageSrc(url?: string): string | null {
 }
 
 export function InboxThread({
-  creatorId,
-  creatorName,
+  id,
+  name,
+  memberType = 'creator',
 }: {
-  creatorId: string;
-  creatorName: string;
+  /** CreatorProfile id (memberType 'creator') or BusinessProfile id ('business'). */
+  id: string;
+  name: string;
+  memberType?: 'creator' | 'business';
 }) {
+  const basePath = `/api/${memberType === 'business' ? 'businesses' : 'creators'}/${id}/messages`;
   const [messages, setMessages] = useState<AdminMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
@@ -60,7 +65,7 @@ export function InboxThread({
     async (opts?: { silent?: boolean }) => {
       if (!opts?.silent) setLoading(true);
       try {
-        const res = await fetch(`/api/creators/${creatorId}/messages`, { cache: 'no-store' });
+        const res = await fetch(basePath, { cache: 'no-store' });
         if (!res.ok) {
           const data = (await res.json().catch(() => ({}))) as { error?: string };
           throw new Error(data.error ?? `Could not load messages (${res.status})`);
@@ -75,10 +80,10 @@ export function InboxThread({
         if (!opts?.silent) setLoading(false);
       }
     },
-    [creatorId],
+    [basePath],
   );
 
-  // Fetch on mount / when the selected creator changes.
+  // Fetch on mount / when the selected member changes.
   useEffect(() => {
     void load();
   }, [load]);
@@ -96,7 +101,7 @@ export function InboxThread({
 
   const sendMessage = useCallback(
     async (payload: { body?: string; imageUrl?: string }) => {
-      const res = await fetch(`/api/creators/${creatorId}/messages`, {
+      const res = await fetch(basePath, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(payload),
@@ -109,7 +114,7 @@ export function InboxThread({
       const created = (raw as { message?: AdminMessage }).message ?? (raw as AdminMessage);
       if (created && created._id) setMessages((prev) => [...prev, created]);
     },
-    [creatorId],
+    [basePath],
   );
 
   async function send() {
@@ -187,18 +192,18 @@ export function InboxThread({
   const canSend = (draft.trim().length > 0 || !!stagedImage) && !busy;
 
   return (
-    <section className="flex h-full min-h-0 flex-col" aria-label={`Chat with ${creatorName}`}>
+    <section className="flex h-full min-h-0 flex-col" aria-label={`Chat with ${name}`}>
       {/* Thread header */}
       <header className="flex shrink-0 items-center gap-3 border-b border-hair px-5 py-3.5">
         <span
           className="grid h-9 w-9 shrink-0 place-items-center rounded-[11px] bg-[linear-gradient(150deg,#2D88FF,#1877F2)] text-sm font-extrabold text-white"
           aria-hidden="true"
         >
-          {creatorName.charAt(0).toUpperCase() || '?'}
+          {name.charAt(0).toUpperCase() || '?'}
         </span>
         <div className="min-w-0">
           <h2 className="truncate text-[15px] font-extrabold tracking-tight text-ink">
-            {creatorName}
+            {name}
           </h2>
           <p className="text-[12px] font-semibold text-faint">Support conversation</p>
         </div>
@@ -223,7 +228,7 @@ export function InboxThread({
           <p className="m-auto text-sm text-faint">Loading messages…</p>
         ) : messages.length === 0 ? (
           <p className="m-auto max-w-xs px-2 text-center text-sm text-faint">
-            No messages yet. Send the first one to {creatorName}.
+            No messages yet. Send the first one to {name}.
           </p>
         ) : (
           messages.map((m) => {
@@ -328,9 +333,9 @@ export function InboxThread({
                 void send();
               }
             }}
-            placeholder={`Message ${creatorName}…`}
+            placeholder={`Message ${name}…`}
             rows={1}
-            aria-label={`Message ${creatorName}`}
+            aria-label={`Message ${name}`}
             className="max-h-32 min-h-[40px] w-full resize-none rounded-lg border border-hair bg-white px-3 py-2.5 text-sm text-ink outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft"
           />
           <button

@@ -489,7 +489,7 @@ router.patch(
   }),
 );
 
-// --- Admin <-> creator support chat ------------------------------------------
+// --- Admin <-> member (creator or business) support chat ---------------------
 
 const adminMessageSchema = z
   .object({
@@ -524,11 +524,135 @@ async function creatorSummaryOf(creatorUserId: string): Promise<UserSummary> {
   };
 }
 
+/** The business's summary chip for the admin-side view of a support thread. */
+async function businessSummaryOf(businessUserId: string): Promise<UserSummary> {
+  const [profile, user] = await Promise.all([
+    BusinessProfile.findOne({ userId: businessUserId }).select('businessName logo'),
+    User.findById(businessUserId).select('name avatar createdAt'),
+  ]);
+  return {
+    _id: businessUserId,
+    name: profile?.businessName ?? user?.name ?? 'Business',
+    avatar: profile?.logo ?? user?.avatar ?? null,
+    role: 'business',
+    createdAt: (user?.createdAt ?? new Date()).toISOString(),
+  };
+}
+
+/**
+ * Open (or fetch) the support thread with a MEMBER (creator or business, keyed by
+ * their User id), mark it read from the support side, and return the serialized
+ * thread + up to 100 messages (oldest-last for straight rendering). Shared by the
+ * creator and business GET handlers so both behave identically.
+ */
+async function openSupportThread(
+  memberUserId: string,
+  memberSummary: UserSummary,
+): Promise<{ conversation: ReturnType<typeof toPublicConversation>; messages: ReturnType<typeof toPublicMessage>[] }> {
+  const support = await getOrCreateSupportUser();
+  const c = await getOrCreateAdminConversation(memberUserId);
+
+  // Opening the thread means the support team actually read it. Stamp the
+  // member's unread messages as read, clear the support-side counter, and tell
+  // the member's app so their sent-message ticks flip to blue (read). Only when
+  // there is something unread, so re-opening an empty/read thread is a no-op.
+  if (c.unreadByBusiness > 0) {
+    await Message.updateMany(
+      { conversationId: c._id, senderUserId: { $ne: support._id }, readAt: { $exists: false } },
+      { $set: { readAt: new Date() } },
+    );
+    c.unreadByBusiness = 0;
+    await c.save();
+    emitToUser(memberUserId, 'conversation:read', {
+      conversationId: c.id,
+      byUserId: String(support._id),
+    });
+  }
+
+  const docs = await Message.find({ conversationId: c._id }).sort({ createdAt: -1 }).limit(100);
+  const messages = docs.reverse().map(toPublicMessage);
+
+  // Serialize from the support/admin viewpoint: unreadCount reflects the
+  // support-side counter and the other participant is the member.
+  const conversation = toPublicConversation(c, String(support._id), memberSummary);
+  return { conversation, messages };
+}
+
+/**
+ * Send a message to a MEMBER (creator or business, keyed by their User id) as the
+ * Local Creator Crew support account. Persists the message, bumps the member's
+ * unread, fans it out live, and pushes an in-app + push notification. Shared by
+ * the creator and business POST handlers so both behave identically.
+ */
+async function sendSupportMessage(
+  memberUserId: string,
+  parsed: { body?: string; imageUrl?: string },
+  senderName: string,
+): Promise<ReturnType<typeof toPublicMessage>> {
+  const text = parsed.body ?? '';
+  const support = await getOrCreateSupportUser();
+  const c = await getOrCreateAdminConversation(memberUserId);
+
+  const recipientOnline = isUserOnline(memberUserId);
+  const message = await Message.create({
+    conversationId: c._id,
+    senderUserId: support._id,
+    senderRole: 'admin',
+    body: text,
+    ...(parsed.imageUrl ? { imageUrl: parsed.imageUrl } : {}),
+    ...(recipientOnline ? { deliveredAt: new Date() } : {}),
+  });
+
+  // Thread preview + bump the member's unread counter (support -> member).
+  c.lastMessage = text || 'Photo';
+  c.lastMessageAt = message.createdAt;
+  c.lastSenderUserId = support._id;
+  c.unreadByCreator += 1;
+  await c.save();
+
+  const publicMessage = toPublicMessage(message);
+  // Live fan-out to every participant (support echo + the member's devices).
+  for (const p of c.participantUserIds) {
+    emitToUser(p.toString(), 'message:new', {
+      conversationId: c.id,
+      message: publicMessage,
+    });
+  }
+
+  // Always notify the member of a support message, even when their socket is
+  // connected. A live socket doesn't mean they're looking at this thread (a
+  // backgrounded app stays connected), and support messages are important and
+  // rare, so we don't suppress the in-app notification + push while "online".
+  // notify() writes the in-app record, emits the live bell event, and pushes
+  // (if they have a valid token + opted in). Best-effort.
+  try {
+    const preview =
+      !text && parsed.imageUrl
+        ? 'sent a photo'
+        : text.length > 80
+          ? `${text.slice(0, 79)}…`
+          : text;
+    await notify({
+      recipient: memberUserId,
+      type: 'new_message',
+      message: `${senderName}: ${preview}`,
+      deepLinkPath: `/chat/${c.id}`,
+    });
+  } catch (err) {
+    console.error(
+      '[admin] support message notify error:',
+      err instanceof Error ? err.message : err,
+    );
+  }
+
+  return publicMessage;
+}
+
 /**
  * GET /api/admin/creators/:id/messages — the support thread with one creator.
  * `:id` is the CreatorProfile id (matches PATCH /creators/:id). Resolves the
  * creator's User, get-or-creates the single admin conversation, and returns the
- * serialized thread plus up to 100 messages (oldest-last for straight rendering).
+ * serialized thread plus up to 100 messages.
  */
 router.get(
   '/creators/:id/messages',
@@ -537,108 +661,56 @@ router.get(
     const profile = await CreatorProfile.findById(id).select('userId');
     if (!profile) throw new AppError(404, 'Creator profile not found');
     const creatorUserId = String(profile.userId);
-
-    const support = await getOrCreateSupportUser();
-    const c = await getOrCreateAdminConversation(creatorUserId);
-
-    // Opening the thread means the support team actually read it. Stamp the
-    // creator's unread messages as read, clear the support-side counter, and tell
-    // the creator's app so their sent-message ticks flip to blue (read). Only when
-    // there is something unread, so re-opening an empty/read thread is a no-op.
-    if (c.unreadByBusiness > 0) {
-      await Message.updateMany(
-        { conversationId: c._id, senderUserId: { $ne: support._id }, readAt: { $exists: false } },
-        { $set: { readAt: new Date() } },
-      );
-      c.unreadByBusiness = 0;
-      await c.save();
-      emitToUser(creatorUserId, 'conversation:read', {
-        conversationId: c.id,
-        byUserId: String(support._id),
-      });
-    }
-
-    const docs = await Message.find({ conversationId: c._id }).sort({ createdAt: -1 }).limit(100);
-    const messages = docs.reverse().map(toPublicMessage);
-
-    // Serialize from the support/admin viewpoint: unreadCount reflects the
-    // support-side counter and the other participant is the creator.
-    const conversation = toPublicConversation(
-      c,
-      String(support._id),
-      await creatorSummaryOf(creatorUserId),
-    );
-    res.status(200).json({ conversation, messages });
+    res.status(200).json(await openSupportThread(creatorUserId, await creatorSummaryOf(creatorUserId)));
   }),
 );
 
 /**
  * POST /api/admin/creators/:id/messages — send a message to the creator as the
- * Local Creator Crew support account. Persists the message, bumps the creator's
- * unread, pushes an in-app + push notification, and fans it out live.
+ * Local Creator Crew support account.
  */
 router.post(
   '/creators/:id/messages',
   asyncHandler(async (req, res) => {
     const id = objectIdParam(req.params.id);
-    const { body, imageUrl } = adminMessageSchema.parse(req.body);
-    const text = body ?? '';
-
+    const parsed = adminMessageSchema.parse(req.body);
     const profile = await CreatorProfile.findById(id).select('userId');
     if (!profile) throw new AppError(404, 'Creator profile not found');
-    const creatorUserId = String(profile.userId);
+    const message = await sendSupportMessage(String(profile.userId), parsed, SUPPORT_NAME);
+    res.status(201).json({ message });
+  }),
+);
 
-    const support = await getOrCreateSupportUser();
-    const c = await getOrCreateAdminConversation(creatorUserId);
+/**
+ * GET /api/admin/businesses/:id/messages — the support thread with one business.
+ * `:id` is the BusinessProfile id (matches PATCH /businesses/:id). Mirrors the
+ * creator support thread exactly; the business owner's User occupies the generic
+ * "member" seat so the business sees "Local Creator Crew" as the counterpart.
+ */
+router.get(
+  '/businesses/:id/messages',
+  asyncHandler(async (req, res) => {
+    const id = objectIdParam(req.params.id);
+    const profile = await BusinessProfile.findById(id).select('userId');
+    if (!profile) throw new AppError(404, 'Business profile not found');
+    const businessUserId = String(profile.userId);
+    res.status(200).json(await openSupportThread(businessUserId, await businessSummaryOf(businessUserId)));
+  }),
+);
 
-    const recipientOnline = isUserOnline(creatorUserId);
-    const message = await Message.create({
-      conversationId: c._id,
-      senderUserId: support._id,
-      senderRole: 'admin',
-      body: text,
-      ...(imageUrl ? { imageUrl } : {}),
-      ...(recipientOnline ? { deliveredAt: new Date() } : {}),
-    });
-
-    // Thread preview + bump the creator's unread counter (support -> creator).
-    c.lastMessage = text || 'Photo';
-    c.lastMessageAt = message.createdAt;
-    c.lastSenderUserId = support._id;
-    c.unreadByCreator += 1;
-    await c.save();
-
-    const publicMessage = toPublicMessage(message);
-    // Live fan-out to every participant (support echo + the creator's devices).
-    for (const p of c.participantUserIds) {
-      emitToUser(p.toString(), 'message:new', {
-        conversationId: c.id,
-        message: publicMessage,
-      });
-    }
-
-    // Always notify the creator of a support message, even when their socket is
-    // connected. A live socket doesn't mean they're looking at this thread (a
-    // backgrounded app stays connected), and support messages are important and
-    // rare, so we don't suppress the in-app notification + push while "online".
-    // notify() writes the in-app record, emits the live bell event, and pushes
-    // (if they have a valid token + opted in). Best-effort.
-    try {
-      const preview = !text && imageUrl ? 'sent a photo' : text.length > 80 ? `${text.slice(0, 79)}…` : text;
-      await notify({
-        recipient: creatorUserId,
-        type: 'new_message',
-        message: `${SUPPORT_NAME}: ${preview}`,
-        deepLinkPath: `/chat/${c.id}`,
-      });
-    } catch (err) {
-      console.error(
-        '[admin] support message notify error:',
-        err instanceof Error ? err.message : err,
-      );
-    }
-
-    res.status(201).json({ message: publicMessage });
+/**
+ * POST /api/admin/businesses/:id/messages — send a message to the business as the
+ * Local Creator Crew support account.
+ */
+router.post(
+  '/businesses/:id/messages',
+  asyncHandler(async (req, res) => {
+    const id = objectIdParam(req.params.id);
+    const parsed = adminMessageSchema.parse(req.body);
+    const profile = await BusinessProfile.findById(id).select('userId');
+    if (!profile) throw new AppError(404, 'Business profile not found');
+    const message = await sendSupportMessage(String(profile.userId), parsed, SUPPORT_NAME);
+    res.status(201).json({ message });
   }),
 );
 
@@ -657,10 +729,14 @@ router.post(
 // --- Support inbox -----------------------------------------------------------
 
 /**
- * GET /api/admin/conversations — the support inbox: every admin<->creator thread
- * that has activity, newest first, with the creator's name/avatar, the last
- * message, and the support-side unread count. `creatorProfileId` lets the UI open
- * the thread via the existing /creators/:id/messages endpoints.
+ * GET /api/admin/conversations — the support inbox: every admin<->member thread
+ * (creator OR business) that has activity, newest first, with the member's
+ * name/avatar, the last message, and the support-side unread count. The member is
+ * identified by their role (looked up from the User in the generic "member" seat):
+ *  - `memberType` labels the row 'creator' or 'business'.
+ *  - `profileId` is the CreatorProfile/BusinessProfile id the UI uses to open the
+ *    thread via the matching /creators/:id/messages or /businesses/:id/messages
+ *    endpoints (null when the profile was deleted → row not openable).
  */
 router.get(
   '/conversations',
@@ -671,15 +747,32 @@ router.get(
 
     const data = await Promise.all(
       convos.map(async (c) => {
-        const creatorUserId = String(c.creatorUserId);
-        const [profile, user] = await Promise.all([
-          CreatorProfile.findOne({ userId: creatorUserId }).select('_id'),
-          User.findById(creatorUserId).select('name avatar'),
-        ]);
+        const memberUserId = String(c.creatorUserId);
+        const user = await User.findById(memberUserId).select('name avatar role');
+        const memberType: 'creator' | 'business' = user?.role === 'business' ? 'business' : 'creator';
+
+        let profileId: string | null = null;
+        let name = user?.name ?? (memberType === 'business' ? 'Business' : 'Creator');
+        if (memberType === 'business') {
+          const profile = await BusinessProfile.findOne({ userId: memberUserId }).select(
+            '_id businessName',
+          );
+          profileId = profile ? String(profile._id) : null;
+          if (profile?.businessName) name = profile.businessName;
+        } else {
+          const profile = await CreatorProfile.findOne({ userId: memberUserId }).select('_id');
+          profileId = profile ? String(profile._id) : null;
+        }
+
         return {
           _id: c.id,
-          creatorProfileId: profile ? String(profile._id) : null,
-          creatorName: user?.name ?? 'Creator',
+          memberType,
+          profileId,
+          name,
+          avatar: user?.avatar ?? null,
+          // Back-compat fields for older UI expectations (creator-only inbox).
+          creatorProfileId: memberType === 'creator' ? profileId : null,
+          creatorName: name,
           creatorAvatar: user?.avatar ?? null,
           lastMessage: c.lastMessage ?? '',
           lastMessageAt: c.lastMessageAt ? c.lastMessageAt.toISOString() : null,

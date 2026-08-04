@@ -4,19 +4,24 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AdminMessage } from '@/lib/types';
 
 /**
- * Admin side of the admin↔creator two-way chat. Renders a "Message" toggle that
- * opens an inline panel showing the conversation thread and a composer. State is
- * self-contained: the thread is (re)fetched on open and after each send, so no
- * socket is needed. All network calls go through the same-origin proxy at
- * `/api/creators/:id/messages` — the browser never touches the backend directly.
+ * Admin side of the admin↔member (creator or business) two-way chat. Renders a
+ * "Message" toggle that opens an inline panel showing the conversation thread and
+ * a composer. State is self-contained: the thread is (re)fetched on open and after
+ * each send, so no socket is needed. All network calls go through the same-origin
+ * proxy at `/api/creators/:id/messages` or `/api/businesses/:id/messages` (chosen
+ * by `memberType`) — the browser never touches the backend directly.
  */
 export function MessageThread({
-  creatorId,
-  creatorName,
+  id,
+  name,
+  memberType = 'creator',
 }: {
-  creatorId: string;
-  creatorName: string;
+  /** CreatorProfile id (memberType 'creator') or BusinessProfile id ('business'). */
+  id: string;
+  name: string;
+  memberType?: 'creator' | 'business';
 }) {
+  const basePath = `/api/${memberType === 'business' ? 'businesses' : 'creators'}/${id}/messages`;
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<AdminMessage[]>([]);
   const [loading, setLoading] = useState(false);
@@ -30,7 +35,7 @@ export function MessageThread({
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/creators/${creatorId}/messages`, { cache: 'no-store' });
+      const res = await fetch(basePath, { cache: 'no-store' });
       if (!res.ok) {
         const data = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(data.error ?? `Could not load messages (${res.status})`);
@@ -42,7 +47,7 @@ export function MessageThread({
     } finally {
       setLoading(false);
     }
-  }, [creatorId]);
+  }, [basePath]);
 
   // Fetch the thread whenever the panel is opened.
   useEffect(() => {
@@ -62,7 +67,7 @@ export function MessageThread({
     setSending(true);
     setError(null);
     try {
-      const res = await fetch(`/api/creators/${creatorId}/messages`, {
+      const res = await fetch(basePath, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ body }),
@@ -101,7 +106,7 @@ export function MessageThread({
   return (
     <div className="flex w-72 flex-col gap-2 rounded-md border border-hair bg-white p-3 shadow-card">
       <div className="flex items-center justify-between">
-        <p className="truncate text-sm font-semibold text-ink">Chat with {creatorName}</p>
+        <p className="truncate text-sm font-semibold text-ink">Chat with {name}</p>
         <button
           type="button"
           onClick={() => setOpen(false)}
@@ -161,7 +166,7 @@ export function MessageThread({
               void send();
             }
           }}
-          placeholder={`Message ${creatorName}…`}
+          placeholder={`Message ${name}…`}
           rows={2}
           className="w-full resize-none rounded-md border border-hair bg-white px-3 py-2 text-sm text-ink outline-none focus:border-brand"
         />

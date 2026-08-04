@@ -105,7 +105,7 @@ export function CreatorCard({ creator }: { creator: CreatorRow }) {
           </div>
           <div className="flex shrink-0 flex-col items-end gap-2">
             <ApproveControl kind="creators" id={creator._id} isVerified={creator.isVerified} />
-            <MessageThread creatorId={creator._id} creatorName={name} />
+            <MessageThread id={creator._id} name={name} memberType="creator" />
           </div>
         </header>
 
