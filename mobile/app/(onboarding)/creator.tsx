@@ -228,7 +228,8 @@ export default function CreatorOnboardingScreen({ initialIndex = 0 }: { initialI
     setError(null);
     setUploading(true);
     try {
-      const url = await pickAndUploadImage('portfolio', { aspect: [4, 5] });
+      // Free-form crop so portrait portfolio shots keep their full frame.
+      const url = await pickAndUploadImage('portfolio');
       if (url) patch({ portfolio: [...form.portfolio, { imageUrl: url }] });
     } catch (err) {
       if (err instanceof ImagePermissionError) setError(err.message);

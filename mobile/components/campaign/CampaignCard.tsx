@@ -104,7 +104,7 @@ export function CampaignCard({ campaign, businessName, applicationStatus, compac
         ...shadows.card,
       }}
     >
-      <CoverImage src={campaign.coverImage} category={campaign.category} style={{ aspectRatio: 16 / 10 }}>
+      <CoverImage src={campaign.coverImage} category={campaign.category} contentFit="contain" style={{ aspectRatio: 16 / 10 }}>
         {/* category chip */}
         <View
           style={{

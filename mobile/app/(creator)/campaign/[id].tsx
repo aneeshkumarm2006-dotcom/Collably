@@ -153,7 +153,7 @@ export default function CampaignDetailScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Hero */}
-        <CoverImage src={c.coverImage} category={c.category} style={{ aspectRatio: 16 / 9 }}>
+        <CoverImage src={c.coverImage} category={c.category} contentFit="contain" style={{ aspectRatio: 16 / 9 }}>
           <View
             style={{
               position: 'absolute',

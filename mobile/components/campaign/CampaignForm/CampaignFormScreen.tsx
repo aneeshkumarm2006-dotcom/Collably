@@ -74,7 +74,8 @@ export function CampaignFormScreen({
     setError(null);
     setCoverUploading(true);
     try {
-      const url = await pickAndUploadImage('campaigns', { aspect: [16, 10] });
+      // Free-form crop so a portrait cover survives instead of being chopped to a landscape strip.
+      const url = await pickAndUploadImage('campaigns');
       if (url) patch({ coverImage: url });
     } catch (err) {
       if (err instanceof ImagePermissionError) setError(err.message);

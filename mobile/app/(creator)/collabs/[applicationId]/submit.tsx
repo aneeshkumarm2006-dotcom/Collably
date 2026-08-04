@@ -50,7 +50,8 @@ export default function SubmitContentScreen() {
     setFormError(null);
     setUploading(true);
     try {
-      const url = await pickAndUploadImage('submissions', { aspect: [4, 5] });
+      // Free-form crop so portrait proof shots keep their full frame.
+      const url = await pickAndUploadImage('submissions');
       if (url) setProof(url);
     } catch (err) {
       if (err instanceof ImagePermissionError) setFormError(err.message);

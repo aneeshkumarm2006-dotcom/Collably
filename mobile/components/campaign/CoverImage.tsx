@@ -33,11 +33,17 @@ export type CoverImageProps = {
   /** Border radius applied to the whole cover. */
   radius?: number;
   style?: ViewStyle;
+  /**
+   * How the image fills the frame. `cover` (default) fills edge-to-edge for
+   * thumbnails/avatars; `contain` letterboxes the full image onto the category
+   * gradient so a portrait cover is shown whole instead of chopped to a strip.
+   */
+  contentFit?: 'cover' | 'contain';
   /** Optional overlay content (category chip, status corner, etc.). */
   children?: React.ReactNode;
 };
 
-export function CoverImage({ src, category, radius = 0, style, children }: CoverImageProps) {
+export function CoverImage({ src, category, radius = 0, style, contentFit = 'cover', children }: CoverImageProps) {
   const [failed, setFailed] = useState(false);
   const [from, to] = CATEGORY_GRADIENT[category] ?? CATEGORY_GRADIENT.Other;
   const showImage = !!src && !failed;
@@ -54,7 +60,7 @@ export function CoverImage({ src, category, radius = 0, style, children }: Cover
         <RemoteImage
           source={{ uri: src! }}
           style={{ width: '100%', height: '100%' }}
-          contentFit="cover"
+          contentFit={contentFit}
           recyclingKey={src}
           onError={() => setFailed(true)}
         />

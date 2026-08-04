@@ -27,7 +27,11 @@ export class ImagePermissionError extends Error {
 }
 
 export type PickAndUploadOptions = {
-  /** Crop aspect ratio for the in-picker editor (e.g. [1, 1] for a logo/avatar). */
+  /**
+   * Locks the crop editor to a fixed aspect ratio (e.g. [1, 1] for a logo/avatar
+   * that genuinely must be square). Omit it for free-form cropping so users can
+   * keep a portrait OR landscape frame (covers, portfolio, content, submissions).
+   */
   aspect?: [number, number];
   /** Longest-edge cap in px after downscale. Default 1080. */
   maxDimension?: number;
@@ -93,11 +97,11 @@ export async function pickAndUploadImage(
 
   const picked = await ImagePicker.launchImageLibraryAsync({
     mediaTypes: ['images'],
-    // Only force the system cropper when a specific `aspect` is required (avatars,
-    // logos → square). Android's built-in crop tool otherwise locks to landscape/
-    // square and mangles portrait images — so for content/portfolio uploads we skip
-    // editing entirely and keep the full portrait image (own compression below).
-    allowsEditing: aspect != null,
+    // Always open the native crop editor so every upload surface gets visible
+    // move + resize crop handles. When `aspect` is omitted the editor is free-form,
+    // so portrait images keep their portrait frame instead of being chopped into a
+    // thin landscape strip; a fixed `aspect` (e.g. [1, 1]) only locks avatars/logos.
+    allowsEditing: true,
     aspect,
     quality: 1, // we do our own compression below for a predictable size
   });

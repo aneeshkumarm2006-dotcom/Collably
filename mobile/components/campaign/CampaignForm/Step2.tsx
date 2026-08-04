@@ -29,6 +29,7 @@ export function Step2({ value, patch, onPickImage, uploading }: Step2Props) {
           src={value.coverImage}
           category={value.category ?? 'Other'}
           radius={16}
+          contentFit="contain"
           style={{ aspectRatio: 16 / 10, borderWidth: 1, borderColor: colors.hair }}
         >
           {!hasCover && (
