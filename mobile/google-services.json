@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "871039042919",
+    "project_id": "local-creator-crew",
+    "storage_bucket": "local-creator-crew.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:871039042919:android:ee076a4138f3c60bf11bc2",
+        "android_client_info": {
+          "package_name": "com.collably.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDsZLhKFZ-domJr98npbECcyyCs9mzFEI0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
