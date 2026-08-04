@@ -22,6 +22,8 @@ export type SubmissionCardProps = {
   onOpenLink?: (url: string) => void;
   /** Tap the proof image to view it full-screen. */
   onViewProof?: (url: string) => void;
+  /** Open the full-page submission detail. */
+  onPress?: () => void;
   onVerify?: () => void;
   onRequestRevision?: () => void;
   onMarkFailed?: () => void;
@@ -34,6 +36,7 @@ export function SubmissionCard({
   creatorAvatar,
   onOpenLink,
   onViewProof,
+  onPress,
   onVerify,
   onRequestRevision,
   onMarkFailed,
@@ -53,8 +56,17 @@ export function SubmissionCard({
         ...shadows.card,
       }}
     >
-      {/* header: creator + when */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+      {/* header: creator + when (tap to open the full-page detail) */}
+      <Pressable
+        onPress={onPress}
+        disabled={!onPress}
+        style={({ pressed }) => ({
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 10,
+          opacity: pressed && onPress ? 0.7 : 1,
+        })}
+      >
         <Avatar src={creatorAvatar} name={creatorName} size={40} />
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text numberOfLines={1} style={{ fontSize: 15, fontWeight: '700', color: colors.text }}>
@@ -67,7 +79,7 @@ export function SubmissionCard({
           )}
         </View>
         {!awaitingReview && <Badge status={application.status} />}
-      </View>
+      </Pressable>
 
       {/* posted link */}
       {application.submissionLink && (

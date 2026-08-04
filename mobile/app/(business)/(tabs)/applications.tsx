@@ -108,7 +108,7 @@ export default function BusinessApplicationsScreen() {
     }
     if (item.status === 'Accepted' || item.status === 'Overdue') {
       return item.submittedAt ? (
-        <Button block size="sm" icon="eye" onPress={() => router.push({ pathname: '/(business)/submissions', params: { applicationId: item._id } })}>
+        <Button block size="sm" icon="eye" onPress={() => router.push({ pathname: '/(business)/submissions/[id]', params: { id: item._id } })}>
           Review submission
         </Button>
       ) : (

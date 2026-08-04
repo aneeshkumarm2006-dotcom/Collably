@@ -134,6 +134,7 @@ export default function SubmissionsScreen() {
               creatorName={item.creatorUser?.name ?? 'Creator'}
               creatorAvatar={item.creatorUser?.avatar}
               busy={busyId === item._id}
+              onPress={() => router.push({ pathname: '/(business)/submissions/[id]', params: { id: item._id } })}
               onOpenLink={(url) => void WebBrowser.openBrowserAsync(url)}
               onViewProof={(url) => setProof(url)}
               onVerify={() => onVerify(item)}

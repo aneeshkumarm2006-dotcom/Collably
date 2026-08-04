@@ -207,7 +207,7 @@ export default function BusinessHomeScreen() {
               {toReview.slice(0, 4).map((a) => (
                 <Press
                   key={a._id}
-                  onPress={() => router.push({ pathname: '/(business)/submissions', params: { applicationId: a._id } })}
+                  onPress={() => router.push({ pathname: '/(business)/submissions/[id]', params: { id: a._id } })}
                   style={{
                     flexDirection: 'row',
                     alignItems: 'center',

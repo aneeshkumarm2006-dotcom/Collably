@@ -485,6 +485,47 @@ router.patch(
   }),
 );
 
+/**
+ * POST /api/applications/:id/cancel — business cancels ONE creator's collab
+ * (PRD §11 edge cases). This is deliberately scoped to a single application: it
+ * only flips THIS application to Cancelled and NEVER touches the campaign or any
+ * other applicant. It exists so the submission-review "cancel" action has a safe,
+ * single-collab endpoint to call instead of the campaign-level Close/Delete
+ * (which would cascade to every application — the data-loss path this replaces).
+ *
+ * Allowed only while the collab is in flight (Accepted or Overdue). Unlike
+ * `/verify` action=fail it does not require a submission, so a business can also
+ * back out of an accepted collab that was never submitted.
+ */
+router.post(
+  '/:id/cancel',
+  authenticate,
+  businessOnly,
+  asyncHandler(async (req, res) => {
+    const id = objectIdParam(req.params.id);
+    const app = await findApplicationOr404(id);
+    await assertBusinessOwns(app, req);
+
+    if (app.status !== 'Accepted' && app.status !== 'Overdue') {
+      throw new AppError(409, 'Only an in-flight collab can be cancelled');
+    }
+
+    // Single-application mutation only. The owning campaign is intentionally left
+    // untouched (never deleted, never closed) — cancelling one creator must never
+    // affect the campaign or the other applicants.
+    app.status = 'Cancelled';
+    await app.save();
+
+    const campaign = await Campaign.findById(app.campaignId).select('title');
+    const creatorUser = await creatorUserFor(app.creatorId);
+    if (creatorUser) {
+      await safeCancelNotify(creatorUser.id, app.id, campaign?.title ?? 'a campaign');
+    }
+
+    res.status(200).json({ application: toPublicApplication(app) });
+  }),
+);
+
 // --- Local helpers ------------------------------------------------------------
 
 /** Compare a (possibly populated) ref to a string id. */
@@ -512,6 +553,20 @@ async function safeFailNotify(creatorUserId: string, applicationId: string, camp
     });
   } catch (err) {
     console.error('[applications] fail notify error:', err instanceof Error ? err.message : err);
+  }
+}
+
+/** Best-effort "collab cancelled" in-app + push (reuses the collab_failed type). */
+async function safeCancelNotify(creatorUserId: string, applicationId: string, campaignTitle: string) {
+  try {
+    await notify({
+      recipient: creatorUserId,
+      type: 'collab_failed',
+      message: `Your collab for "${campaignTitle}" was cancelled by the business.`,
+      deepLinkPath: `/collabs/${applicationId}`,
+    });
+  } catch (err) {
+    console.error('[applications] cancel notify error:', err instanceof Error ? err.message : err);
   }
 }
 
