@@ -84,7 +84,6 @@ export default function CreatorHomeScreen() {
   // nearby rows fall back to the city name (see lib/geo).
   const { point: origin } = useUserLocation();
 
-  const [activeCat, setActiveCat] = useState<Category | null>(null);
 
   // --- Motion -----------------------------------------------------------------
 
@@ -213,16 +212,17 @@ export default function CreatorHomeScreen() {
     return [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([c]) => c);
   }, [campaigns]);
 
-  /** Recommended: best match first, filtered to the selected category chip. */
+  /** Recommended: your best matches, highest score first. Independent of the
+   *  "Browse by category" chips below (tapping a chip opens Explore filtered to
+   *  that category, it does not rewrite this rail). */
   const recommended = useMemo(() => {
     const niche = data?.profile?.niche ?? [];
     const city = data?.profile?.location?.city;
     return campaigns
-      .filter((c) => !activeCat || c.category === activeCat)
       .map((c) => ({ c, score: matchScore(c, niche, city) }))
       .sort((a, b) => b.score - a.score)
       .slice(0, 8);
-  }, [campaigns, activeCat, data?.profile]);
+  }, [campaigns, data?.profile]);
 
   // --- Actions ----------------------------------------------------------------
 
@@ -422,13 +422,15 @@ export default function CreatorHomeScreen() {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={{ gap: 10, paddingHorizontal: 20, paddingBottom: 6 }}
             >
-              <AllChip active={activeCat === null} onPress={() => setActiveCat(null)} />
+              <AllChip active={false} onPress={goExplore} />
               {cats.map((cat) => (
                 <CategoryChip
                   key={cat}
                   category={cat}
-                  active={activeCat === cat}
-                  onPress={() => setActiveCat(activeCat === cat ? null : cat)}
+                  active={false}
+                  onPress={() =>
+                    router.push({ pathname: '/(creator)/(tabs)/explore', params: { category: cat } })
+                  }
                 />
               ))}
             </ScrollView>
