@@ -23,11 +23,37 @@ const RESEND_ENDPOINT = 'https://api.resend.com/emails';
 const BRAND = {
   name: 'Local Creator Crew',
   accent: '#0C831F',
-  // Deep-link scheme the mobile app registers (PRD §8.2). Used in email CTAs.
-  // NOTE: the `collably://` scheme is an identifier, NOT the display name — it
-  // stays as-is so existing deep links / OAuth / builds keep working.
-  scheme: 'collably://',
 } as const;
+
+/**
+ * Web host used to build every transactional-email CTA. Email clients (Gmail,
+ * Outlook…) strip or deaden custom-scheme links like `collably://`, so those
+ * buttons render dead. Plain **https** links on the web host always render and
+ * click, and Android App Links / iOS Universal Links open the installed app
+ * (falling back to the website when it isn't). We therefore NEVER put a raw
+ * `collably://` link in an email — CTAs are always `${webBase()}<deepLinkPath>`.
+ *
+ * Falls back to the production host so a CTA is never a dead custom-scheme link
+ * even when `WEB_APP_URL` is unset. Set `WEB_APP_URL` on the server for the
+ * nicest behavior (e.g. a staging host), but it degrades safely regardless.
+ */
+const WEB_APP_FALLBACK = 'https://www.localcreatorcrew.com';
+
+/** Base web URL for CTA links, trailing slash stripped, never a dead link. */
+function webBase(): string {
+  return (env.webAppUrl || WEB_APP_FALLBACK).replace(/\/+$/, '');
+}
+
+/**
+ * Build an https CTA url on the web host from an in-app deep-link path (the same
+ * `deepLinkPath` the notification carries, PRD §8.2). The app's Android App Link
+ * intent filters must include the path prefix (see `mobile/app.json`) so the app
+ * opens; otherwise the website handles it.
+ */
+function webUrl(deepLinkPath: string): string {
+  const path = deepLinkPath.startsWith('/') ? deepLinkPath : `/${deepLinkPath}`;
+  return `${webBase()}${path}`;
+}
 
 export interface EmailContent {
   subject: string;
@@ -245,22 +271,21 @@ export function accountCreatedEmail(p: { name: string }): EmailContent {
     heading: `Welcome to ${BRAND.name}, ${esc(p.name)}!`,
     bodyHtml: 'Your account is ready. Open the app to finish your profile and start collaborating.',
     bodyText: 'Your account is ready. Open the app to finish your profile and start collaborating.',
-    cta: { label: 'Open Local Creator Crew', url: BRAND.scheme },
+    cta: { label: 'Open Local Creator Crew', url: webUrl('/notifications') },
   });
 }
 
 /**
- * Password reset CTA link. Prefers the **web** reset route
- * (`<WEB_APP_URL>/reset-password/<token>`) when `WEB_APP_URL` is configured —
- * the website is the canonical reset surface (it auto-logs-in on success). Falls
- * back to the mobile `collably://reset-password?token=` deep link otherwise, so
- * the flow keeps working before the website is deployed.
+ * Password reset CTA link — always the **https** web reset route
+ * (`<webBase>/reset-password/<token>`). The website is the canonical reset
+ * surface (it auto-logs-in on success), and the same https link opens the
+ * mobile app via App Links when installed. `webBase()` falls back to the
+ * production host, so this is NEVER a dead custom-scheme link. The token stays
+ * in the path (matching the web route `/reset-password/[token]`); the mobile app
+ * parses it from the path too (see `app/(auth)/reset-password/[token].tsx`).
  */
 function passwordResetUrl(token: string): string {
-  if (env.webAppUrl) {
-    return `${env.webAppUrl}/reset-password/${encodeURIComponent(token)}`;
-  }
-  return `${BRAND.scheme}reset-password?token=${encodeURIComponent(token)}`;
+  return `${webBase()}/reset-password/${encodeURIComponent(token)}`;
 }
 
 /** Email verification — a one-time code the user types back into the app. */
@@ -292,11 +317,17 @@ export function passwordResetEmail(p: { name: string; token: string }): EmailCon
   });
 }
 
+// Notification emails carry the same `deepLinkPath` as their in-app Notification
+// (passed as `ctaPath`) so the button opens the exact screen via App Links.
+// `ctaPath` is optional and defaults to `/notifications` so direct callers/tests
+// still render a valid https CTA.
+
 /** New application received — sent to the business. */
 export function newApplicationEmail(p: {
   businessName: string;
   creatorName: string;
   campaignTitle: string;
+  ctaPath?: string;
 }): EmailContent {
   return layout({
     heading: 'You have a new application',
@@ -304,7 +335,7 @@ export function newApplicationEmail(p: {
       p.campaignTitle,
     )}</strong>. Review their pitch and profile in the app.`,
     bodyText: `${p.creatorName} applied to "${p.campaignTitle}". Review their pitch in the app.`,
-    cta: { label: 'Review application', url: BRAND.scheme },
+    cta: { label: 'Review application', url: webUrl(p.ctaPath ?? '/notifications') },
   });
 }
 
@@ -313,6 +344,7 @@ export function applicationAcceptedEmail(p: {
   creatorName: string;
   campaignTitle: string;
   businessName: string;
+  ctaPath?: string;
 }): EmailContent {
   return layout({
     heading: "You're in! 🎉",
@@ -320,7 +352,7 @@ export function applicationAcceptedEmail(p: {
       p.campaignTitle,
     )}</strong>. Check the deadline and deliverables, then create and submit your content.`,
     bodyText: `${p.businessName} accepted you for "${p.campaignTitle}". Check the deliverables and submit your content.`,
-    cta: { label: 'View collaboration', url: BRAND.scheme },
+    cta: { label: 'View collaboration', url: webUrl(p.ctaPath ?? '/notifications') },
   });
 }
 
@@ -328,6 +360,7 @@ export function applicationAcceptedEmail(p: {
 export function applicationRejectedEmail(p: {
   creatorName: string;
   campaignTitle: string;
+  ctaPath?: string;
 }): EmailContent {
   return layout({
     heading: 'Update on your application',
@@ -335,7 +368,7 @@ export function applicationRejectedEmail(p: {
       p.campaignTitle,
     )}</strong> wasn't selected this time. Plenty more collabs are waiting — keep applying!`,
     bodyText: `Your application to "${p.campaignTitle}" wasn't selected this time. Keep applying — more collabs are waiting!`,
-    cta: { label: 'Explore campaigns', url: BRAND.scheme },
+    cta: { label: 'Explore campaigns', url: webUrl(p.ctaPath ?? '/notifications') },
   });
 }
 
@@ -343,6 +376,7 @@ export function applicationRejectedEmail(p: {
 export function submissionReceivedEmail(p: {
   creatorName: string;
   campaignTitle: string;
+  ctaPath?: string;
 }): EmailContent {
   return layout({
     heading: 'Content submitted for review',
@@ -350,7 +384,7 @@ export function submissionReceivedEmail(p: {
       p.campaignTitle,
     )}</strong>. Review and verify it in the app.`,
     bodyText: `${p.creatorName} submitted content for "${p.campaignTitle}". Review and verify it in the app.`,
-    cta: { label: 'Review submission', url: BRAND.scheme },
+    cta: { label: 'Review submission', url: webUrl(p.ctaPath ?? '/notifications') },
   });
 }
 
@@ -358,6 +392,7 @@ export function submissionReceivedEmail(p: {
 export function submissionVerifiedEmail(p: {
   creatorName: string;
   campaignTitle: string;
+  ctaPath?: string;
 }): EmailContent {
   return layout({
     heading: 'Your submission was verified ✅',
@@ -365,7 +400,7 @@ export function submissionVerifiedEmail(p: {
       p.campaignTitle,
     )}</strong> has been verified and the collaboration is complete.`,
     bodyText: `Your content for "${p.campaignTitle}" has been verified and the collaboration is complete. Nice work!`,
-    cta: { label: 'View collaboration', url: BRAND.scheme },
+    cta: { label: 'View collaboration', url: webUrl(p.ctaPath ?? '/notifications') },
   });
 }
 
@@ -374,6 +409,7 @@ export function revisionRequestedEmail(p: {
   creatorName: string;
   campaignTitle: string;
   note?: string;
+  ctaPath?: string;
 }): EmailContent {
   const noteHtml = p.note ? `<br/><br/><em>"${esc(p.note)}"</em>` : '';
   const noteText = p.note ? `\n\nNote: "${p.note}"` : '';
@@ -383,7 +419,7 @@ export function revisionRequestedEmail(p: {
       p.campaignTitle,
     )}</strong>. Update your content and resubmit.${noteHtml}`,
     bodyText: `The business asked for a revision on your submission for "${p.campaignTitle}". Update and resubmit.${noteText}`,
-    cta: { label: 'Update submission', url: BRAND.scheme },
+    cta: { label: 'Update submission', url: webUrl(p.ctaPath ?? '/notifications') },
   });
 }
 
@@ -391,6 +427,7 @@ export function revisionRequestedEmail(p: {
 export function campaignExpiringEmail(p: {
   businessName: string;
   campaignTitle: string;
+  ctaPath?: string;
 }): EmailContent {
   return layout({
     heading: 'Your campaign is expiring soon',
@@ -398,7 +435,7 @@ export function campaignExpiringEmail(p: {
       p.campaignTitle,
     )}</strong> ends in about 48 hours. Review pending applications before it closes.`,
     bodyText: `"${p.campaignTitle}" ends in ~48 hours. Review pending applications before it closes.`,
-    cta: { label: 'Review applications', url: BRAND.scheme },
+    cta: { label: 'Review applications', url: webUrl(p.ctaPath ?? '/notifications') },
   });
 }
 
@@ -407,6 +444,7 @@ export function newMatchingCampaignEmail(p: {
   creatorName: string;
   campaignTitle: string;
   businessName: string;
+  ctaPath?: string;
 }): EmailContent {
   return layout({
     heading: 'A new campaign matches your niche',
@@ -414,6 +452,6 @@ export function newMatchingCampaignEmail(p: {
       p.campaignTitle,
     )}</strong>, which fits what you create. Apply early — spots are limited.`,
     bodyText: `${p.businessName} posted "${p.campaignTitle}", which matches your niche. Apply early — spots are limited.`,
-    cta: { label: 'View campaign', url: BRAND.scheme },
+    cta: { label: 'View campaign', url: webUrl(p.ctaPath ?? '/notifications') },
   });
 }

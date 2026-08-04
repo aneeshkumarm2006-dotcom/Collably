@@ -48,6 +48,31 @@
               "scheme": "https",
               "host": "www.localcreatorcrew.com",
               "pathPrefix": "/campaign"
+            },
+            {
+              "scheme": "https",
+              "host": "www.localcreatorcrew.com",
+              "pathPrefix": "/campaigns"
+            },
+            {
+              "scheme": "https",
+              "host": "www.localcreatorcrew.com",
+              "pathPrefix": "/applications"
+            },
+            {
+              "scheme": "https",
+              "host": "www.localcreatorcrew.com",
+              "pathPrefix": "/collabs"
+            },
+            {
+              "scheme": "https",
+              "host": "www.localcreatorcrew.com",
+              "pathPrefix": "/submissions"
+            },
+            {
+              "scheme": "https",
+              "host": "www.localcreatorcrew.com",
+              "pathPrefix": "/notifications"
             }
           ]
         }

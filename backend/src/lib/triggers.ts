@@ -49,6 +49,7 @@ export function notifyNewApplication(opts: {
         businessName: opts.businessName,
         creatorName: opts.creatorName,
         campaignTitle: opts.campaignTitle,
+        ctaPath: `/campaigns/${opts.campaignId}/applications`,
       }),
     }),
   );
@@ -72,6 +73,7 @@ export function notifyApplicationAccepted(opts: {
         creatorName: opts.creatorName,
         campaignTitle: opts.campaignTitle,
         businessName: opts.businessName,
+        ctaPath: `/applications/${opts.applicationId}`,
       }),
     }),
   );
@@ -93,6 +95,7 @@ export function notifyApplicationRejected(opts: {
       email: applicationRejectedEmail({
         creatorName: opts.creatorName,
         campaignTitle: opts.campaignTitle,
+        ctaPath: `/applications/${opts.applicationId}`,
       }),
     }),
   );
@@ -114,6 +117,7 @@ export function notifySubmissionReceived(opts: {
       email: submissionReceivedEmail({
         creatorName: opts.creatorName,
         campaignTitle: opts.campaignTitle,
+        ctaPath: `/submissions?applicationId=${opts.applicationId}`,
       }),
     }),
   );
@@ -135,6 +139,7 @@ export function notifySubmissionVerified(opts: {
       email: submissionVerifiedEmail({
         creatorName: opts.creatorName,
         campaignTitle: opts.campaignTitle,
+        ctaPath: `/collabs/${opts.applicationId}`,
       }),
     }),
   );
@@ -219,6 +224,7 @@ export function notifyRevisionRequested(opts: {
         creatorName: opts.creatorName,
         campaignTitle: opts.campaignTitle,
         note: opts.note,
+        ctaPath: `/collabs/${opts.applicationId}/submit`,
       }),
     }),
   );

@@ -21,6 +21,8 @@ export default function AuthLayout() {
       <Stack.Screen name="signup" />
       <Stack.Screen name="forgot-password" options={{ contentStyle: { backgroundColor: colors.bg } }} />
       <Stack.Screen name="reset-password" options={{ contentStyle: { backgroundColor: colors.bg } }} />
+      {/* Path-token variant opened by the reset email's App Link (/reset-password/<token>). */}
+      <Stack.Screen name="reset-password/[token]" options={{ contentStyle: { backgroundColor: colors.bg } }} />
     </Stack>
   );
 }
