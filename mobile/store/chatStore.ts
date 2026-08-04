@@ -42,7 +42,11 @@ type ChatState = {
 
   loadConversations: () => Promise<void>;
   loadMessages: (conversationId: string, before?: string) => Promise<Message[]>;
-  sendMessage: (conversationId: string, body: string) => Promise<void>;
+  /** Send a text message, an image message, or an image with a caption. */
+  sendMessage: (
+    conversationId: string,
+    payload: { body?: string; imageUrl?: string },
+  ) => Promise<void>;
   markRead: (conversationId: string) => Promise<void>;
 
   // Socket-driven.
@@ -88,9 +92,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
     return data.messages;
   },
 
-  sendMessage: async (conversationId, body) => {
+  sendMessage: async (conversationId, payload) => {
     const me = useAuthStore.getState().user;
     if (!me) return;
+    const body = payload.body?.trim() ?? '';
+    const imageUrl = payload.imageUrl;
+    // Guard: never fire an empty POST (the server rejects it anyway).
+    if (!body && !imageUrl) return;
     const tempId = `temp-${Date.now()}-${Math.round(Math.random() * 1e6)}`;
     const optimistic: Message = {
       _id: tempId,
@@ -98,6 +106,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       senderUserId: me._id,
       senderRole: me.role,
       body,
+      ...(imageUrl ? { imageUrl } : {}),
       createdAt: new Date().toISOString(),
     };
     set((s) => ({
@@ -110,7 +119,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     try {
       const { data } = await api.post<{ message: Message }>(
         `/conversations/${conversationId}/messages`,
-        { body },
+        { ...(body ? { body } : {}), ...(imageUrl ? { imageUrl } : {}) },
       );
       set((s) => {
         const withoutTemp = (s.messages[conversationId] ?? []).filter((m) => m._id !== tempId);
@@ -162,12 +171,19 @@ export const useChatStore = create<ChatState>((set, get) => ({
       }
 
       const current = s.conversations[idx];
+      // An image-only message previews as "Photo" (mirrors the server + admin chat).
+      const preview = message.body?.trim() ? message.body : message.imageUrl ? 'Photo' : '';
+      const delivered = !!(message.deliveredAt || message.readAt);
       const updated: Conversation = {
         ...current,
-        lastMessage: message.body,
+        lastMessage: preview,
         lastMessageAt: message.createdAt,
         lastSenderUserId: message.senderUserId,
         unreadCount: fromOther ? (current.unreadCount ?? 0) + 1 : current.unreadCount,
+        // Reset the list tick to match THIS new last message: single ✓ until it's
+        // delivered. When it's the other party's message the tick is hidden anyway.
+        lastMessageDelivered: fromOther ? current.lastMessageDelivered : delivered,
+        ...(fromOther ? {} : { lastReadByOther: false }),
       };
       // Move the touched thread to the top.
       const conversations = [updated, ...s.conversations.filter((_, i) => i !== idx)];
@@ -178,30 +194,38 @@ export const useChatStore = create<ChatState>((set, get) => ({
   onConversationRead: (conversationId) => {
     const myId = useAuthStore.getState().user?._id;
     if (!myId) return;
-    // The other participant read the thread — stamp our sent messages as read.
+    // The other participant read the thread — stamp our sent messages as read, and
+    // flip the list row's read receipt to blue (delivered implied by read).
     set((s) => {
       const list = s.messages[conversationId];
-      if (!list) return {};
+      const conversations = s.conversations.map((c) =>
+        c._id === conversationId ? { ...c, lastReadByOther: true, lastMessageDelivered: true } : c,
+      );
+      if (!list) return { conversations };
       const now = new Date().toISOString();
       const next = list.map((m) =>
         m.senderUserId === myId && !m.readAt ? { ...m, readAt: now } : m,
       );
-      return { messages: { ...s.messages, [conversationId]: next } };
+      return { conversations, messages: { ...s.messages, [conversationId]: next } };
     });
   },
 
   onConversationDelivered: (conversationId) => {
     const myId = useAuthStore.getState().user?._id;
     if (!myId) return;
-    // The recipient came online — stamp our undelivered sent messages as delivered.
+    // The recipient came online — stamp our undelivered sent messages as delivered,
+    // and flip the list row's tick to grey ✓✓ (delivered, not yet read).
     set((s) => {
       const list = s.messages[conversationId];
-      if (!list) return {};
+      const conversations = s.conversations.map((c) =>
+        c._id === conversationId ? { ...c, lastMessageDelivered: true } : c,
+      );
+      if (!list) return { conversations };
       const now = new Date().toISOString();
       const next = list.map((m) =>
         m.senderUserId === myId && !m.deliveredAt && !m.readAt ? { ...m, deliveredAt: now } : m,
       );
-      return { messages: { ...s.messages, [conversationId]: next } };
+      return { conversations, messages: { ...s.messages, [conversationId]: next } };
     });
   },
 

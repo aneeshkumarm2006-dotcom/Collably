@@ -37,4 +37,11 @@ export interface Conversation extends Timestamped {
    * until this flips true, then blue (read). Only meaningful when the viewer sent last.
    */
   lastReadByOther?: boolean;
+  /**
+   * True when the viewer's last message has reached the recipient's device
+   * (`deliveredAt`/`readAt` is set on that message). Lets the list row mirror the
+   * thread bubble: single tick when only sent, grey double-tick once delivered.
+   * Only meaningful when the viewer sent last.
+   */
+  lastMessageDelivered?: boolean;
 }

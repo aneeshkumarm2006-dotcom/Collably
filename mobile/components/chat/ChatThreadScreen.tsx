@@ -142,9 +142,9 @@ export function ChatThreadScreen() {
   );
 
   const send = useCallback(
-    (body: string) => {
+    (payload: { body?: string; imageUrl?: string }) => {
       if (!id) return;
-      void useChatStore.getState().sendMessage(id, body).catch((err) => {
+      void useChatStore.getState().sendMessage(id, payload).catch((err) => {
         showToast({ message: isApiError(err) ? err.message : 'Message failed to send.', type: 'error' });
       });
     },

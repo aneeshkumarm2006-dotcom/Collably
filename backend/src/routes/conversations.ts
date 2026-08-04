@@ -39,9 +39,44 @@ const historyQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(50).catch(30).default(30),
 });
 
-const sendSchema = z.object({
-  body: z.string().trim().min(1, 'message is required').max(4000),
-});
+const sendSchema = z
+  .object({
+    body: z.string().trim().max(4000).optional(),
+    // Only accept an https URL on our own Cloudinary host. Blocks javascript:/data:
+    // schemes (zod .url() would allow them) and off-Cloudinary/relay hosts. Mirrors
+    // the admin support-chat validator in admin.ts.
+    imageUrl: z
+      .string()
+      .trim()
+      .max(600)
+      .refine((u) => {
+        try {
+          const p = new URL(u);
+          return p.protocol === 'https:' && p.hostname === 'res.cloudinary.com';
+        } catch {
+          return false;
+        }
+      }, 'Image URL must be an https Cloudinary link')
+      .optional(),
+  })
+  .refine((v) => (v.body && v.body.length > 0) || v.imageUrl, 'A message or an image is required');
+
+/**
+ * Whether the viewer's last message has reached the recipient — the same truth the
+ * thread bubble uses (`readAt || deliveredAt`). Only queried when the viewer sent
+ * last (otherwise the list shows no tick), so the list row can render single ✓ (sent)
+ * vs grey ✓✓ (delivered) instead of always claiming ✓✓.
+ */
+async function lastMessageDeliveredFor(
+  c: ConversationDoc,
+  viewerUserId: string,
+): Promise<boolean | undefined> {
+  if (!c.lastSenderUserId || c.lastSenderUserId.toString() !== viewerUserId) return undefined;
+  const last = await Message.findOne({ conversationId: c._id })
+    .sort({ createdAt: -1 })
+    .select('deliveredAt readAt');
+  return !!(last && (last.deliveredAt || last.readAt));
+}
 
 // --- Helpers ------------------------------------------------------------------
 
@@ -119,7 +154,12 @@ router.get(
     const viewerId = req.user!._id.toString();
     const items = await Promise.all(
       convos.map(async (c) =>
-        toPublicConversation(c, viewerId, await resolveOtherParticipant(c, viewerId)),
+        toPublicConversation(
+          c,
+          viewerId,
+          await resolveOtherParticipant(c, viewerId),
+          await lastMessageDeliveredFor(c, viewerId),
+        ),
       ),
     );
     res.status(200).json(paginated(items, total, pagination));
@@ -136,7 +176,12 @@ router.get(
     assertParticipant(c, req);
     const viewerId = req.user!._id.toString();
     res.status(200).json({
-      conversation: toPublicConversation(c, viewerId, await resolveOtherParticipant(c, viewerId)),
+      conversation: toPublicConversation(
+        c,
+        viewerId,
+        await resolveOtherParticipant(c, viewerId),
+        await lastMessageDeliveredFor(c, viewerId),
+      ),
     });
   }),
 );
@@ -166,7 +211,8 @@ router.post(
     const id = objectIdParam(req.params.id);
     const c = await findConversationOr404(id);
     assertParticipant(c, req);
-    const { body } = sendSchema.parse(req.body);
+    const { body, imageUrl } = sendSchema.parse(req.body);
+    const text = body ?? '';
 
     const senderUserId = req.user!._id;
     // Recipient = the participant that isn't the sender. Works identically for the
@@ -195,12 +241,14 @@ router.post(
       conversationId: c._id,
       senderUserId,
       senderRole: req.user!.role,
-      body,
+      body: text,
+      ...(imageUrl ? { imageUrl } : {}),
       ...(recipientOnline ? { deliveredAt: new Date() } : {}),
     });
 
-    // Update the thread preview + bump the recipient's unread counter.
-    c.lastMessage = body;
+    // Update the thread preview + bump the recipient's unread counter. An image-only
+    // message previews as "Photo" (mirrors the admin support-chat behaviour).
+    c.lastMessage = text || 'Photo';
     c.lastMessageAt = message.createdAt;
     c.lastSenderUserId = senderUserId;
     if (recipientIsCreator) c.unreadByCreator += 1;
@@ -221,7 +269,7 @@ router.post(
     // while they're already in the thread). Best-effort — never blocks the send.
     if (!isUserOnline(recipientUserId)) {
       try {
-        const preview = body.length > 80 ? `${body.slice(0, 79)}…` : body;
+        const preview = !text && imageUrl ? 'sent a photo' : text.length > 80 ? `${text.slice(0, 79)}…` : text;
         await notify({
           recipient: recipientUserId,
           type: 'new_message',
@@ -272,7 +320,12 @@ router.post(
     }
 
     res.status(200).json({
-      conversation: toPublicConversation(c, viewerId, await resolveOtherParticipant(c, viewerId)),
+      conversation: toPublicConversation(
+        c,
+        viewerId,
+        await resolveOtherParticipant(c, viewerId),
+        await lastMessageDeliveredFor(c, viewerId),
+      ),
     });
   }),
 );

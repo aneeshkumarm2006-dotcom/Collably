@@ -5,9 +5,10 @@
  * chip, and a fixed-width time/unread column so it never gets squeezed. Unread rows
  * get bolder text + a brighter timestamp.
  *
- * Tick honesty: the preview ✓✓ is GREY (delivered) by default and only turns BLUE
- * once `lastReadByOther` is true — the other participant has actually read your last
- * message. No fabricated "read" state.
+ * Tick honesty: the preview tick mirrors the thread bubble exactly. A single ✓ shows
+ * when your last message is only sent (not yet on the recipient's device); it becomes
+ * a GREY ✓✓ once `lastMessageDelivered` is true (delivered) and turns BLUE ✓✓ once
+ * `lastReadByOther` is true (actually read). No fabricated delivered/read state.
  */
 import { Text, View } from 'react-native';
 import { Pressable } from '@/components/ui/SafePressable';
@@ -35,6 +36,10 @@ export function ConversationRow({
   const isOfficial = conversation.kind === 'admin';
   const sentLast = !!mineId && conversation.lastSenderUserId === mineId;
   const readByOther = conversation.lastReadByOther === true;
+  // Delivered = the last message reached the recipient's device. Read implies
+  // delivered, so treat a read receipt as delivered too — mirrors the bubble's
+  // `readAt || deliveredAt ? '✓✓' : '✓'`.
+  const deliveredToOther = readByOther || conversation.lastMessageDelivered === true;
 
   return (
     <Pressable
@@ -63,8 +68,10 @@ export function ConversationRow({
 
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 3 }}>
           {sentLast && (
-            // Always ✓✓ (delivered); grey until actually read, then blue.
-            <Text style={{ fontSize: 12, fontWeight: '700', color: readByOther ? p.rowTickRead : p.rowTickDelivered }}>✓✓</Text>
+            // Single ✓ when only sent; grey ✓✓ once delivered; blue ✓✓ once read.
+            <Text style={{ fontSize: 12, fontWeight: '700', color: readByOther ? p.rowTickRead : p.rowTickDelivered }}>
+              {deliveredToOther ? '✓✓' : '✓'}
+            </Text>
           )}
           <Text
             numberOfLines={1}

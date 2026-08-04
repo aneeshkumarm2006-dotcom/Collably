@@ -334,6 +334,13 @@ export function toPublicConversation(
   c: ConversationDoc,
   viewerUserId: string,
   otherParticipant?: UserSummary,
+  /**
+   * Whether the viewer's last message has reached the recipient's device. The
+   * serializer stays DB-free, so the caller resolves this from the last message's
+   * `deliveredAt`/`readAt` (see conversations route) and passes it in. Only powers
+   * the list tick when the viewer sent last; left undefined it's simply omitted.
+   */
+  lastMessageDelivered?: boolean,
 ): Conversation {
   // Always present: the business on an application thread, the support user on an
   // admin thread (it fills the "business" seat so dyad plumbing keeps working).
@@ -362,6 +369,7 @@ export function toPublicConversation(
     lastSenderUserId: c.lastSenderUserId ? refId(c.lastSenderUserId as Ref<unknown>) : undefined,
     unreadCount: viewerIsCreator ? c.unreadByCreator : c.unreadByBusiness,
     lastReadByOther: otherUnread === 0,
+    ...(lastMessageDelivered === undefined ? {} : { lastMessageDelivered }),
     createdAt: c.createdAt.toISOString(),
     updatedAt: c.updatedAt.toISOString(),
   };
