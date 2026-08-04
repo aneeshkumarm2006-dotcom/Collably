@@ -12,12 +12,13 @@ import * as WebBrowser from 'expo-web-browser';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Header } from '@/components/shared';
 import { Avatar, Button, Card, Icon, StatCard, ErrorState, SkeletonCard, type IconName } from '@/components/ui';
+import { CampaignCard } from '@/components/campaign';
 import { useTheme } from '@/components/ThemeProvider';
 import { api, isApiError } from '@/lib/api';
 import { useFetch } from '@/lib/useFetch';
 import { pickAndUploadImage, ImagePermissionError } from '@/lib/imageUpload';
 import { useAuthStore } from '@/store/authStore';
-import type { BusinessProfile } from '@/types';
+import type { BusinessProfile, Campaign } from '@/types';
 
 export default function BusinessProfileScreen() {
   const { colors } = useTheme();
@@ -33,7 +34,27 @@ export default function BusinessProfileScreen() {
     return res.profile;
   }, []);
 
-  useFocusEffect(useCallback(() => reload(), [reload]));
+  // This business's own campaigns (all statuses) — a lightweight list reusing the
+  // same `mine=true` endpoint the Campaigns tab uses. Kept separate from the
+  // profile fetch so a campaigns hiccup never blocks the profile from rendering.
+  const {
+    data: campaigns,
+    loading: campaignsLoading,
+    error: campaignsError,
+    reload: reloadCampaigns,
+  } = useFetch(async () => {
+    const { data: res } = await api.get<{ data: Campaign[] }>('/campaigns', {
+      params: { mine: 'true', limit: 5 },
+    });
+    return res.data;
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      reload();
+      reloadCampaigns();
+    }, [reload, reloadCampaigns]),
+  );
 
   const changeLogo = async () => {
     if (!data) return;
@@ -171,6 +192,70 @@ export default function BusinessProfileScreen() {
             <View style={{ flex: 1 }}>
               <StatCard icon="checkcircle" value={data.totalCollabsCompleted} label="Collabs done" tone="success" />
             </View>
+          </View>
+
+          {/* This business's campaigns */}
+          <View style={{ gap: 10 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Text style={{ fontSize: 16, fontWeight: '800', color: colors.text, letterSpacing: -0.2 }}>
+                Your campaigns
+              </Text>
+              {campaigns && campaigns.length > 0 && (
+                <Pressable
+                  onPress={() => router.push('/(business)/(tabs)/campaigns')}
+                  hitSlop={8}
+                  accessibilityRole="link"
+                  accessibilityLabel="View all campaigns"
+                  style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
+                >
+                  <Text style={{ fontSize: 13.5, fontWeight: '700', color: colors.accent }}>View all</Text>
+                </Pressable>
+              )}
+            </View>
+
+            {campaignsLoading && !campaigns ? (
+              <SkeletonCard />
+            ) : campaignsError && !campaigns ? (
+              <Card padding={16}>
+                <Text style={{ fontSize: 13.5, color: colors.text2 }}>Couldn&apos;t load your campaigns.</Text>
+                <View style={{ marginTop: 10 }}>
+                  <Button variant="outline" size="sm" onPress={reloadCampaigns}>
+                    Retry
+                  </Button>
+                </View>
+              </Card>
+            ) : campaigns && campaigns.length > 0 ? (
+              <View style={{ gap: 10 }}>
+                {campaigns.map((c) => (
+                  <CampaignCard
+                    key={c._id}
+                    campaign={c}
+                    businessName="Your campaign"
+                    compact
+                    onPress={() =>
+                      router.push({
+                        pathname: '/(business)/campaigns/[id]/applications',
+                        params: { id: c._id },
+                      })
+                    }
+                  />
+                ))}
+              </View>
+            ) : (
+              <Card padding={20}>
+                <View style={{ alignItems: 'center', gap: 10 }}>
+                  <Text style={{ fontSize: 14.5, fontWeight: '700', color: colors.text }}>No campaigns yet</Text>
+                  <Text style={{ fontSize: 13, color: colors.text2, textAlign: 'center', lineHeight: 19 }}>
+                    Post your first campaign to start receiving applications from creators.
+                  </Text>
+                  <View style={{ marginTop: 4 }}>
+                    <Button size="sm" icon="plus" onPress={() => router.push('/(business)/campaigns/new')}>
+                      New campaign
+                    </Button>
+                  </View>
+                </View>
+              </Card>
+            )}
           </View>
 
           {/* About */}

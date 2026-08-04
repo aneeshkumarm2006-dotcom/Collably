@@ -5,19 +5,24 @@
  * gesture-only. A floating action button launches the create flow; tapping a card
  * opens its applicant list.
  */
-import { useCallback, useMemo, useState } from 'react';
-import { Alert, FlatList, RefreshControl, ScrollView, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Alert, FlatList, Platform, RefreshControl, ScrollView, Text, View } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
 import { Pressable } from '@/components/ui/SafePressable';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Header, NotificationBell, SwipeableRow, type SwipeAction } from '@/components/shared';
 import { CampaignCard } from '@/components/campaign';
-import { EmptyState, ErrorState, Icon, SkeletonCard, TagChip } from '@/components/ui';
+import { Button, EmptyState, ErrorState, Icon, SkeletonCard, TagChip } from '@/components/ui';
 import { useTheme } from '@/components/ThemeProvider';
 import { api, isApiError } from '@/lib/api';
 import { useFetch } from '@/lib/useFetch';
+import { useAuthStore } from '@/store/authStore';
 import type { CampaignStatus } from '@/constants';
 import type { Campaign } from '@/types';
+
+/** One-time "you can swipe" hint (persisted so it shows at most once per install). */
+const SWIPE_HINT_KEY = 'collably.campaignSwipeHintDismissed';
 
 const TABS: { key: string; label: string; statuses?: CampaignStatus[] }[] = [
   { key: 'all', label: 'All' },
@@ -32,6 +37,32 @@ export default function BusinessCampaignsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [tab, setTab] = useState('all');
+  // Admin approval gate (mirrors the backend `profile.isVerified`). Publishing a
+  // Draft to Active 403s until this is true, so we surface the state rather than
+  // letting Publish fail silently.
+  const approved = useAuthStore((s) => s.approved);
+
+  // One-time swipe hint. Default hidden until we've read the persisted flag, so it
+  // never flashes for a user who already dismissed it.
+  const [hintDismissed, setHintDismissed] = useState(true);
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const seen = Platform.OS === 'web' ? '1' : await SecureStore.getItemAsync(SWIPE_HINT_KEY);
+        if (active) setHintDismissed(seen === '1');
+      } catch {
+        if (active) setHintDismissed(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+  const dismissHint = useCallback(() => {
+    setHintDismissed(true);
+    if (Platform.OS !== 'web') void SecureStore.setItemAsync(SWIPE_HINT_KEY, '1').catch(() => {});
+  }, []);
 
   const { data, setData, loading, error, reload } = useFetch(async () => {
     const { data: res } = await api.get<{ data: Campaign[] }>('/campaigns', {
@@ -60,6 +91,26 @@ export default function BusinessCampaignsScreen() {
       setData((list) => list?.map((c) => (c._id === campaign._id ? { ...c, status: prev } : c)) ?? list);
       Alert.alert('Could not update', isApiError(err) ? err.message : 'Please try again.');
     }
+  };
+
+  /**
+   * Publish a Draft. The backend rejects this until the business is verified, so
+   * when we already know the account is under review we explain it up front instead
+   * of firing a request that would 403.
+   */
+  const publish = (campaign: Campaign) => {
+    if (!approved) {
+      Alert.alert(
+        'Account under review',
+        'Your business is being verified. You can publish this campaign once an admin approves your account.',
+        [
+          { text: 'OK', style: 'cancel' },
+          { text: 'View status', onPress: () => router.push('/(business)/(tabs)/profile') },
+        ],
+      );
+      return;
+    }
+    void setStatus(campaign, 'Active');
   };
 
   const confirmStatus = (campaign: Campaign, status: CampaignStatus, verb: string) => {
@@ -105,7 +156,9 @@ export default function BusinessCampaignsScreen() {
         onPress: () => router.push({ pathname: '/(business)/campaigns/[id]/applications', params: { id: c._id } }),
       },
     ];
-    if (c.status === 'Draft') options.push({ text: 'Publish', onPress: () => void setStatus(c, 'Active') });
+    if (c.status === 'Draft') {
+      options.push({ text: approved ? 'Publish' : 'Publish (pending approval)', onPress: () => publish(c) });
+    }
     if (c.status === 'Active') {
       options.push({ text: 'Pause', onPress: () => void setStatus(c, 'Paused') });
       options.push({ text: 'Close', style: 'destructive', onPress: () => confirmStatus(c, 'Closed', 'Close') });
@@ -134,7 +187,13 @@ export default function BusinessCampaignsScreen() {
     if (c.status === 'Draft') {
       return [
         edit,
-        { key: 'publish', label: 'Publish', icon: 'zap', color: colors.accent, onPress: () => void setStatus(c, 'Active') },
+        {
+          key: 'publish',
+          label: approved ? 'Publish' : 'Pending',
+          icon: approved ? 'zap' : 'clock',
+          color: approved ? colors.accent : colors.warn,
+          onPress: () => publish(c),
+        },
         { key: 'delete', label: 'Delete', icon: 'trash', color: colors.danger, onPress: () => remove(c) },
       ];
     }
@@ -187,19 +246,30 @@ export default function BusinessCampaignsScreen() {
           keyExtractor={(item) => item._id}
           renderItem={({ item }) => (
             <SwipeableRow actions={actionsFor(item)}>
-              <Pressable onLongPress={() => openMenu(item)} delayLongPress={300}>
-                <CampaignCard
-                  campaign={item}
-                  businessName="Your campaign"
-                  onPress={() =>
-                    router.push({ pathname: '/(business)/campaigns/[id]/applications', params: { id: item._id } })
-                  }
-                />
-              </Pressable>
+              <View>
+                <Pressable onLongPress={() => openMenu(item)} delayLongPress={300}>
+                  <CampaignCard
+                    campaign={item}
+                    businessName="Your campaign"
+                    onPress={() =>
+                      router.push({ pathname: '/(business)/campaigns/[id]/applications', params: { id: item._id } })
+                    }
+                  />
+                </Pressable>
+                {/* Drafts get an always-visible Publish affordance (not gesture-only). */}
+                {item.status === 'Draft' && (
+                  <DraftPublishBar approved={approved} colors={colors} onPublish={() => publish(item)} />
+                )}
+              </View>
             </SwipeableRow>
           )}
           contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 96, gap: 14, flexGrow: 1 }}
           showsVerticalScrollIndicator={false}
+          ListHeaderComponent={
+            !hintDismissed && filtered.length > 0 ? (
+              <SwipeHint colors={colors} onDismiss={dismissHint} />
+            ) : null
+          }
           refreshControl={<RefreshControl refreshing={loading} onRefresh={reload} tintColor={colors.accent} />}
           ListEmptyComponent={
             <EmptyState
@@ -237,6 +307,84 @@ export default function BusinessCampaignsScreen() {
         })}
       >
         <Icon name="plus" size={24} color="#fff" strokeWidth={2.2} />
+      </Pressable>
+    </View>
+  );
+}
+
+type Colors = ReturnType<typeof useTheme>['colors'];
+
+/**
+ * Publish affordance shown on Draft cards. Approved businesses get a real Publish
+ * button; businesses still under review get a clearly-disabled "pending approval"
+ * row (tappable for the why) so Publish never fails silently.
+ */
+function DraftPublishBar({ approved, colors, onPublish }: { approved: boolean; colors: Colors; onPublish: () => void }) {
+  if (approved) {
+    return (
+      <View style={{ marginTop: 8 }}>
+        <Button block variant="tonal" size="sm" icon="zap" onPress={onPublish}>
+          Publish campaign
+        </Button>
+      </View>
+    );
+  }
+  return (
+    <Pressable
+      onPress={onPublish}
+      accessibilityRole="button"
+      accessibilityLabel="Publish pending approval"
+      accessibilityState={{ disabled: true }}
+      accessibilityHint="Your account is under review. You can publish once approved."
+      style={({ pressed }) => ({
+        marginTop: 8,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        backgroundColor: colors.warnSoft,
+        borderWidth: 1,
+        borderColor: colors.warn,
+        borderRadius: 12,
+        paddingVertical: 10,
+        paddingHorizontal: 12,
+        opacity: pressed ? 0.7 : 1,
+      })}
+    >
+      <Icon name="clock" size={16} color={colors.warn} />
+      <Text style={{ flex: 1, fontSize: 12.5, color: colors.text2, lineHeight: 17 }}>
+        Pending approval. You can publish once your account is verified.
+      </Text>
+    </Pressable>
+  );
+}
+
+/** Dismissible one-time hint that swipe/long-press manage a campaign. */
+function SwipeHint({ colors, onDismiss }: { colors: Colors; onDismiss: () => void }) {
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        backgroundColor: colors.accentSoft,
+        borderRadius: 12,
+        paddingVertical: 10,
+        paddingHorizontal: 12,
+        marginBottom: 14,
+      }}
+    >
+      <Icon name="edit" size={15} color={colors.accent} strokeWidth={1.9} />
+      <Text style={{ flex: 1, fontSize: 12.5, color: colors.text2, lineHeight: 17 }}>
+        Swipe left on a campaign to edit or manage it. Long-press for more options.
+      </Text>
+      <Pressable
+        onPress={onDismiss}
+        hitSlop={10}
+        accessibilityRole="button"
+        accessibilityLabel="Dismiss hint"
+        style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1 })}
+      >
+        <Icon name="x" size={16} color={colors.text3} />
       </Pressable>
     </View>
   );
