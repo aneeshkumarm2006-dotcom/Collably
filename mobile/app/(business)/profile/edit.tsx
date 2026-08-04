@@ -5,12 +5,12 @@
  * so the look is identical; on save it returns to the profile tab.
  */
 import { useState } from 'react';
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 import { Pressable } from '@/components/ui/SafePressable';
 import { useRouter } from 'expo-router';
 import { Header } from '@/components/shared';
 import { FormBanner } from '@/components/auth';
-import { Button, Field, TextField, TextArea, TagChip, Icon, RemoteImage, SkeletonCard, ErrorState } from '@/components/ui';
+import { Button, Field, TextField, TextArea, TagChip, Icon, RemoteImage, SkeletonCard, ErrorState, KeyboardAwareScrollView } from '@/components/ui';
 import { useTheme } from '@/components/ThemeProvider';
 import { CATEGORIES, type Category } from '@/constants';
 import type { GeoLocation, BusinessProfile } from '@/types';
@@ -147,11 +147,7 @@ function EditForm({ initial }: { initial: Form }) {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Header title="Edit profile" onBack={() => router.back()} variant="card" />
-      <ScrollView
-        contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
+      <KeyboardAwareScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
         {formError && <FormBanner message={formError} />}
 
         {/* Logo */}
@@ -238,7 +234,7 @@ function EditForm({ initial }: { initial: Form }) {
             Save changes
           </Button>
         </View>
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </View>
   );
 }

@@ -8,7 +8,7 @@
  * screens own the API wiring.
  */
 import { type ReactNode, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Keyboard, Text, View, type TextStyle } from 'react-native';
+import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, Text, View, type TextStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useAnimatedStyle,
@@ -76,7 +76,13 @@ export function VerifyShell({
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+    // iOS lifts the footer/inputs above the keyboard via `padding`; Android relies on
+    // the OS window pan (`android.softwareKeyboardLayoutMode: "pan"` in app.json), so
+    // its behavior stays undefined to avoid fighting the pan.
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: colors.bg }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <View
         style={{
           paddingTop: insets.top + 8,
@@ -120,7 +126,7 @@ export function VerifyShell({
           {footer}
         </View>
       ) : null}
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

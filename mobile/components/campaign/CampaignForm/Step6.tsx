@@ -5,12 +5,12 @@
  * approves as many applicants as it wants.)
  */
 import { createElement, useState } from 'react';
-import { Platform, ScrollView, Text, View } from 'react-native';
+import { Platform, Text, View } from 'react-native';
 import { Pressable } from '@/components/ui/SafePressable';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useTheme } from '@/components/ThemeProvider';
 import { formatDate } from '@/lib/utils';
-import { Icon, TagChip } from '@/components/ui';
+import { Icon, KeyboardAwareScrollView, TagChip } from '@/components/ui';
 import { Field, TextField } from './fields';
 import type { CampaignStepProps } from './Step1';
 
@@ -37,7 +37,7 @@ export function Step6({ value, patch }: CampaignStepProps) {
   const removeTag = (tag: string) => patch({ tags: value.tags.filter((t) => t !== tag) });
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 16 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+    <KeyboardAwareScrollView contentContainerStyle={{ padding: 16 }}>
       <Field label="Application deadline" hint="After this date the campaign stops accepting applications.">
         <Pressable
           onPress={() => setShowPicker((s) => !s)}
@@ -146,6 +146,6 @@ export function Step6({ value, patch }: CampaignStepProps) {
           </View>
         )}
       </Field>
-    </ScrollView>
+    </KeyboardAwareScrollView>
   );
 }

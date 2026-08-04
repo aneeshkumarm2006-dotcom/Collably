@@ -10,10 +10,10 @@
  * other changes. Address search additionally requires the server-side Geocoding key.
  */
 import { useEffect, useRef, useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { TextInput } from '@/components/ui/SafeTextInput';
 import { Field, SwitchRow } from './fields';
-import { AutocompleteField, Button, Icon } from '@/components/ui';
+import { AutocompleteField, Button, Icon, KeyboardAwareScrollView } from '@/components/ui';
 import {
   MapView,
   Marker,
@@ -40,11 +40,7 @@ export function Step3({ value, patch }: CampaignStepProps) {
     patch({ location: { ...value.location, ...partial } });
 
   return (
-    <ScrollView
-      contentContainerStyle={{ padding: 16 }}
-      showsVerticalScrollIndicator={false}
-      keyboardShouldPersistTaps="handled"
-    >
+    <KeyboardAwareScrollView contentContainerStyle={{ padding: 16 }}>
       <View style={{ marginBottom: 16 }}>
         <SwitchRow
           label="Remote / Online"
@@ -94,7 +90,7 @@ export function Step3({ value, patch }: CampaignStepProps) {
           </Field>
         </>
       )}
-    </ScrollView>
+    </KeyboardAwareScrollView>
   );
 }
 

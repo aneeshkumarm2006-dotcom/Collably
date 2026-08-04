@@ -9,11 +9,11 @@
  * mirror that into the auth store so the root gate routes to the business home.
  */
 import { useState } from 'react';
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 import { Pressable } from '@/components/ui/SafePressable';
 import { LiveBuilderShell, BusinessPreviewCard } from '@/components/onboarding';
 import { FormBanner } from '@/components/auth';
-import { Field, TextField, TextArea, TagChip, Icon, Button, RemoteImage, AutocompleteField } from '@/components/ui';
+import { Field, TextField, TextArea, TagChip, Icon, Button, RemoteImage, AutocompleteField, KeyboardAwareScrollView } from '@/components/ui';
 import { COUNTRIES, REGIONS, CITY_NAMES, locationForCity } from '@/lib/locations';
 import { useTheme } from '@/components/ThemeProvider';
 import { CATEGORIES, type Category } from '@/constants';
@@ -154,11 +154,7 @@ export default function BusinessOnboardingScreen() {
       onBack={onBack}
       onNext={onNext}
     >
-      <ScrollView
-        contentContainerStyle={{ padding: 20, paddingBottom: 32 }}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
+      <KeyboardAwareScrollView contentContainerStyle={{ padding: 20, paddingBottom: 32 }}>
         {error && <FormBanner message={error} />}
 
         {step === 1 && (
@@ -270,7 +266,7 @@ export default function BusinessOnboardingScreen() {
         {step === 4 && <LogoStep logo={form.logo} uploading={uploading} onPick={pickLogo} onClear={() => patch({ logo: null })} />}
 
         {step === 5 && <ReviewStep form={form} />}
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </LiveBuilderShell>
   );
 }

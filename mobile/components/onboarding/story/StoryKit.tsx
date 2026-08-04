@@ -10,8 +10,9 @@
  * reduce-motion.
  */
 import { useEffect, useState } from 'react';
-import { ScrollView, Text, View, useWindowDimensions, type KeyboardTypeOptions, type ViewStyle } from 'react-native';
+import { Text, View, useWindowDimensions, type KeyboardTypeOptions, type ViewStyle } from 'react-native';
 import { TextInput } from '@/components/ui/SafeTextInput';
+import { KeyboardAwareScrollView } from '@/components/ui/KeyboardAwareScrollView';
 import Reanimated, {
   Easing,
   Extrapolation,
@@ -536,13 +537,11 @@ export function StoryPanel({
           (or scrolled content) can never bleed up over the header text. */}
       <View style={{ flex: 1, overflow: 'hidden' }}>
         {scroll ? (
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
+          <KeyboardAwareScrollView
             contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 10, paddingBottom: 20 }}
           >
             {children}
-          </ScrollView>
+          </KeyboardAwareScrollView>
         ) : (
           <View style={{ flex: 1, paddingHorizontal: 24, paddingTop: 6 }}>{children}</View>
         )}

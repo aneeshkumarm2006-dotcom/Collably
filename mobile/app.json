@@ -22,6 +22,7 @@
     },
     "android": {
       "package": "com.collably.app",
+      "softwareKeyboardLayoutMode": "pan",
       "adaptiveIcon": {
         "backgroundColor": "#1877F2",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

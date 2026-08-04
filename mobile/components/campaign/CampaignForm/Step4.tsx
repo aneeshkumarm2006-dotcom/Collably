@@ -3,9 +3,9 @@
  * and optionally set an estimated value (drives the "Reward value" stub on cards
  * and the §13 reward sort).
  */
-import { ScrollView, View } from 'react-native';
+import { View } from 'react-native';
 import { REWARD_TYPES } from '@/constants';
-import { TagChip } from '@/components/ui';
+import { KeyboardAwareScrollView, TagChip } from '@/components/ui';
 import { Field, TextField } from './fields';
 import type { CampaignStepProps } from './Step1';
 
@@ -13,7 +13,7 @@ export function Step4({ value, patch }: CampaignStepProps) {
   const setReward = (partial: Partial<typeof value.reward>) => patch({ reward: { ...value.reward, ...partial } });
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 16 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+    <KeyboardAwareScrollView contentContainerStyle={{ padding: 16 }}>
       <Field label="Reward type">
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           {REWARD_TYPES.map((r) => (
@@ -43,6 +43,6 @@ export function Step4({ value, patch }: CampaignStepProps) {
           keyboardType="numeric"
         />
       </Field>
-    </ScrollView>
+    </KeyboardAwareScrollView>
   );
 }

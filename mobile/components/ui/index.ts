@@ -35,3 +35,4 @@ export {
   type NumberStepperProps,
 } from './FormFields';
 export { AutocompleteField, type AutocompleteFieldProps } from './AutocompleteField';
+export { KeyboardAwareScrollView } from './KeyboardAwareScrollView';

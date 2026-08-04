@@ -2,9 +2,9 @@
  * Step 1 — Basics (PRD §7.4): campaign title, description, and category. These are
  * the required identity fields; the screen gates "Next" on `validateStep(1, …)`.
  */
-import { ScrollView, View } from 'react-native';
+import { View } from 'react-native';
 import { CATEGORIES } from '@/constants';
-import { TagChip } from '@/components/ui';
+import { KeyboardAwareScrollView, TagChip } from '@/components/ui';
 import { Field, TextField, TextArea } from './fields';
 import type { CampaignFormState, CampaignFormPatch } from './formState';
 
@@ -15,7 +15,7 @@ export type CampaignStepProps = {
 
 export function Step1({ value, patch }: CampaignStepProps) {
   return (
-    <ScrollView contentContainerStyle={{ padding: 16 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+    <KeyboardAwareScrollView contentContainerStyle={{ padding: 16 }}>
       <Field label="Campaign title" hint="Keep it punchy. This is the headline creators see first.">
         <TextField
           value={value.title}
@@ -42,6 +42,6 @@ export function Step1({ value, patch }: CampaignStepProps) {
           ))}
         </View>
       </Field>
-    </ScrollView>
+    </KeyboardAwareScrollView>
   );
 }

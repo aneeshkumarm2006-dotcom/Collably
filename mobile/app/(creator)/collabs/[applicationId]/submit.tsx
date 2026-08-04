@@ -5,7 +5,7 @@
  * for an Accepted (or Overdue) collab; for a revision it re-submits the same way.
  */
 import { useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Header } from '@/components/shared';
 import { FormBanner } from '@/components/auth';
@@ -19,6 +19,7 @@ import {
   Icon,
   SkeletonCard,
   ErrorState,
+  KeyboardAwareScrollView,
 } from '@/components/ui';
 import { useTheme } from '@/components/ThemeProvider';
 import { api, isApiError } from '@/lib/api';
@@ -109,11 +110,7 @@ export default function SubmitContentScreen() {
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Header title="Submit content" onBack={() => router.back()} variant="card" />
 
-      <ScrollView
-        contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
+      <KeyboardAwareScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
         {/* Campaign summary */}
         {campaign && (
           <View
@@ -200,7 +197,7 @@ export default function SubmitContentScreen() {
           <Icon name="lock" size={14} color={colors.text3} />
           <Text style={{ fontSize: 12, color: colors.text3 }}>The brand reviews your submission before it's verified.</Text>
         </View>
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </View>
   );
 }

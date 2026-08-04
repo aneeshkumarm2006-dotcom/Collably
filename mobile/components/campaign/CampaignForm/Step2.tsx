@@ -4,9 +4,9 @@
  * Image picking + Cloudinary upload is wired by the screen (Phase 11/16) and
  * passed in via `onPickImage`; this step just renders state.
  */
-import { ScrollView, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useTheme } from '@/components/ThemeProvider';
-import { Button } from '@/components/ui';
+import { Button, KeyboardAwareScrollView } from '@/components/ui';
 import { CoverImage } from '../CoverImage';
 import { Field } from './fields';
 import type { CampaignStepProps } from './Step1';
@@ -23,7 +23,7 @@ export function Step2({ value, patch, onPickImage, uploading }: Step2Props) {
   const hasCover = !!value.coverImage;
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 16 }} showsVerticalScrollIndicator={false}>
+    <KeyboardAwareScrollView contentContainerStyle={{ padding: 16 }}>
       <Field label="Cover image" hint="A bright, real photo performs best. Skip it and we'll use a branded gradient.">
         <CoverImage
           src={value.coverImage}
@@ -50,6 +50,6 @@ export function Step2({ value, patch, onPickImage, uploading }: Step2Props) {
           </Button>
         )}
       </View>
-    </ScrollView>
+    </KeyboardAwareScrollView>
   );
 }

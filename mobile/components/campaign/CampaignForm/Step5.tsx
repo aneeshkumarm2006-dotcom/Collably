@@ -3,12 +3,12 @@
  * (platform · content type · quantity · optional requirements). Add/remove rows;
  * each maps to a `CampaignDeliverable` on the campaign model.
  */
-import { ScrollView, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { Pressable } from '@/components/ui/SafePressable';
 import { useTheme } from '@/components/ThemeProvider';
 import { PLATFORMS, CONTENT_TYPES_BY_PLATFORM } from '@/constants';
 import type { CampaignDeliverable } from '@/types';
-import { Button, Card, Icon, TagChip } from '@/components/ui';
+import { Button, Card, Icon, KeyboardAwareScrollView, TagChip } from '@/components/ui';
 import { Field, TextField, NumberStepper } from './fields';
 import type { CampaignStepProps } from './Step1';
 
@@ -24,7 +24,7 @@ export function Step5({ value, patch }: CampaignStepProps) {
     patch({ deliverables: [...value.deliverables, { platform: 'Instagram', contentType: 'Post', quantity: 1 }] });
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 16 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+    <KeyboardAwareScrollView contentContainerStyle={{ padding: 16 }}>
       {value.deliverables.map((d, i) => (
         <Card key={i} style={{ marginBottom: 14 }} padding={14}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
@@ -83,6 +83,6 @@ export function Step5({ value, patch }: CampaignStepProps) {
       <Button variant="tonal" icon="plus" block onPress={add}>
         Add another deliverable
       </Button>
-    </ScrollView>
+    </KeyboardAwareScrollView>
   );
 }
