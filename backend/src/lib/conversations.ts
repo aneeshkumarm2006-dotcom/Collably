@@ -1,10 +1,10 @@
 /**
  * Chat conversation helpers shared by the application + conversation routes.
  *
- * A conversation is the chat thread for one accepted collab. Chat is between the
- * two *Users* (not their role profiles), so we resolve each profile's `userId`
- * here. Creation is idempotent (keyed by the unique `applicationId`) so a
- * re-approval or a race can't open two threads for the same collab.
+ * A conversation is the chat thread between a business and a creator. Chat is between
+ * the two *Users* (not their role profiles), so we resolve each profile's `userId`
+ * here. Creation is idempotent (keyed by the unique user pair) so a re-approval, a
+ * second collab, or a race can't open a duplicate thread.
  */
 import { randomBytes } from 'node:crypto';
 import type { Types } from 'mongoose';
@@ -20,9 +20,19 @@ export const SUPPORT_EMAIL = 'support@localcreatorcrew.com';
 export const SUPPORT_NAME = 'Local Creator Crew';
 
 /**
- * Idempotently open (or fetch) the chat thread for an accepted application.
- * Returns `null` only if a participant profile can't be resolved — which
- * shouldn't happen for a genuine accepted collab.
+ * Idempotently open (or fetch) the chat thread between the business and the creator
+ * on an accepted application. Returns `null` only if a participant profile can't be
+ * resolved — which shouldn't happen for a genuine accepted collab.
+ *
+ * ONE thread per business↔creator pair. A second (third, tenth) accepted collab with
+ * the same business reuses the same thread rather than opening another one, so the
+ * chat list shows a business once instead of once per contract.
+ *
+ * The collab fields are `$set` rather than `$setOnInsert` on purpose: on an existing
+ * thread they're overwritten with the newest collab, which is what keeps the
+ * "Collab · <title>" context strip pointing at what the two are currently working on.
+ * The participants are `$setOnInsert` because they define the thread's identity and
+ * must never move.
  */
 export async function getOrCreateConversationForApplication(
   app: ApplicationDoc,
@@ -35,14 +45,19 @@ export async function getOrCreateConversationForApplication(
   if (!business || !creator) return null;
 
   return Conversation.findOneAndUpdate(
-    { applicationId: app._id },
+    { kind: 'application', businessUserId: business.userId, creatorUserId: creator.userId },
     {
-      $setOnInsert: {
+      // Latest-collab context, refreshed on every accept.
+      $set: {
         applicationId: app._id,
         campaignId: app.campaignId,
         campaignTitle: campaign?.title,
         businessId: app.businessId,
         creatorId: app.creatorId,
+      },
+      // Thread identity — set once, never touched again.
+      $setOnInsert: {
+        kind: 'application',
         businessUserId: business.userId,
         creatorUserId: creator.userId,
         participantUserIds: [business.userId, creator.userId],

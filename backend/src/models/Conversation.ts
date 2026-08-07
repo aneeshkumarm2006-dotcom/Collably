@@ -82,13 +82,27 @@ const conversationSchema = new Schema<ConversationDoc>(
   { timestamps: true },
 );
 
-// Keep application threads 1:1 with their accepted collab, while allowing many
-// admin threads (which carry no applicationId). Partial (not sparse) so only docs
-// that actually have an ObjectId applicationId participate in the unique index.
+// ONE thread per business↔creator pair, not one per collab.
+//
+// This used to be a unique index on `applicationId`, which meant a creator accepted
+// for two campaigns from the same business got two identical-looking rows in their
+// chat list. People expect a conversation to be with a *person*, not with a contract,
+// so the identity of a thread is now the pair of users. The collab fields below
+// (`applicationId`, `campaignId`, `campaignTitle`) still exist, but they now describe
+// the MOST RECENT collab in the thread and are re-`$set` each time a new application
+// is accepted — that's what keeps the "Collab · <title>" strip meaningful.
+//
+// Partial on `kind: 'application'` so admin/support threads (which have their own
+// index below) don't participate. The migration back-fills `kind` on legacy rows that
+// predate the field, otherwise they'd fall outside this filter and stay un-deduped.
 conversationSchema.index(
-  { applicationId: 1 },
-  { unique: true, partialFilterExpression: { applicationId: { $type: 'objectId' } } },
+  { businessUserId: 1, creatorUserId: 1 },
+  { unique: true, partialFilterExpression: { kind: 'application' } },
 );
+
+// Not unique any more — `applicationId` is now "the latest collab", so it's only a
+// lookup path (e.g. a notification deep-link resolving its thread).
+conversationSchema.index({ applicationId: 1 });
 
 // One admin/support thread per member — idempotent get-or-create relies on this.
 // `creatorUserId` holds the non-support member (a creator OR a business owner);
