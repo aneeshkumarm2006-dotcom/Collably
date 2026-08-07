@@ -37,8 +37,19 @@ type ChatState = {
   conversations: Conversation[];
   /** conversationId → messages (newest-first). */
   messages: Record<string, Message[]>;
+  /**
+   * conversationId → unsent composer text. Lives here rather than in the composer's
+   * own `useState` so leaving a thread and coming back doesn't throw the draft away
+   * (the thread screen unmounts on navigation, the store doesn't). Kept in memory
+   * only: drafts are worth surviving navigation, not worth an encrypted write on
+   * every keystroke.
+   */
+  drafts: Record<string, string>;
   totalUnread: number;
   loadingConversations: boolean;
+
+  /** Save (or clear, when empty) the unsent text for one thread. */
+  setDraft: (conversationId: string, text: string) => void;
 
   loadConversations: () => Promise<void>;
   loadMessages: (conversationId: string, before?: string) => Promise<Message[]>;
@@ -60,8 +71,22 @@ type ChatState = {
 export const useChatStore = create<ChatState>((set, get) => ({
   conversations: [],
   messages: {},
+  drafts: {},
   totalUnread: 0,
   loadingConversations: false,
+
+  setDraft: (conversationId, text) =>
+    set((s) => {
+      // Drop the key entirely when the draft is emptied, so `drafts[id]` stays a
+      // truthy check for "this thread has something unsent".
+      if (!text) {
+        if (s.drafts[conversationId] === undefined) return s;
+        const { [conversationId]: _removed, ...rest } = s.drafts;
+        return { drafts: rest };
+      }
+      if (s.drafts[conversationId] === text) return s;
+      return { drafts: { ...s.drafts, [conversationId]: text } };
+    }),
 
   loadConversations: async () => {
     set({ loadingConversations: true });
@@ -115,6 +140,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
         [conversationId]: [optimistic, ...(s.messages[conversationId] ?? [])],
       },
     }));
+    // The text is in flight now, so it's no longer a draft. Stashed so a failed
+    // send can hand it back rather than losing what the user typed.
+    const priorDraft = get().drafts[conversationId];
+    get().setDraft(conversationId, '');
 
     try {
       const { data } = await api.post<{ message: Message }>(
@@ -136,6 +165,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
           [conversationId]: (s.messages[conversationId] ?? []).filter((m) => m._id !== tempId),
         },
       }));
+      // Put the text back in the composer — losing it on a flaky network is worse
+      // than the failed send itself.
+      if (priorDraft !== undefined) get().setDraft(conversationId, priorDraft);
       throw err;
     }
   },
@@ -229,5 +261,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
     });
   },
 
-  reset: () => set({ conversations: [], messages: {}, totalUnread: 0, loadingConversations: false }),
+  reset: () =>
+    set({ conversations: [], messages: {}, drafts: {}, totalUnread: 0, loadingConversations: false }),
 }));

@@ -5,7 +5,7 @@
  * live by `useChatSocket`); this screen loads history, pages older messages,
  * marks the thread read, and relays typing indicators over the socket.
  */
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -17,7 +17,7 @@ import {
 } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { SafetyMenu } from '@/components/shared';
+import { SafetyMenu, type SafetyMenuAction } from '@/components/shared';
 import { Avatar, ErrorState, Icon } from '@/components/ui';
 import { Pressable } from '@/components/ui/SafePressable';
 import { useTheme } from '@/components/ThemeProvider';
@@ -41,6 +41,7 @@ export function ChatThreadScreen() {
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const myId = useAuthStore((s) => s.user?._id);
+  const myRole = useAuthStore((s) => s.user?.role);
 
   const messages = useChatStore((s) => (id ? s.messages[id] : undefined)) ?? EMPTY;
   const [conv, setConv] = useState<Conversation | null>(null);
@@ -171,15 +172,37 @@ export function ChatThreadScreen() {
   const isOfficial = conv?.kind === 'admin';
   const headerSubtitle = typingFromOther ? 'typing…' : isOfficial ? 'Official account · Support' : undefined;
 
+  // Ordinary actions for the "⋯" menu, so it isn't a bare report/block prompt.
+  // Creator-only for now: the public profile routes key off the *profile* id, which
+  // this thread doesn't carry, so only the campaign link can be built from `conv`.
+  const menuActions = useMemo<SafetyMenuAction[] | undefined>(() => {
+    if (isOfficial || myRole !== 'creator' || !conv?.campaignId) return undefined;
+    return [
+      {
+        icon: 'briefcase',
+        label: 'View collab',
+        onPress: () =>
+          router.push({
+            pathname: '/(creator)/campaign/[id]',
+            params: { id: String(conv.campaignId) },
+          }),
+      },
+    ];
+  }, [isOfficial, myRole, conv?.campaignId, router]);
+
   return (
     // The KeyboardAvoidingView wraps the WHOLE screen (header included) so its top
     // is the window top → keyboardVerticalOffset is 0 and the composer always lifts
     // to sit right above the keyboard on iOS (`padding`).
     //
-    // Android is handled at the OS level by `android.softwareKeyboardLayoutMode: "pan"`
-    // (app.json): focusing the composer pans the window up so it sits above the
-    // keyboard. So Android's behavior stays undefined — using `height` here too would
-    // double up with the pan and shove the composer far above the keyboard.
+    // Android is handled at the OS level by `android.softwareKeyboardLayoutMode: "resize"`
+    // (app.json): the window shrinks to the space above the keyboard, so this flex
+    // column re-lays-out on its own and the header stays pinned at the top. Android's
+    // behavior therefore stays undefined — adding one would double-compensate.
+    //
+    // This was "pan" until Aug 2026. Under the mandatory edge-to-edge of Android 15+
+    // (Expo 54 / RN 0.81) pan shifts the window by the wrong amount: the header slid
+    // off the top of the screen and the composer ended up UNDER the keyboard.
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: pal.chatBg }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -236,6 +259,7 @@ export function ChatThreadScreen() {
           <SafetyMenu
             userId={String(conv.otherParticipant._id)}
             name={conv.otherParticipant.name}
+            actions={menuActions}
             onBlocked={() => router.back()}
           />
         ) : null}
@@ -288,9 +312,30 @@ export function ChatThreadScreen() {
                 <WelcomeCard name={title} />
               ) : null
             }
-            ListEmptyComponent={loading ? <ActivityIndicator size="small" color={colors.text3} style={{ marginTop: 40 }} /> : null}
+            // An empty thread used to render nothing at all once loading finished,
+            // leaving a blank grey void between the collab strip and the composer.
+            // The official thread has its WelcomeCard; every other new thread gets
+            // this. Inverted list → flip it so it reads upright.
+            ListEmptyComponent={
+              loading ? (
+                <ActivityIndicator size="small" color={colors.text3} style={{ marginTop: 40 }} />
+              ) : isOfficial ? null : (
+                <View style={{ transform: [{ scaleY: -1 }] }}>
+                  <ThreadIntro
+                    name={title}
+                    avatar={conv?.otherParticipant?.avatar}
+                    campaignTitle={conv?.campaignTitle}
+                  />
+                </View>
+              )
+            }
           />
-          <ChatComposer onSend={send} onTyping={emitTyping} bottomInset={kbVisible ? 0 : insets.bottom} />
+          <ChatComposer
+            conversationId={id}
+            onSend={send}
+            onTyping={emitTyping}
+            bottomInset={kbVisible ? 0 : insets.bottom}
+          />
         </View>
       )}
     </KeyboardAvoidingView>
@@ -313,6 +358,36 @@ function WelcomeCard({ name }: { name: string }) {
       </View>
       <Text style={{ fontSize: 13, lineHeight: 19, color: colors.text2, textAlign: 'center', maxWidth: 260 }}>
         This is your direct line to the Local Creator Crew team. We'll message you here about your profile and collabs.
+      </Text>
+    </View>
+  );
+}
+
+/**
+ * Shown in place of an empty timeline on a normal (non-support) thread: who you're
+ * talking to, what collab it's about, and a nudge. Without it a brand-new chat opens
+ * on a blank grey screen, which reads as a loading failure rather than "say hello".
+ */
+function ThreadIntro({
+  name,
+  avatar,
+  campaignTitle,
+}: {
+  name: string;
+  avatar?: string | null;
+  campaignTitle?: string | null;
+}) {
+  const { colors } = useTheme();
+  return (
+    <View style={{ alignItems: 'center', paddingHorizontal: 32, paddingTop: 44, gap: 10 }}>
+      <Avatar src={avatar} name={name} size={62} />
+      <Text style={{ fontSize: 16.5, fontWeight: '800', color: colors.text, letterSpacing: -0.2 }}>
+        {name}
+      </Text>
+      <Text style={{ fontSize: 13.5, lineHeight: 20, color: colors.text2, textAlign: 'center' }}>
+        {campaignTitle
+          ? `This is the start of your chat about “${campaignTitle}”. Say hello and agree the details.`
+          : 'This is the start of your chat. Say hello and agree the details.'}
       </Text>
     </View>
   );

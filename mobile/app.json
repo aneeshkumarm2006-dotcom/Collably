@@ -23,7 +23,7 @@
     "android": {
       "package": "com.collably.app",
       "googleServicesFile": "./google-services.json",
-      "softwareKeyboardLayoutMode": "pan",
+      "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
         "backgroundColor": "#1877F2",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

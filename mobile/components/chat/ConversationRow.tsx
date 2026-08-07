@@ -13,6 +13,7 @@
 import { Text, View } from 'react-native';
 import { Pressable } from '@/components/ui/SafePressable';
 import { Avatar, Icon } from '@/components/ui';
+import { useChatStore } from '@/store/chatStore';
 import type { Conversation } from '@/types';
 import { relativeStamp } from './time';
 import { useChatPalette } from './chatTheme';
@@ -40,6 +41,8 @@ export function ConversationRow({
   // delivered, so treat a read receipt as delivered too — mirrors the bubble's
   // `readAt || deliveredAt ? '✓✓' : '✓'`.
   const deliveredToOther = readByOther || conversation.lastMessageDelivered === true;
+  // Unsent text left in this thread's composer, if any.
+  const draft = useChatStore((s) => s.drafts[conversation._id])?.trim();
 
   return (
     <Pressable
@@ -67,18 +70,34 @@ export function ConversationRow({
         </View>
 
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 3 }}>
-          {sentLast && (
-            // Single ✓ when only sent; grey ✓✓ once delivered; blue ✓✓ once read.
-            <Text style={{ fontSize: 12, fontWeight: '700', color: readByOther ? p.rowTickRead : p.rowTickDelivered }}>
-              {deliveredToOther ? '✓✓' : '✓'}
-            </Text>
+          {draft ? (
+            // An unsent draft outranks the last message in the preview — same as
+            // WhatsApp. It's the only cue that you left something half-typed.
+            <>
+              <Text style={{ fontSize: 13.5, fontWeight: '700', color: colors.danger }}>Draft:</Text>
+              <Text
+                numberOfLines={1}
+                style={{ flexShrink: 1, fontSize: 13.5, color: colors.text2 }}
+              >
+                {draft}
+              </Text>
+            </>
+          ) : (
+            <>
+              {sentLast && (
+                // Single ✓ when only sent; grey ✓✓ once delivered; blue ✓✓ once read.
+                <Text style={{ fontSize: 12, fontWeight: '700', color: readByOther ? p.rowTickRead : p.rowTickDelivered }}>
+                  {deliveredToOther ? '✓✓' : '✓'}
+                </Text>
+              )}
+              <Text
+                numberOfLines={1}
+                style={{ flexShrink: 1, fontSize: 13.5, color: hasUnread ? colors.text : colors.text2, fontWeight: hasUnread ? '600' : '400' }}
+              >
+                {conversation.lastMessage ?? 'Say hello 👋'}
+              </Text>
+            </>
           )}
-          <Text
-            numberOfLines={1}
-            style={{ flexShrink: 1, fontSize: 13.5, color: hasUnread ? colors.text : colors.text2, fontWeight: hasUnread ? '600' : '400' }}
-          >
-            {conversation.lastMessage ?? 'Say hello 👋'}
-          </Text>
         </View>
 
         {!!conversation.campaignTitle && !isOfficial && (
