@@ -2,37 +2,28 @@
  * Shared bottom-tab bar styling for all three role layouts (creator, business,
  * admin), so they can't drift apart.
  *
- * Why this exists rather than an inline `tabBarStyle`: the bar has to paint its own
- * background all the way through the bottom safe-area inset.
+ * Colours ONLY. Do not add height or safe-area padding here.
  *
- * Android 15+ forces edge-to-edge (Expo 54 / RN 0.81), so the system gesture strip is
- * transparent and the app draws behind it. With only `backgroundColor` set, the tab
- * bar filled its own frame and the inset strip below it did not, which rendered as
- * TWO stacked bars — the tab row in one shade and a band under it in another.
- * Extending the height by `insets.bottom` and padding the content back up by the same
- * amount means one continuous surface, with the icons still sitting above the gesture
- * area rather than under it.
+ * React Navigation 7's `BottomTabBar` already handles the bottom inset itself, in
+ * three places (see its BottomTabBar.js): the computed `tabBarHeight` is derived
+ * from `insets`, the content container gets `paddingBottom: spacing + insets.bottom`,
+ * and the bar gets `paddingBottom: insets.bottom`. Adding
+ * `height: CONTENT + insets.bottom` plus `paddingBottom: insets.bottom` on top of
+ * that counts the inset twice, and the surplus is painted in `tabBarStyle`'s
+ * background — which renders as an empty second bar stacked under the labels.
  *
- * iOS gets the same treatment for free: the home-indicator inset is handled by the
- * identical maths, so the two platforms stay visually in step.
+ * That is exactly the bug this file previously caused. If the bar ever needs to be
+ * taller, set `height` alone and leave the padding to the library.
  */
-import { Platform, type ViewStyle } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import type { ViewStyle } from 'react-native';
 import { useTheme } from '@/components/ThemeProvider';
-
-/** Height of the icon + label row itself, before any safe-area inset. */
-const BAR_CONTENT_HEIGHT = Platform.OS === 'ios' ? 52 : 58;
 
 export function useTabBarStyle(): ViewStyle {
   const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
 
   return {
     backgroundColor: colors.tabBar,
     borderTopColor: colors.hair,
     borderTopWidth: 1,
-    height: BAR_CONTENT_HEIGHT + insets.bottom,
-    paddingBottom: insets.bottom,
-    paddingTop: 6,
   };
 }
