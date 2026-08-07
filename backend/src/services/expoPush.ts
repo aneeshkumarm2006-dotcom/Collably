@@ -18,6 +18,7 @@ import { emitToUser } from '../lib/realtime';
 import { User, type UserDoc } from '../models/User';
 import { Notification, type NotificationDoc } from '../models/Notification';
 import type { NotificationType } from '../../../shared/types/Notification';
+import { ANDROID_CHANNEL_ID } from '../../../shared/constants/push';
 import { sendEmail, type EmailContent, type SendEmailResult } from './resend';
 import { toPublicNotification } from '../lib/serialize';
 
@@ -35,6 +36,18 @@ export interface ExpoPushMessage {
   data?: Record<string, unknown>;
   sound?: 'default' | null;
   badge?: number;
+  /**
+   * Android channel to post on. Must match a channel the app has actually created
+   * (see `ANDROID_CHANNEL_ID`) — Android silently reroutes an unknown id to a
+   * fallback channel, and the heads-up behaviour quietly disappears with it.
+   */
+  channelId?: string;
+  /**
+   * `'high'` asks FCM to deliver immediately and wake the device. Without it a
+   * push can be held back while the phone is dozing, so a chat message might
+   * arrive minutes late — and a delayed heads-up banner is worse than none.
+   */
+  priority?: 'default' | 'normal' | 'high';
 }
 
 export interface PushResult {
@@ -88,8 +101,18 @@ export async function sendExpoPush(messages: ExpoPushMessage[]): Promise<{
       const res = await fetch(EXPO_PUSH_ENDPOINT, {
         method: 'POST',
         headers,
-        // Default a sound so the §9.2 triggers alert on the device.
-        body: JSON.stringify(batch.map((m) => ({ sound: 'default', ...m }))),
+        // Defaults applied per message, overridable by the caller: a sound so the
+        // §9.2 triggers alert, the MAX-importance Android channel so the
+        // notification peeks as a heads-up banner instead of landing silently in
+        // the shade, and high priority so FCM doesn't defer it.
+        body: JSON.stringify(
+          batch.map((m) => ({
+            sound: 'default',
+            channelId: ANDROID_CHANNEL_ID,
+            priority: 'high',
+            ...m,
+          })),
+        ),
       });
       if (!res.ok) {
         failed += batch.length;

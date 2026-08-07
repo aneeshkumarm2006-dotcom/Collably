@@ -16,6 +16,11 @@ import { Platform } from 'react-native';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import * as Device from 'expo-device';
 import { api } from './api';
+import {
+  ANDROID_CHANNEL_ID,
+  ANDROID_CHANNEL_NAME,
+  ANDROID_CHANNEL_DESCRIPTION,
+} from '@/constants';
 
 // Push notifications were removed from Expo Go (Android) in SDK 53: merely
 // importing `expo-notifications` there throws. Detect Expo Go so we can no-op
@@ -72,11 +77,33 @@ export async function registerForPushNotifications(): Promise<string | null> {
   if (!Notifications) return null;
 
   // Android needs a notification channel before tokens/notifications work well.
+  //
+  // MAX, not DEFAULT: on Android 8+ the channel's importance is the ONLY thing that
+  // decides whether a notification peeks as a heads-up banner over the current
+  // screen. At DEFAULT it drops silently into the shade, which is why notifications
+  // were arriving but never showing themselves.
+  //
+  // Note the channel id is versioned (see ANDROID_CHANNEL_ID) because channels are
+  // immutable once created — this had to be a new channel, not an edit to the old.
   if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('default', {
-      name: 'Default',
-      importance: Notifications.AndroidImportance.DEFAULT,
+    await Notifications.setNotificationChannelAsync(ANDROID_CHANNEL_ID, {
+      name: ANDROID_CHANNEL_NAME,
+      description: ANDROID_CHANNEL_DESCRIPTION,
+      importance: Notifications.AndroidImportance.MAX,
+      sound: 'default',
+      vibrationPattern: [0, 250, 250, 250],
+      // Show the content on the lock screen; the alternative hides the text behind
+      // "Contents hidden", which makes a message notification useless.
+      lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+      lightColor: '#1877F2',
+      enableVibrate: true,
+      showBadge: true,
     });
+
+    // Retire the old DEFAULT-importance channel so it stops appearing as a stale
+    // second entry in the user's notification settings. Deleting is safe: nothing
+    // targets it any more, and Android tolerates deleting a missing channel.
+    await Notifications.deleteNotificationChannelAsync('default').catch(() => {});
   }
 
   const { status: existing } = await Notifications.getPermissionsAsync();
