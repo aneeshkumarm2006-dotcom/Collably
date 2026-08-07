@@ -27,6 +27,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Confetti } from '@/components/ui';
 import { StoryBackButton, StoryProgress, type Grad } from './StoryKit';
+import { useStoryPalette } from './storyTheme';
 
 const ABS_FILL = { position: 'absolute' as const, top: 0, left: 0, right: 0, bottom: 0 };
 
@@ -44,6 +45,7 @@ export type StoryOnboardingProps = {
 };
 
 export function StoryOnboarding({ index, total, gradient, onBack, celebrate = false, children }: StoryOnboardingProps) {
+  const pal = useStoryPalette();
   const insets = useSafeAreaInsets();
   const reduced = useReducedMotion();
 
@@ -57,11 +59,17 @@ export function StoryOnboarding({ index, total, gradient, onBack, celebrate = fa
   const Enter = forward ? FadeInRight : FadeInLeft;
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#0B0B0F' }}>
+    <View style={{ flex: 1, backgroundColor: pal.isDark ? '#0B0B0F' : '#F4F7FD' }}>
       <KenBurns gradient={gradient} reduced={reduced} />
-      {/* legibility scrim — darken top + bottom so white chrome/text reads */}
+      {/* Legibility scrim. Dark mode darkens the top and bottom so white chrome
+          reads; light mode has to do the OPPOSITE — lighten those bands so the
+          dark ink reads — otherwise the same scrim would bury it. */}
       <LinearGradient
-        colors={['rgba(8,8,14,0.42)', 'rgba(8,8,14,0.12)', 'rgba(8,8,14,0.82)']}
+        colors={
+          pal.isDark
+            ? ['rgba(8,8,14,0.42)', 'rgba(8,8,14,0.12)', 'rgba(8,8,14,0.82)']
+            : ['rgba(255,255,255,0.5)', 'rgba(255,255,255,0.15)', 'rgba(255,255,255,0.85)']
+        }
         locations={[0, 0.4, 1]}
         style={ABS_FILL}
         pointerEvents="none"

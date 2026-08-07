@@ -1,14 +1,19 @@
 /**
- * Shared layout for the auth screens (PRD §7.1). A keyboard-avoiding, scrollable
- * page with the safe-area handled, an optional back button, and a titled header
- * (with subtitle). Keeps login / signup / forgot / reset visually consistent and
- * out of the way of the on-screen keyboard.
+ * Shared layout for the auth screens (PRD §7.1). A keyboard-aware, scrollable page
+ * with the safe-area handled, an optional back button, and a titled header (with
+ * subtitle). Keeps forgot / reset visually consistent and out of the way of the
+ * on-screen keyboard.
+ *
+ * Uses `KeyboardAwareScrollView`, never a `KeyboardAvoidingView`. Pairing a KAV with
+ * a `flexGrow: 1` content container makes the two re-measure each other every frame
+ * on iOS, which strobes the whole form while typing — see the note in
+ * `PremiumAuthLayout` for the full mechanism.
  */
-import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
+import { Platform, Text, View } from 'react-native';
 import { Pressable } from '@/components/ui/SafePressable';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/components/ThemeProvider';
-import { Icon } from '@/components/ui';
+import { Icon, KeyboardAwareScrollView } from '@/components/ui';
 import { BrandMark } from '@/components/shared';
 
 export type AuthShellProps = {
@@ -27,19 +32,14 @@ export function AuthShell({ title, subtitle, onBack, children, footer, brand = t
   const insets = useSafeAreaInsets();
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: colors.bg }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <ScrollView
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+      <KeyboardAwareScrollView
         contentContainerStyle={{
           flexGrow: 1,
           paddingHorizontal: 24,
           paddingTop: insets.top + 16,
           paddingBottom: insets.bottom + 16,
         }}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
       >
         {onBack && (
           <Pressable
@@ -79,7 +79,7 @@ export function AuthShell({ title, subtitle, onBack, children, footer, brand = t
         <View className="mt-8">{children}</View>
 
         {footer && <View className="mt-auto pt-8">{footer}</View>}
-      </ScrollView>
-    </KeyboardAvoidingView>
+      </KeyboardAwareScrollView>
+    </View>
   );
 }

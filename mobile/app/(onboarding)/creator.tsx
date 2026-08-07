@@ -14,13 +14,18 @@ import { useEffect, useRef, useState } from 'react';
 import { Modal, Text, View } from 'react-native';
 import Reanimated, {
   Easing,
+  Extrapolation,
   FadeInDown,
+  interpolate,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
   withDelay,
+  withRepeat,
+  withSpring,
   withTiming,
   ZoomIn,
+  type SharedValue,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable } from '@/components/ui/SafePressable';
@@ -37,6 +42,9 @@ import {
   WelcomeDeck,
   optionVisual,
   useTileWidth,
+  useStoryPalette,
+  GROUND_DARK,
+  GROUND_LIGHT,
   type Grad,
 } from '@/components/onboarding';
 import { CITY_NAMES, REGIONS, COUNTRIES, locationForCity } from '@/lib/locations';
@@ -57,18 +65,24 @@ const REVEAL = TOTAL - 1;
 // redesign): a blue-biased near-black with the Meta-blue glow at the top, so the
 // whole flow reads as one system instead of shifting colour per step. The reveal
 // keeps a brighter blue to feel celebratory. Ken-Burns adds subtle ambient drift.
-const GROUND: Grad = ['#16233F', '#0B0C11'];
-const PANEL_BG: Grad[] = [
-  GROUND, // welcome
-  GROUND, // niche
-  GROUND, // content
-  GROUND, // ugc
-  GROUND, // location
-  GROUND, // socials
-  GROUND, // bio
-  GROUND, // portfolio
-  ['#0A3DC9', '#05122E'], // reveal — brighter blue for the finish
-];
+// Light mode gets the same structure, not an inversion: one calm ground for the
+// eight input steps and a brighter, more saturated one for the reveal, so the
+// "you finished something" beat still lands.
+function panelGrounds(isDark: boolean): Grad[] {
+  const ground: Grad = isDark ? GROUND_DARK : GROUND_LIGHT;
+  const reveal: Grad = isDark ? ['#0A3DC9', '#05122E'] : ['#DCE8FF', '#F6F9FF'];
+  return [
+    ground, // welcome
+    ground, // niche
+    ground, // content
+    ground, // ugc
+    ground, // location
+    ground, // socials
+    ground, // bio
+    ground, // portfolio
+    reveal, // reveal — brighter for the finish
+  ];
+}
 
 type CreatorForm = {
   bio: string;
@@ -173,6 +187,8 @@ function toggle<T>(list: T[], item: T): T[] {
 }
 
 export default function CreatorOnboardingScreen({ initialIndex = 0 }: { initialIndex?: number }) {
+  const pal = useStoryPalette();
+  const PANEL_BG = panelGrounds(pal.isDark);
   const user = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
 
@@ -495,19 +511,20 @@ export default function CreatorOnboardingScreen({ initialIndex = 0 }: { initialI
                     height: tileW * 1.2,
                     borderRadius: 16,
                     borderWidth: 1.5,
-                    borderColor: 'rgba(255,255,255,0.3)',
+                    borderColor: pal.hairlineStrong,
                     borderStyle: 'dashed',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    backgroundColor: 'rgba(255,255,255,0.07)',
+                    backgroundColor: pal.surface,
+                    ...pal.elevation(1),
                   }}
                 >
-                  <Icon name={uploading ? 'refresh' : 'plus'} size={26} color="#fff" />
-                  <Text style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.82)', marginTop: 6 }}>{uploading ? 'Uploading…' : 'Add photo'}</Text>
+                  <Icon name={uploading ? 'refresh' : 'plus'} size={26} color={pal.accent} />
+                  <Text style={{ fontSize: 12.5, fontWeight: '600', color: pal.ink(0.82), marginTop: 6 }}>{uploading ? 'Uploading…' : 'Add photo'}</Text>
                 </Pressable>
               ) : null}
             </View>
-            {error ? <Text style={{ fontSize: 13, color: '#FFB4B4', marginTop: 14 }}>{error}</Text> : null}
+            {error ? <Text style={{ fontSize: 13, color: pal.danger, marginTop: 14 }}>{error}</Text> : null}
           </StoryPanel>
         );
 
@@ -521,11 +538,11 @@ export default function CreatorOnboardingScreen({ initialIndex = 0 }: { initialI
             footer={
               <View style={{ gap: 8 }}>
                 <NextPill label="Go live" icon="sparkles" onPress={submit} loading={submitting} />
-                {error ? <Text style={{ fontSize: 13, color: '#FFB4B4', textAlign: 'center' }}>{error}</Text> : null}
+                {error ? <Text style={{ fontSize: 13, color: pal.danger, textAlign: 'center' }}>{error}</Text> : null}
               </View>
             }
           >
-            <RevealRecap form={form} firstName={firstName} />
+            <RevealCelebration form={form} firstName={firstName} />
           </StoryPanel>
         );
     }
@@ -551,13 +568,14 @@ function SocialCard({
   complete: boolean;
   children: React.ReactNode;
 }) {
+  const pal = useStoryPalette();
   return (
     <View
       style={{
         borderRadius: 18,
-        backgroundColor: complete ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.06)',
+        backgroundColor: pal.surface,
         borderWidth: 1,
-        borderColor: complete ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.13)',
+        borderColor: complete ? pal.accentBorder : pal.hairline,
         padding: 14,
         marginBottom: 12,
       }}
@@ -569,11 +587,11 @@ function SocialCard({
           end={{ x: 1, y: 1 }}
           style={{ width: 42, height: 42, borderRadius: 13, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 8, shadowOffset: { width: 0, height: 4 } }}
         >
-          <Icon name={icon} size={22} color="#fff" />
+          <Icon name={icon} size={22} color={pal.onTile} />
         </LinearGradient>
         <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 15, fontWeight: '800', color: '#fff', letterSpacing: -0.2 }}>{name}</Text>
-          <Text style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', marginTop: 1 }}>{sub}</Text>
+          <Text style={{ fontSize: 15, fontWeight: '800', color: pal.ink(), letterSpacing: -0.2 }}>{name}</Text>
+          <Text style={{ fontSize: 12, color: pal.ink(0.55), marginTop: 1 }}>{sub}</Text>
         </View>
         {complete ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999, backgroundColor: 'rgba(255,193,94,0.16)', borderWidth: 1, borderColor: 'rgba(255,193,94,0.42)' }}>
@@ -589,38 +607,33 @@ function SocialCard({
 
 /** Amber inline warning shown when a platform is started but its link isn't a valid URL. */
 function LinkHint({ show, platform }: { show: boolean; platform: string }) {
+  const pal = useStoryPalette();
   if (!show) return null;
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
-      <Icon name="alert" size={13} color="#FFD08A" strokeWidth={2.2} />
-      <Text style={{ fontSize: 12.5, color: '#FFD08A', flex: 1 }}>Add a valid profile link (e.g. {platform}).</Text>
+      <Icon name="alert" size={13} color={pal.warn} strokeWidth={2.2} />
+      <Text style={{ fontSize: 12.5, color: pal.warn, flex: 1 }}>Add a valid profile link (e.g. {platform}).</Text>
     </View>
   );
 }
 
-/** Ease a displayed integer up to `target` (cubic-out). */
-function useCountUp(target: number, duration = 900): number {
-  const [val, setVal] = useState(0);
+/**
+ * The reveal: a celebration, not a summary card.
+ *
+ * This used to render a mock profile card with a 4-up counter row. Two problems with
+ * that: a card is a *report*, which is the wrong register for the one moment in the
+ * flow that should feel like an achievement — and the counter row cheerfully showed
+ * "0 Photos" at exactly the moment we want the user to feel finished.
+ *
+ * The sequence is staged so it reads as one beat rather than several things arriving
+ * at once: rings pulse out → the avatar springs in → the badge stamps → the name and
+ * niches rise → the strength meter fills. Every stage collapses to its final state
+ * under reduce-motion, so the screen is never mid-animation for someone who opted out.
+ */
+function RevealCelebration({ form, firstName }: { form: CreatorForm; firstName: string }) {
+  const p = useStoryPalette();
   const reduced = useReducedMotion();
-  useEffect(() => {
-    if (reduced) {
-      setVal(target);
-      return;
-    }
-    let raf = 0;
-    const start = Date.now();
-    const tick = () => {
-      const p = Math.min(1, (Date.now() - start) / duration);
-      setVal(Math.round(target * (1 - Math.pow(1 - p, 3))));
-      if (p < 1) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [target, duration, reduced]);
-  return val;
-}
 
-function RevealRecap({ form, firstName }: { form: CreatorForm; firstName: string }) {
   const platforms = [
     form.social.igHandle.trim() && 'Instagram',
     form.social.ytHandle.trim() && 'YouTube',
@@ -629,91 +642,197 @@ function RevealRecap({ form, firstName }: { form: CreatorForm; firstName: string
   const loc = [form.location.city, form.location.state].filter(Boolean).join(', ');
   const initial = (firstName.trim()[0] ?? 'Y').toUpperCase();
 
-  // profile strength: share of the 5 meaningful sections completed
-  const sections = [form.niche.length > 0, platforms.length > 0, form.contentTypes.length > 0, Boolean(loc), form.portfolio.length > 0 || Boolean(form.bio.trim())];
+  // Profile strength: share of the 5 meaningful sections completed.
+  const sections = [
+    form.niche.length > 0,
+    platforms.length > 0,
+    form.contentTypes.length > 0,
+    Boolean(loc),
+    form.portfolio.length > 0 || Boolean(form.bio.trim()),
+  ];
   const strength = Math.round((sections.filter(Boolean).length / sections.length) * 100);
 
+  // ── stage 1: the avatar lands ──────────────────────────────────────────────
+  const pop = useSharedValue(reduced ? 1 : 0);
+  // ── stage 2: the badge stamps on, slightly after ───────────────────────────
+  const stamp = useSharedValue(reduced ? 1 : 0);
+  // ── ambient: rings breathing outward behind the avatar ─────────────────────
+  const ring = useSharedValue(0);
+  // ── stage 3: the meter fills ───────────────────────────────────────────────
   const bar = useSharedValue(0);
-  const reduced = useReducedMotion();
+
   useEffect(() => {
-    bar.value = reduced ? strength : withDelay(400, withTiming(strength, { duration: 1100, easing: Easing.out(Easing.cubic) }));
-  }, [bar, strength, reduced]);
+    if (reduced) {
+      bar.value = strength;
+      return;
+    }
+    pop.value = withSpring(1, { damping: 11, stiffness: 190, mass: 0.7 });
+    stamp.value = withDelay(430, withSpring(1, { damping: 9, stiffness: 260, mass: 0.5 }));
+    bar.value = withDelay(620, withTiming(strength, { duration: 1000, easing: Easing.out(Easing.cubic) }));
+    // One slow, continuous pulse. Deliberately not a burst: a burst plays once and is
+    // gone, while a breathing ring keeps the screen alive for however long the user
+    // sits here before tapping Go live.
+    ring.value = withRepeat(withTiming(1, { duration: 2600, easing: Easing.out(Easing.quad) }), -1, false);
+  }, [reduced, pop, stamp, bar, ring, strength]);
+
+  const avatarStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(pop.value, [0, 0.4], [0, 1], Extrapolation.CLAMP),
+    transform: [{ scale: interpolate(pop.value, [0, 1], [0.55, 1], Extrapolation.CLAMP) }],
+  }));
+  const stampStyle = useAnimatedStyle(() => ({
+    opacity: stamp.value,
+    transform: [{ scale: interpolate(stamp.value, [0, 1], [0.3, 1], Extrapolation.CLAMP) }],
+  }));
   const barStyle = useAnimatedStyle(() => ({ width: `${bar.value}%` }));
 
   return (
-    <View style={{ flex: 1, justifyContent: 'center' }}>
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 }}>
+      {/* avatar + breathing rings */}
+      <View style={{ width: 150, height: 150, alignItems: 'center', justifyContent: 'center' }}>
+        {!reduced &&
+          [0, 0.34, 0.67].map((offset) => (
+            <PulseRing key={offset} progress={ring} offset={offset} color={p.accent} />
+          ))}
+
+        <Reanimated.View style={avatarStyle}>
+          <LinearGradient
+            colors={['#5AA0FF', '#1877F2']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{
+              width: 96,
+              height: 96,
+              borderRadius: 999,
+              alignItems: 'center',
+              justifyContent: 'center',
+              ...(p.isDark
+                ? { shadowColor: '#1877F2', shadowOpacity: 0.6, shadowRadius: 26, shadowOffset: { width: 0, height: 10 } }
+                : p.elevation(3)),
+            }}
+          >
+            <Text style={{ fontSize: 38, fontWeight: '800', color: p.onTile }}>{initial}</Text>
+          </LinearGradient>
+
+          <Reanimated.View
+            style={[
+              {
+                position: 'absolute',
+                bottom: 0,
+                right: 0,
+                width: 32,
+                height: 32,
+                borderRadius: 999,
+                backgroundColor: p.success,
+                borderWidth: 3.5,
+                borderColor: p.isDark ? '#0B0C11' : '#FFFFFF',
+                alignItems: 'center',
+                justifyContent: 'center',
+              },
+              stampStyle,
+            ]}
+          >
+            <Icon name="check" size={15} color="#fff" strokeWidth={3.6} />
+          </Reanimated.View>
+        </Reanimated.View>
+      </View>
+
+      {/* identity */}
       <Reanimated.View
-        entering={reduced ? undefined : FadeInDown.duration(520).springify().damping(16)}
-        style={{ borderRadius: 26, overflow: 'hidden', backgroundColor: '#FFFFFF', shadowColor: '#000', shadowOpacity: 0.4, shadowRadius: 30, shadowOffset: { width: 0, height: 18 } }}
+        entering={reduced ? undefined : FadeInDown.delay(260).duration(460).springify().damping(15)}
+        style={{ alignItems: 'center', marginTop: 26 }}
       >
-        <LinearGradient colors={['#0A3DC9', '#5B21B6', '#C026D3']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ height: 70 }} />
-        <View style={{ paddingHorizontal: 18, paddingBottom: 18 }}>
-          {/* avatar + verified badge */}
-          <View style={{ marginTop: -36, width: 72 }}>
-            <LinearGradient colors={['#FF7A45', '#D7263D']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 72, height: 72, borderRadius: 999, borderWidth: 4, borderColor: '#fff', alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ fontSize: 28, fontWeight: '800', color: '#fff' }}>{initial}</Text>
-            </LinearGradient>
-            <View style={{ position: 'absolute', bottom: -2, right: -2, width: 24, height: 24, borderRadius: 999, backgroundColor: '#1877F2', borderWidth: 3, borderColor: '#fff', alignItems: 'center', justifyContent: 'center' }}>
-              <Icon name="check" size={12} color="#fff" strokeWidth={3.5} />
-            </View>
+        <Text style={{ fontSize: 24, fontWeight: '900', color: p.ink(), letterSpacing: -0.6 }}>
+          {firstName || 'Your profile'}
+        </Text>
+        {loc ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 5 }}>
+            <Icon name="mappin" size={14} color={p.ink(0.55)} strokeWidth={2} />
+            <Text style={{ fontSize: 14, color: p.ink(0.55) }}>{loc}</Text>
           </View>
+        ) : null}
+      </Reanimated.View>
 
-          <Text style={{ fontSize: 20, fontWeight: '800', color: '#1C1E21', letterSpacing: -0.5, marginTop: 11 }}>{firstName || 'Your profile'}</Text>
-          {loc ? (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 }}>
-              <Icon name="mappin" size={14} color="#65676B" strokeWidth={2} />
-              <Text style={{ fontSize: 13, color: '#65676B' }}>{loc}</Text>
-            </View>
-          ) : null}
+      {/* niches */}
+      {form.niche.length > 0 ? (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 18, justifyContent: 'center' }}>
+          {form.niche.slice(0, 6).map((n, i) => (
+            <Reanimated.View
+              key={n}
+              entering={reduced ? undefined : ZoomIn.delay(520 + i * 90).springify().damping(13).stiffness(220)}
+              style={{
+                backgroundColor: p.accentSoft,
+                borderWidth: 1,
+                borderColor: p.accentBorder,
+                borderRadius: 999,
+                paddingHorizontal: 13,
+                paddingVertical: 6,
+              }}
+            >
+              <Text style={{ fontSize: 12.5, fontWeight: '700', color: p.accentText }}>{n}</Text>
+            </Reanimated.View>
+          ))}
+        </View>
+      ) : null}
 
-          {form.niche.length > 0 ? (
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 13 }}>
-              {form.niche.slice(0, 8).map((n, i) => (
-                <Reanimated.View
-                  key={n}
-                  entering={reduced ? undefined : ZoomIn.delay(500 + i * 110).springify().damping(13).stiffness(220)}
-                  style={{ backgroundColor: '#E7F0FF', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5 }}
-                >
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#1877F2' }}>{n}</Text>
-                </Reanimated.View>
-              ))}
-            </View>
-          ) : null}
-
-          <View style={{ flexDirection: 'row', marginTop: 16, paddingTop: 14, borderTopWidth: 1, borderTopColor: '#DADDE1' }}>
-            <RecapStat value={form.niche.length} label="Niches" />
-            <View style={{ width: 1, backgroundColor: '#DADDE1' }} />
-            <RecapStat value={platforms.length} label="Platforms" />
-            <View style={{ width: 1, backgroundColor: '#DADDE1' }} />
-            <RecapStat value={form.contentTypes.length} label="Formats" />
-            <View style={{ width: 1, backgroundColor: '#DADDE1' }} />
-            <RecapStat value={form.portfolio.length} label="Photos" />
-          </View>
-
-          <View style={{ marginTop: 14 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
-              <Text style={{ fontSize: 11.5, fontWeight: '700', color: '#65676B' }}>Profile strength</Text>
-              <Text style={{ fontSize: 11.5, fontWeight: '700', color: '#65676B' }}>{strength}%</Text>
-            </View>
-            <View style={{ height: 7, borderRadius: 999, backgroundColor: '#EBEDF0', overflow: 'hidden' }}>
-              <Reanimated.View style={[{ height: '100%', borderRadius: 999 }, barStyle]}>
-                <LinearGradient colors={['#16C79A', '#1877F2']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ flex: 1 }} />
-              </Reanimated.View>
-            </View>
-          </View>
+      {/* strength meter */}
+      <Reanimated.View
+        entering={reduced ? undefined : FadeInDown.delay(560).duration(460)}
+        style={{ width: '100%', maxWidth: 300, marginTop: 26 }}
+      >
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+          <Text style={{ fontSize: 12, fontWeight: '700', color: p.ink(0.6), letterSpacing: 0.3 }}>
+            PROFILE STRENGTH
+          </Text>
+          <Text style={{ fontSize: 12, fontWeight: '800', color: p.accentText }}>{strength}%</Text>
+        </View>
+        <View style={{ height: 8, borderRadius: 999, backgroundColor: p.isDark ? p.glass(0.12) : '#D9E3F5', overflow: 'hidden' }}>
+          <Reanimated.View style={[{ height: '100%', borderRadius: 999 }, barStyle]}>
+            <LinearGradient
+              colors={['#5AA0FF', '#1877F2']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={{ flex: 1, borderRadius: 999 }}
+            />
+          </Reanimated.View>
         </View>
       </Reanimated.View>
     </View>
   );
 }
 
-function RecapStat({ value, label }: { value: number; label: string }) {
-  const shown = useCountUp(value);
+/**
+ * One ring of the breathing pulse. A component rather than a `useAnimatedStyle`
+ * helper called in a loop — hooks must not be called from a plain function, and
+ * silencing that lint rule would just hide the next person's mistake.
+ *
+ * `offset` phase-shifts each ring around the shared 0→1 clock so the three expand
+ * in sequence from a single driver, rather than three timers drifting apart.
+ */
+function PulseRing({
+  progress,
+  offset,
+  color,
+}: {
+  progress: SharedValue<number>;
+  offset: number;
+  color: string;
+}) {
+  const style = useAnimatedStyle(() => {
+    const t = (progress.value + offset) % 1;
+    return {
+      opacity: interpolate(t, [0, 0.15, 1], [0, 0.32, 0], Extrapolation.CLAMP),
+      transform: [{ scale: interpolate(t, [0, 1], [0.85, 1.85], Extrapolation.CLAMP) }],
+    };
+  });
+
   return (
-    <View style={{ flex: 1, alignItems: 'center' }}>
-      <Text style={{ fontFamily: 'monospace', fontSize: 19, fontWeight: '800', color: '#1C1E21', letterSpacing: -0.5 }}>{shown}</Text>
-      <Text style={{ fontSize: 10.5, color: '#8A8D91', marginTop: 2 }}>{label}</Text>
-    </View>
+    <Reanimated.View
+      pointerEvents="none"
+      style={[
+        { position: 'absolute', width: 118, height: 118, borderRadius: 999, borderWidth: 1.5, borderColor: color },
+        style,
+      ]}
+    />
   );
 }
 

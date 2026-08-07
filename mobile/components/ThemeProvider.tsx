@@ -9,6 +9,7 @@
  * value must be computed in JS (e.g. a gradient pair or a shadow object).
  */
 import { createContext, useContext, useEffect, useMemo, type ReactNode } from 'react';
+import { useColorScheme as useRNColorScheme } from 'react-native';
 import { useColorScheme as useNativeWindColorScheme } from 'nativewind';
 import { LIGHT, DARK, SHADOWS, RADII, type ThemeColors, type ThemeName } from '@/constants/theme';
 import { useThemeStore } from '@/store/themeStore';
@@ -47,16 +48,25 @@ export const DARK_THEME = darkTheme;
 export const ThemeContext = createContext<Theme>(lightTheme);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  // NativeWind tracks the active scheme and drives `dark:` variants; the user's
-  // saved preference (system/light/dark) forces it via setColorScheme.
-  const { colorScheme, setColorScheme } = useNativeWindColorScheme();
+  // The runtime palette resolves from RN's own `useColorScheme()` rather than
+  // NativeWind's. RN reads the OS directly and updates live, which makes it the
+  // right source of truth for a value the whole app renders from; NativeWind's
+  // `setColorScheme` is still called below because it drives `dark:` utility
+  // variants, it just no longer decides what `useTheme()` returns. Keeping the two
+  // concerns separate also means a NativeWind interop regression (this codebase
+  // already carries two — see `SafePressable` and `SafeTextInput`) can't silently
+  // take the entire palette with it.
+  const { setColorScheme } = useNativeWindColorScheme();
+  const systemScheme = useRNColorScheme();
   const mode = useThemeStore((s) => s.mode);
 
   useEffect(() => {
     setColorScheme(mode); // 'system' | 'light' | 'dark' — all accepted by NativeWind
   }, [mode, setColorScheme]);
 
-  const isDark = colorScheme === 'dark';
+  // An explicit light/dark preference wins; 'system' follows the OS (defaulting to
+  // light when the OS reports nothing, which RN does briefly during startup).
+  const isDark = mode === 'system' ? systemScheme === 'dark' : mode === 'dark';
 
   const theme = useMemo<Theme>(
     () => ({

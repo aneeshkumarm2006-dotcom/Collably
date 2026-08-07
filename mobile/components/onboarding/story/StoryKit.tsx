@@ -29,6 +29,7 @@ import Reanimated, {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable } from '@/components/ui/SafePressable';
 import { Icon, type IconName } from '@/components/ui';
+import { useStoryPalette, STORY_BLUE, STORY_GREEN } from './storyTheme';
 
 export type Grad = readonly [string, string];
 
@@ -70,6 +71,7 @@ export const optionVisual = (label: string): TileVisual =>
 
 // ── story progress bar (segments over the photo; current one glows) ──────────
 export function StoryProgress({ current, total }: { current: number; total: number }) {
+  const p = useStoryPalette();
   return (
     <View style={{ flexDirection: 'row', gap: 5 }}>
       {Array.from({ length: total }).map((_, i) => {
@@ -83,7 +85,7 @@ export function StoryProgress({ current, total }: { current: number; total: numb
               height: 4,
               borderRadius: 2,
               overflow: 'hidden',
-              backgroundColor: done ? 'transparent' : 'rgba(255,255,255,0.16)',
+              backgroundColor: done ? 'transparent' : p.isDark ? p.glass(0.16) : '#D9E3F5',
               // The active segment gets a soft blue glow so "where am I" reads
               // instantly without counting filled bars.
               ...(isCurrent
@@ -103,6 +105,7 @@ export function StoryProgress({ current, total }: { current: number; total: numb
 
 // ── circular translucent back ────────────────────────────────────────────────
 export function StoryBackButton({ onPress }: { onPress: () => void }) {
+  const p = useStoryPalette();
   return (
     <Pressable
       onPress={onPress}
@@ -114,24 +117,26 @@ export function StoryBackButton({ onPress }: { onPress: () => void }) {
         borderRadius: 999,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: 'rgba(255,255,255,0.16)',
+        backgroundColor: p.surface,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.22)',
+        borderColor: p.hairline,
         opacity: pressed ? 0.6 : 1,
+        ...p.elevation(1),
       })}
     >
-      <Icon name="chevL" size={19} color="#fff" />
+      <Icon name="chevL" size={19} color={p.ink()} />
     </Pressable>
   );
 }
 
-// ── big headline + subtitle (light on dark) ──────────────────────────────────
+// ── big headline + subtitle, on whichever ground the theme gives us ──────────
 export function StoryHeadline({ title, subtitle }: { title: string; subtitle?: string }) {
+  const p = useStoryPalette();
   return (
     <View>
-      <Text style={{ fontSize: 30, fontWeight: '900', color: '#fff', letterSpacing: -0.8, lineHeight: 35 }}>{title}</Text>
+      <Text style={{ fontSize: 30, fontWeight: '900', color: p.ink(), letterSpacing: -0.8, lineHeight: 35 }}>{title}</Text>
       {subtitle ? (
-        <Text style={{ fontSize: 15, color: 'rgba(255,255,255,0.78)', marginTop: 8, lineHeight: 21 }}>{subtitle}</Text>
+        <Text style={{ fontSize: 15, color: p.ink(0.78), marginTop: 8, lineHeight: 21 }}>{subtitle}</Text>
       ) : null}
     </View>
   );
@@ -156,10 +161,13 @@ export function ChoiceTile({
   width?: number | string;
   height?: number;
 }) {
+  const p = useStoryPalette();
   const reduced = useReducedMotion();
   const press = useSharedValue(0);
   const pop = useSharedValue(1);
   const sel = useSharedValue(selected ? 1 : 0);
+  // Captured for the worklet below — see `rgb` in storyTheme.
+  const rgb = p.rgb;
 
   useEffect(() => {
     sel.value = withTiming(selected ? 1 : 0, { duration: 220, easing: Easing.out(Easing.cubic) });
@@ -176,7 +184,7 @@ export function ChoiceTile({
       { translateY: -4 * sel.value },
       { scale: (1 + 0.025 * sel.value) * (1 - press.value * 0.04) * pop.value },
     ],
-    borderColor: `rgba(255,255,255,${0.13 + sel.value * 0.79})`,
+    borderColor: `rgba(${rgb},${0.13 + sel.value * 0.79})`,
   }));
   const washStyle = useAnimatedStyle(() => ({ opacity: sel.value }));
   const checkStyle = useAnimatedStyle(() => ({ opacity: sel.value, transform: [{ scale: 0.4 + sel.value * 0.6 }] }));
@@ -196,7 +204,7 @@ export function ChoiceTile({
     >
       <Reanimated.View
         style={[
-          { height, borderRadius: 22, overflow: 'hidden', borderWidth: 1, backgroundColor: 'rgba(255,255,255,0.06)', padding: 14, justifyContent: 'space-between' },
+          { height, borderRadius: 22, overflow: 'hidden', borderWidth: 1, backgroundColor: p.surface, padding: 14, justifyContent: 'space-between', ...p.elevation(selected ? 2 : 1) },
           tileStyle,
         ]}
       >
@@ -212,12 +220,15 @@ export function ChoiceTile({
           end={{ x: 1, y: 1 }}
           style={{ width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 10, shadowOffset: { width: 0, height: 5 } }}
         >
-          <Icon name={icon} size={23} color="#fff" strokeWidth={2} />
+          {/* On the coloured medallion, so white in both themes. */}
+          <Icon name={icon} size={23} color={p.onTile} strokeWidth={2} />
         </LinearGradient>
 
-        <Text style={{ fontSize: 15, fontWeight: '700', color: '#fff', letterSpacing: -0.2 }}>{label}</Text>
+        {/* Unselected the label sits on the ground (theme ink); selected, the
+            gradient wash is behind it, so it goes white in both themes. */}
+        <Text style={{ fontSize: 15, fontWeight: '700', color: selected ? p.onTile : p.ink(), letterSpacing: -0.2 }}>{label}</Text>
 
-        {/* check badge */}
+        {/* check badge — only ever visible over the gradient wash */}
         <Reanimated.View
           pointerEvents="none"
           style={[{ position: 'absolute', top: 11, right: 11, width: 25, height: 25, borderRadius: 999, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' }, checkStyle]}
@@ -245,6 +256,10 @@ export function SelectChip({
   selected: boolean;
   onPress: () => void;
 }) {
+  const p = useStoryPalette();
+  // Selected fills with a translucent brand blue, so its ink is the accent in both
+  // themes; unselected sits on the ground and follows the theme.
+  const selectedInk = p.isDark ? '#FFFFFF' : '#0B4FB0';
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityState={{ selected }}>
       <View
@@ -256,15 +271,16 @@ export function SelectChip({
           paddingHorizontal: 14,
           borderRadius: 14,
           borderWidth: 1.5,
-          borderColor: selected ? 'rgba(90,160,255,0.7)' : 'rgba(255,255,255,0.12)',
-          backgroundColor: selected ? 'rgba(45,136,255,0.16)' : 'rgba(255,255,255,0.04)',
+          borderColor: selected ? p.accentBorder : p.hairline,
+          backgroundColor: selected ? p.accentSoft : p.surface,
+          ...(selected ? {} : p.elevation(1)),
         }}
       >
-        <Icon name={icon} size={16} color={selected ? '#fff' : 'rgba(255,255,255,0.5)'} strokeWidth={2} />
-        <Text style={{ fontSize: 14, fontWeight: selected ? '700' : '600', color: selected ? '#fff' : '#C9CED7', letterSpacing: -0.1 }}>
+        <Icon name={icon} size={16} color={selected ? selectedInk : p.ink(0.5)} strokeWidth={2} />
+        <Text style={{ fontSize: 14, fontWeight: selected ? '700' : '600', color: selected ? selectedInk : p.chipText, letterSpacing: -0.1 }}>
           {label}
         </Text>
-        {selected ? <Icon name="check" size={14} color="#5AA0FF" strokeWidth={3} /> : null}
+        {selected ? <Icon name="check" size={14} color={p.accentText} strokeWidth={3} /> : null}
       </View>
     </Pressable>
   );
@@ -286,19 +302,22 @@ export function NextPill({
   count?: number;
   icon?: IconName;
 }) {
+  const p = useStoryPalette();
   // Brand-blue gradient CTA with a soft glow (approved redesign) — one confident
-  // primary action per panel, in the Meta blue, on the cinematic dark ground.
+  // primary action per panel. The enabled pill paints ON the blue gradient, so its
+  // content stays white in both themes; only the DISABLED pill sits on the bare
+  // ground and therefore has to follow the theme.
   const content = (
     <>
       {typeof count === 'number' && count > 0 ? (
         <View style={{ minWidth: 24, height: 24, paddingHorizontal: 7, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={{ color: '#fff', fontSize: 12.5, fontWeight: '800' }}>{count}</Text>
+          <Text style={{ color: p.onTile, fontSize: 12.5, fontWeight: '800' }}>{count}</Text>
         </View>
       ) : null}
-      <Text style={{ fontSize: 16.5, fontWeight: '800', color: '#fff', letterSpacing: -0.2 }}>
+      <Text style={{ fontSize: 16.5, fontWeight: '800', color: p.onTile, letterSpacing: -0.2 }}>
         {loading ? 'Please wait…' : label}
       </Text>
-      {!loading && <Icon name={icon} size={18} color="#fff" strokeWidth={2.4} />}
+      {!loading && <Icon name={icon} size={18} color={p.onTile} strokeWidth={2.4} />}
     </>
   );
 
@@ -325,11 +344,13 @@ export function NextPill({
               gap: 8,
               height: 56,
               borderRadius: 18,
-              backgroundColor: 'rgba(255,255,255,0.08)',
+              backgroundColor: p.surfaceSunk,
+              borderWidth: 1,
+              borderColor: p.hairline,
             }}
           >
-            <Text style={{ fontSize: 16.5, fontWeight: '800', color: 'rgba(255,255,255,0.35)', letterSpacing: -0.2 }}>{label}</Text>
-            <Icon name={icon} size={18} color="rgba(255,255,255,0.35)" strokeWidth={2.4} />
+            <Text style={{ fontSize: 16.5, fontWeight: '800', color: p.ink(0.35), letterSpacing: -0.2 }}>{label}</Text>
+            <Icon name={icon} size={18} color={p.ink(0.35)} strokeWidth={2.4} />
           </View>
         ) : (
           <LinearGradient
@@ -350,9 +371,6 @@ export function NextPill({
 // A solid, premium field (not a flat translucent box): the surface deepens, the
 // border picks up the brand blue on focus, and a `valid` field shows an inline
 // green check so the user gets validation feedback right where they typed.
-const STORY_BLUE = '#2D88FF';
-const STORY_GREEN = '#45BD62';
-
 export function StoryInput({
   label,
   value,
@@ -375,13 +393,14 @@ export function StoryInput({
   /** When true, shows an inline green check (e.g. a validated profile URL). */
   valid?: boolean;
 }) {
+  const p = useStoryPalette();
   const [focused, setFocused] = useState(false);
-  const borderColor = focused ? STORY_BLUE : valid ? 'rgba(69,189,98,0.55)' : 'rgba(255,255,255,0.16)';
+  const borderColor = focused ? STORY_BLUE : valid ? 'rgba(69,189,98,0.55)' : p.hairline;
 
   return (
     <View style={{ marginBottom: 14 }}>
       {label ? (
-        <Text style={{ fontSize: 11.5, fontWeight: '700', color: 'rgba(255,255,255,0.6)', marginBottom: 7, letterSpacing: 0.5, textTransform: 'uppercase' }}>{label}</Text>
+        <Text style={{ fontSize: 11.5, fontWeight: '700', color: p.ink(0.6), marginBottom: 7, letterSpacing: 0.5, textTransform: 'uppercase' }}>{label}</Text>
       ) : null}
       <View style={{ position: 'relative', justifyContent: 'center' }}>
         <TextInput
@@ -390,13 +409,13 @@ export function StoryInput({
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           placeholder={placeholder}
-          placeholderTextColor="rgba(255,255,255,0.36)"
+          placeholderTextColor={p.ink(0.36)}
           keyboardType={keyboardType}
           autoCapitalize={autoCapitalize}
           maxLength={maxLength}
           multiline={multiline}
           style={{
-            backgroundColor: 'rgba(255,255,255,0.055)',
+            backgroundColor: p.surfaceSunk,
             borderWidth: 1.5,
             borderColor,
             borderRadius: 14,
@@ -406,7 +425,7 @@ export function StoryInput({
             minHeight: multiline ? 100 : undefined,
             textAlignVertical: multiline ? 'top' : 'center',
             fontSize: 16,
-            color: '#fff',
+            color: p.ink(),
             // Soft focus ring via shadow (Android falls back to the border color).
             ...(focused
               ? { shadowColor: STORY_BLUE, shadowOpacity: 0.35, shadowRadius: 8, shadowOffset: { width: 0, height: 0 } }
@@ -443,6 +462,7 @@ export function StoryAutocomplete({
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
   max?: number;
 }) {
+  const p = useStoryPalette();
   const [focused, setFocused] = useState(false);
   const q = value.trim().toLowerCase();
   const matches =
@@ -453,7 +473,7 @@ export function StoryAutocomplete({
   return (
     <View style={{ marginBottom: 14 }}>
       {label ? (
-        <Text style={{ fontSize: 12.5, fontWeight: '700', color: 'rgba(255,255,255,0.72)', marginBottom: 7, letterSpacing: 0.2 }}>{label}</Text>
+        <Text style={{ fontSize: 12.5, fontWeight: '700', color: p.ink(0.72), marginBottom: 7, letterSpacing: 0.2 }}>{label}</Text>
       ) : null}
       <TextInput
         value={value}
@@ -462,21 +482,23 @@ export function StoryAutocomplete({
         // Delay so a tap on a suggestion registers before the list hides.
         onBlur={() => setTimeout(() => setFocused(false), 160)}
         placeholder={placeholder}
-        placeholderTextColor="rgba(255,255,255,0.42)"
+        placeholderTextColor={p.ink(0.42)}
         autoCapitalize={autoCapitalize}
         style={{
-          backgroundColor: 'rgba(255,255,255,0.12)',
+          backgroundColor: p.surfaceSunk,
           borderWidth: 1,
-          borderColor: matches.length ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.2)',
+          borderColor: matches.length ? p.hairlineStrong : p.hairline,
           borderRadius: 14,
           paddingHorizontal: 14,
           paddingVertical: 13,
           fontSize: 16,
-          color: '#fff',
+          color: p.ink(),
         }}
       />
       {matches.length > 0 ? (
-        <View style={{ marginTop: 6, backgroundColor: 'rgba(14,16,26,0.97)', borderRadius: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,0.16)', overflow: 'hidden' }}>
+        // Opaque, not translucent: suggestion rows have to stay readable over
+        // whatever the panel behind them happens to be.
+        <View style={{ marginTop: 6, backgroundColor: p.popover, borderRadius: 14, borderWidth: 1, borderColor: p.hairline, overflow: 'hidden', ...p.elevation(2) }}>
           {matches.map((o, i) => (
             <Pressable
               key={o}
@@ -490,13 +512,13 @@ export function StoryAutocomplete({
                 gap: 9,
                 paddingHorizontal: 14,
                 paddingVertical: 12,
-                backgroundColor: pressed ? 'rgba(255,255,255,0.10)' : 'transparent',
+                backgroundColor: pressed ? p.glass(0.06) : 'transparent',
                 borderTopWidth: i ? 1 : 0,
-                borderTopColor: 'rgba(255,255,255,0.08)',
+                borderTopColor: p.hairline,
               })}
             >
-              <Icon name="mappin" size={14} color="rgba(255,255,255,0.6)" strokeWidth={2} />
-              <Text style={{ color: '#fff', fontSize: 15 }}>{o}</Text>
+              <Icon name="mappin" size={14} color={p.ink(0.6)} strokeWidth={2} />
+              <Text style={{ color: p.ink(), fontSize: 15 }}>{o}</Text>
             </Pressable>
           ))}
         </View>
@@ -507,9 +529,10 @@ export function StoryAutocomplete({
 
 // ── ghost "skip" text link ───────────────────────────────────────────────────
 export function SkipLink({ label = 'Skip for now', onPress }: { label?: string; onPress: () => void }) {
+  const p = useStoryPalette();
   return (
     <Pressable onPress={onPress} style={({ pressed }) => ({ alignSelf: 'center', paddingVertical: 10, opacity: pressed ? 0.5 : 1 })}>
-      <Text style={{ fontSize: 14, fontWeight: '600', color: 'rgba(255,255,255,0.72)' }}>{label}</Text>
+      <Text style={{ fontSize: 14, fontWeight: '600', color: p.ink(0.72) }}>{label}</Text>
     </Pressable>
   );
 }
@@ -562,9 +585,11 @@ export function useTileWidth(pad = 24, gap = 12, cols = 2): number {
 // Cohesive with the blue-black flow: a Meta-blue banner, a blue-lit avatar, and
 // an honest "verified creator" row (no fabricated reach/engagement numbers). The
 // card springs up + fades in once on mount, over a soft blue shadow-glow.
-const CARD_SURFACE = '#141830';
-
 function ProfilePreviewCard({ name }: { name: string }) {
+  const p = useStoryPalette();
+  // Everything inside this card sits on `cardSurface`, not on the page ground —
+  // but both flip with the theme, so the same ink helper reads correctly on either.
+  const CARD_SURFACE = p.cardSurface;
   const initial = (name.trim()[0] ?? 'Y').toUpperCase();
   return (
     <View
@@ -573,13 +598,15 @@ function ProfilePreviewCard({ name }: { name: string }) {
         overflow: 'hidden',
         backgroundColor: CARD_SURFACE,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.10)',
+        borderColor: p.hairline,
         // Blue shadow reads as a soft glow (iOS); grey elevation on Android.
-        shadowColor: '#1877F2',
-        shadowOpacity: 0.55,
-        shadowRadius: 34,
-        shadowOffset: { width: 0, height: 22 },
-        elevation: 18,
+        // Dark: a saturated blue glow, which reads as light emitted onto near-black.
+        // Light: that same glow on a pale canvas just looks like a blue stain, so the
+        // card gets a deep neutral-cool elevation instead — the hero card of the
+        // screen, so the strongest shadow in the system.
+        ...(p.isDark
+          ? { shadowColor: '#1877F2', shadowOpacity: 0.55, shadowRadius: 34, shadowOffset: { width: 0, height: 22 }, elevation: 18 }
+          : p.elevation(3)),
       }}
     >
       {/* Meta-blue banner with a diagonal sheen */}
@@ -599,42 +626,42 @@ function ProfilePreviewCard({ name }: { name: string }) {
           <View>
             <View style={{ width: 70, height: 70, borderRadius: 999, borderWidth: 3.5, borderColor: CARD_SURFACE }}>
               <LinearGradient colors={['#5AA0FF', '#1877F2']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1, borderRadius: 999, alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ fontSize: 27, fontWeight: '800', color: '#fff' }}>{initial}</Text>
+                <Text style={{ fontSize: 27, fontWeight: '800', color: p.onTile }}>{initial}</Text>
               </LinearGradient>
             </View>
             <View style={{ position: 'absolute', bottom: 0, right: 0, width: 23, height: 23, borderRadius: 999, backgroundColor: '#2D88FF', borderWidth: 2.5, borderColor: CARD_SURFACE, alignItems: 'center', justifyContent: 'center' }}>
-              <Icon name="check" size={11} color="#fff" strokeWidth={3.5} />
+              <Icon name="check" size={11} color={p.onTile} strokeWidth={3.5} />
             </View>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(45,136,255,0.16)', borderWidth: 1, borderColor: 'rgba(90,160,255,0.38)', borderRadius: 999, paddingHorizontal: 11, paddingVertical: 5, marginBottom: 4 }}>
             <View style={{ width: 6, height: 6, borderRadius: 999, backgroundColor: '#5AA0FF' }} />
-            <Text style={{ fontSize: 11, fontWeight: '700', color: '#9CC4FF' }}>Open to collabs</Text>
+            <Text style={{ fontSize: 11, fontWeight: '700', color: p.accentText }}>Open to collabs</Text>
           </View>
         </View>
 
-        <Text numberOfLines={1} style={{ fontSize: 20, fontWeight: '800', color: '#fff', letterSpacing: -0.4, marginTop: 12 }}>
+        <Text numberOfLines={1} style={{ fontSize: 20, fontWeight: '800', color: p.ink(), letterSpacing: -0.4, marginTop: 12 }}>
           {name || 'Your name'}
         </Text>
-        <Text style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.55)', marginTop: 2 }}>Creator profile</Text>
+        <Text style={{ fontSize: 12.5, color: p.ink(0.55), marginTop: 2 }}>Creator profile</Text>
 
         {/* niche chips */}
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 14 }}>
           {['Fashion', 'Beauty', 'Food'].map((c) => (
-            <View key={c} style={{ backgroundColor: 'rgba(255,255,255,0.07)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.10)', borderRadius: 999, paddingHorizontal: 11, paddingVertical: 5 }}>
-              <Text style={{ fontSize: 11.5, fontWeight: '700', color: 'rgba(255,255,255,0.85)' }}>{c}</Text>
+            <View key={c} style={{ backgroundColor: p.surfaceSunk, borderWidth: 1, borderColor: p.hairline, borderRadius: 999, paddingHorizontal: 11, paddingVertical: 5 }}>
+              <Text style={{ fontSize: 11.5, fontWeight: '700', color: p.ink(0.85) }}>{c}</Text>
             </View>
           ))}
         </View>
 
         {/* Honest trust row: the verified badge comes from the Instagram DM
             ownership check, not a self-reported follower/engagement number. */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 16, paddingTop: 14, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.08)' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 16, paddingTop: 14, borderTopWidth: 1, borderTopColor: p.hairline }}>
           <View style={{ width: 20, height: 20, borderRadius: 999, backgroundColor: '#2D88FF', alignItems: 'center', justifyContent: 'center' }}>
-            <Icon name="check" size={11} color="#fff" strokeWidth={3.5} />
+            <Icon name="check" size={11} color={p.onTile} strokeWidth={3.5} />
           </View>
-          <Text style={{ fontSize: 13, fontWeight: '700', color: '#fff' }}>Verified creator</Text>
+          <Text style={{ fontSize: 13, fontWeight: '700', color: p.ink() }}>Verified creator</Text>
           <View style={{ flex: 1 }} />
-          <Text style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.4)' }}>via Instagram</Text>
+          <Text style={{ fontSize: 11.5, color: p.ink(0.4) }}>via Instagram</Text>
         </View>
       </View>
     </View>
@@ -642,6 +669,8 @@ function ProfilePreviewCard({ name }: { name: string }) {
 }
 
 export function WelcomeDeck({ name }: { name: string }) {
+  // `pal`, not `p` — `p` is already the shared value driving the card's entrance.
+  const pal = useStoryPalette();
   const reduced = useReducedMotion();
   const { width } = useWindowDimensions();
   const cardW = Math.min(width - 56, 330);
@@ -660,9 +689,9 @@ export function WelcomeDeck({ name }: { name: string }) {
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
       {/* context caption: tells the user what this card represents */}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 20 }}>
-        <View style={{ height: 1, width: 20, backgroundColor: 'rgba(255,255,255,0.18)' }} />
-        <Text style={{ fontSize: 10.5, fontWeight: '800', letterSpacing: 1.6, color: 'rgba(255,255,255,0.5)' }}>THIS IS WHAT BRANDS SEE</Text>
-        <View style={{ height: 1, width: 20, backgroundColor: 'rgba(255,255,255,0.18)' }} />
+        <View style={{ height: 1, width: 20, backgroundColor: pal.hairlineStrong }} />
+        <Text style={{ fontSize: 10.5, fontWeight: '800', letterSpacing: 1.6, color: pal.ink(0.5) }}>THIS IS WHAT BRANDS SEE</Text>
+        <View style={{ height: 1, width: 20, backgroundColor: pal.hairlineStrong }} />
       </View>
 
       <Reanimated.View style={[{ width: cardW }, cardStyle]}>

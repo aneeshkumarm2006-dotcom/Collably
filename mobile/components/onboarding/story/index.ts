@@ -21,3 +21,10 @@ export {
   useTileWidth,
   type Grad,
 } from './StoryKit';
+export {
+  useStoryPalette,
+  GROUND_DARK,
+  GROUND_LIGHT,
+  STORY_BLUE,
+  STORY_GREEN,
+} from './storyTheme';

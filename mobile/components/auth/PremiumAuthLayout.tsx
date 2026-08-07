@@ -19,29 +19,49 @@
  * password?" link) legible too. Neither touches the forms' logic.
  */
 import { useCallback, useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
+import { Platform, Text, View } from 'react-native';
 import { Pressable } from '@/components/ui/SafePressable';
 import { LinearGradient } from 'expo-linear-gradient';
 import { setStatusBarStyle } from 'expo-status-bar';
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ThemeContext, DARK_THEME } from '@/components/ThemeProvider';
-import { Icon, DarkSurfaceProvider } from '@/components/ui';
+import { ThemeContext, DARK_THEME, useTheme } from '@/components/ThemeProvider';
+import { Icon, DarkSurfaceProvider, KeyboardAwareScrollView } from '@/components/ui';
 import { BrandMark } from '@/components/shared';
 import { SignupForm, type SignupRole } from './SignupForm';
 import { LoginForm } from './LoginForm';
 
-// ── blue-black cinematic palette (matches the story onboarding) ──────────────
-const GROUND = ['#16233F', '#0B0C11'] as const; // top → bottom dark ground
-const INK = '#FFFFFF';
-const INK_SOFT = 'rgba(255,255,255,0.78)';
-const INK_MUTED = 'rgba(255,255,255,0.6)';
-const ACCENT = '#5AA0FF'; // light blue link/text
-const CHIP_FILL = 'rgba(255,255,255,0.16)';
-const CHIP_BORDER = 'rgba(255,255,255,0.22)';
+// ── cinematic palette, matched to the story onboarding in BOTH themes ────────
+// Dark keeps the original blue-black ground. Light is a cool near-white with the
+// same blue bias, so the two flows still read as one system rather than as a
+// cinematic dark screen bolted onto a plain white form.
+const GROUND_DARK = ['#16233F', '#0B0C11'] as const;
+// Kept in step with the story onboarding's light ground so the two flows still read
+// as one system. Tinted rather than flat white — elevated chrome needs something to
+// lift off, and a pure-white ground makes the whole screen read as an unstyled form.
+const GROUND_LIGHT = ['#E7EFFE', '#FBFCFF'] as const;
 const ROLE_FILL = 'rgba(45,136,255,0.16)';
 const ROLE_BORDER = 'rgba(90,160,255,0.4)';
-const ROLE_TEXT = '#9CC4FF';
+
+/** Ink + chrome for the current theme. Mirrors `storyTheme`'s ink/glass split. */
+function authPalette(isDark: boolean) {
+  const rgb = isDark ? '255,255,255' : '11,21,36';
+  return {
+    ground: isDark ? GROUND_DARK : GROUND_LIGHT,
+    ink: `rgba(${rgb},1)`,
+    inkSoft: `rgba(${rgb},0.78)`,
+    inkMuted: `rgba(${rgb},0.6)`,
+    // Dark lifts with translucency; light lifts with a solid surface + shadow.
+    chipFill: isDark ? `rgba(${rgb},0.16)` : '#FFFFFF',
+    chipBorder: isDark ? `rgba(${rgb},0.22)` : '#E2E9F6',
+    chipElevation: isDark
+      ? {}
+      : { shadowColor: '#0F2B5B', shadowOpacity: 0.07, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
+    // The pale blue link reads on near-black but vanishes on near-white.
+    accent: isDark ? '#5AA0FF' : '#1B62C9',
+    roleText: isDark ? '#9CC4FF' : '#1B62C9',
+  };
+}
 
 export type PremiumAuthRole = SignupRole | null;
 export type PremiumAuthMode = 'signup' | 'signin';
@@ -70,6 +90,14 @@ function subtitleFor(mode: PremiumAuthMode, role: PremiumAuthRole): string {
 }
 
 export function PremiumAuthLayout({ initialMode, initialRole = null, onBack }: PremiumAuthLayoutProps) {
+  // Follow the system theme. This screen used to force DARK_THEME on its whole
+  // subtree; now the forced context and DarkSurfaceProvider are mounted only when
+  // the theme is actually dark, which lets the shared form parts (AuthInput,
+  // Button, the Google/Apple buttons) fall back to the light styling they already
+  // shipped with. No component needed new props.
+  const { isDark } = useTheme();
+  const pal = authPalette(isDark);
+  const GROUND = pal.ground;
   const insets = useSafeAreaInsets();
   const [mode, setMode] = useState<PremiumAuthMode>(initialMode);
   // A role picked in the inline picker overrides the (possibly late) param.
@@ -77,13 +105,13 @@ export function PremiumAuthLayout({ initialMode, initialRole = null, onBack }: P
   const role: PremiumAuthRole = pickedRole ?? initialRole;
   const android = Platform.OS === 'android';
 
-  // The dark cinematic ground needs LIGHT status-bar icons; restore the theme
-  // default (driven by the OS scheme) on exit.
+  // Status-bar icons must contrast with the ground we actually painted, so this
+  // follows the theme rather than always asking for light icons.
   useFocusEffect(
     useCallback(() => {
-      setStatusBarStyle('light', true);
+      setStatusBarStyle(isDark ? 'light' : 'dark', true);
       return () => setStatusBarStyle('auto', true);
-    }, []),
+    }, [isDark]),
   );
 
   // The role chip + role-aware headline only make sense while signing up.
@@ -98,14 +126,26 @@ export function PremiumAuthLayout({ initialMode, initialRole = null, onBack }: P
   });
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: GROUND[1] }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    // Keyboard handling lives in `KeyboardAwareScrollView`, NOT a KeyboardAvoidingView.
+    //
+    // This used to be `<KeyboardAvoidingView behavior="padding">` wrapping a ScrollView
+    // whose content had `flexGrow: 1`, and the two fought every frame: the KAV padded
+    // the bottom by the keyboard height → the scroll viewport shrank → `flexGrow: 1`
+    // re-measured the content to the new viewport → the size change made the KAV
+    // re-measure and re-pad → repeat. On iOS that never settles, so the whole form
+    // (and most visibly the focused field's blue ring) strobed while you typed.
+    //
+    // The scroll-into-view behaviour is not lost — it's better. The KAV only ever added
+    // padding; it never scrolled the focused field anywhere. `automaticallyAdjustKeyboardInsets`
+    // insets the content AND has UIKit bring the first responder into view, and because
+    // it moves the *content inset* rather than the view's frame, `flexGrow: 1` never
+    // re-measures. No loop, and the user still never scrolls by hand.
+    <View style={{ flex: 1, backgroundColor: GROUND[1] }}>
       {/* ── Blue-black cinematic ground (static gradient behind everything) ── */}
       <LinearGradient colors={GROUND} start={{ x: 0.2, y: 0 }} end={{ x: 0.5, y: 1 }} style={{ flex: 1 }}>
-        <ScrollView
+        <KeyboardAwareScrollView
           style={{ flex: 1 }}
           contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom + 28 }}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
         >
           {/* ── Header: back + role chip, brand lockup, role-aware headline ── */}
           <View style={{ paddingTop: insets.top + 14, paddingHorizontal: 24 }}>
@@ -120,13 +160,14 @@ export function PremiumAuthLayout({ initialMode, initialRole = null, onBack }: P
                   borderRadius: 999,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  backgroundColor: CHIP_FILL,
+                  backgroundColor: pal.chipFill,
                   borderWidth: 1,
-                  borderColor: CHIP_BORDER,
+                  borderColor: pal.chipBorder,
                   opacity: pressed ? 0.6 : 1,
+                  ...pal.chipElevation,
                 })}
               >
-                <Icon name={android ? 'arrowL' : 'chevL'} size={android ? 20 : 19} color={INK} strokeWidth={2.2} />
+                <Icon name={android ? 'arrowL' : 'chevL'} size={android ? 20 : 19} color={pal.ink} strokeWidth={2.2} />
               </Pressable>
 
               {showRole ? (
@@ -143,22 +184,22 @@ export function PremiumAuthLayout({ initialMode, initialRole = null, onBack }: P
                     paddingVertical: 7,
                   }}
                 >
-                  <Icon name={role === 'creator' ? 'person' : 'store'} size={14} color={ROLE_TEXT} strokeWidth={2.2} />
-                  <Text style={{ fontSize: 12.5, fontWeight: '800', color: ROLE_TEXT }}>{role === 'creator' ? 'Creator' : 'Business'}</Text>
+                  <Icon name={role === 'creator' ? 'person' : 'store'} size={14} color={pal.roleText} strokeWidth={2.2} />
+                  <Text style={{ fontSize: 12.5, fontWeight: '800', color: pal.roleText }}>{role === 'creator' ? 'Creator' : 'Business'}</Text>
                 </View>
               ) : null}
             </View>
 
             {/* brand lockup — the connector mark in white ink on the dark ground */}
             <View style={{ marginTop: 26 }}>
-              <BrandMark size={40} wordmark color={INK} wordmarkColor={INK} bg={GROUND[0]} />
+              <BrandMark size={40} wordmark color={pal.ink} wordmarkColor={pal.ink} bg={GROUND[0]} />
             </View>
 
             {/* headline + subtitle */}
-            <Text style={{ fontSize: 27, fontWeight: '900', color: INK, letterSpacing: -0.8, lineHeight: 32, marginTop: 20 }}>
+            <Text style={{ fontSize: 27, fontWeight: '900', color: pal.ink, letterSpacing: -0.8, lineHeight: 32, marginTop: 20 }}>
               {headlineFor(mode, role)}
             </Text>
-            <Text style={{ fontSize: 15, color: INK_SOFT, marginTop: 9, lineHeight: 21 }}>
+            <Text style={{ fontSize: 15, color: pal.inkSoft, marginTop: 9, lineHeight: 21 }}>
               {subtitleFor(mode, role)}
             </Text>
           </View>
@@ -167,8 +208,7 @@ export function PremiumAuthLayout({ initialMode, initialRole = null, onBack }: P
               Both providers keep the shared form building blocks legible on dark:
               DarkSurface → translucent "glass" styling; forced DARK theme → any
               inline theme-driven text/links. Neither changes the forms' logic. */}
-          <ThemeContext.Provider value={DARK_THEME}>
-            <DarkSurfaceProvider>
+          <ThemedFormSurface isDark={isDark}>
               <View style={{ paddingHorizontal: 24, paddingTop: 26 }}>
                 {/* One form at a time. Sign in is the default; sign up isn't shown until
                     the user taps the switch link below — so a returning user sees only
@@ -181,20 +221,36 @@ export function PremiumAuthLayout({ initialMode, initialRole = null, onBack }: P
 
                 {/* Bottom switch: "New to Local Creator Crew? Sign up" ⇄ "Already have an account? Sign in" */}
                 <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6, marginTop: 22 }}>
-                  <Text style={{ fontSize: 14, color: INK_MUTED }}>
+                  <Text style={{ fontSize: 14, color: pal.inkMuted }}>
                     {mode === 'signin' ? 'New to Local Creator Crew?' : 'Already have an account?'}
                   </Text>
                   <Pressable onPress={() => setMode(mode === 'signin' ? 'signup' : 'signin')} hitSlop={10}>
-                    <Text style={{ fontSize: 14, fontWeight: '800', color: ACCENT }}>
+                    <Text style={{ fontSize: 14, fontWeight: '800', color: pal.accent }}>
                       {mode === 'signin' ? 'Sign up' : 'Sign in'}
                     </Text>
                   </Pressable>
                 </View>
               </View>
-            </DarkSurfaceProvider>
-          </ThemeContext.Provider>
-        </ScrollView>
+          </ThemedFormSurface>
+        </KeyboardAwareScrollView>
       </LinearGradient>
-    </KeyboardAvoidingView>
+    </View>
+  );
+}
+
+/**
+ * Wraps the form in the dark-surface treatment ONLY when the theme is dark.
+ *
+ * `AuthInput`, `Button` and the social buttons all already branch on
+ * `useOnDarkSurface()`; mounting the provider unconditionally is what pinned them
+ * to the light-on-dark glass styling. In light mode we mount nothing and they use
+ * the styling they were originally written with.
+ */
+function ThemedFormSurface({ isDark, children }: { isDark: boolean; children: React.ReactNode }) {
+  if (!isDark) return <>{children}</>;
+  return (
+    <ThemeContext.Provider value={DARK_THEME}>
+      <DarkSurfaceProvider>{children}</DarkSurfaceProvider>
+    </ThemeContext.Provider>
   );
 }

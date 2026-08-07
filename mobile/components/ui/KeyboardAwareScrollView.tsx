@@ -9,12 +9,16 @@
  *
  * How it fixes it, using only built-ins:
  *  - iOS: `automaticallyAdjustKeyboardInsets` makes the ScrollView pad its content
- *    inset by the keyboard height AND scroll the focused input into view. No
- *    `KeyboardAvoidingView` needed (and no double-padding when one is present, since
- *    the inset is computed from the keyboard/scroll-frame overlap).
- *  - Android: the OS pans the window so the focused input sits above the keyboard —
- *    driven by `android.softwareKeyboardLayoutMode: "pan"` in app.json. This prop is
+ *    inset by the keyboard height AND scroll the focused input into view.
+ *  - Android: the OS resizes the window to the space above the keyboard — driven by
+ *    `android.softwareKeyboardLayoutMode: "resize"` in app.json — and the ScrollView
+ *    brings the focused field into view inside that smaller viewport. This prop is
  *    ignored on Android, so the two mechanisms never fight.
+ *
+ * Never wrap this in a `KeyboardAvoidingView`. A KAV changes the scroll view's FRAME
+ * while this changes its CONTENT INSET; with a `flexGrow: 1` content container the two
+ * re-measure each other every frame and the screen strobes (that was the auth-screen
+ * "blinking input" bug). Frame stays put, inset moves — that's the whole trick.
  *
  * `keyboardShouldPersistTaps="handled"` is on by default so taps on autocomplete
  * results, chips, and buttons still register while the keyboard is open. All
