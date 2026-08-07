@@ -1,23 +1,20 @@
 /**
  * Creator bottom tabs (PRD §4.1, §7.3): Home · Explore · Collabs · Chats · Profile.
- * Tab styling/colors come from the runtime theme so light/dark stay in sync; tab
- * glyphs use the app's `Icon` set. Phase 12 builds each tab's content.
+ * Tab styling/colors come from the runtime theme so light/dark stay in sync; the
+ * glyphs come from `components/nav/TabIcon` (Phosphor, filled when selected).
+ * Phase 12 builds each tab's content.
  */
 import { Tabs } from 'expo-router';
-import type { ColorValue } from 'react-native';
+import { ChatCircle, Compass, Handshake, House, User } from 'phosphor-react-native';
 import { useTheme } from '@/components/ThemeProvider';
-import { Icon, type IconName } from '@/components/ui';
+import { useTabBarStyle } from '@/components/nav/useTabBarStyle';
+import { tabIcon } from '@/components/nav/TabIcon';
 import { useChatStore } from '@/store/chatStore';
 
 export default function CreatorTabsLayout() {
   const { colors } = useTheme();
+  const tabBarStyle = useTabBarStyle();
   const unread = useChatStore((s) => s.totalUnread);
-
-  const icon =
-    (name: IconName) =>
-    ({ color, size }: { color: ColorValue; size: number }) => (
-      <Icon name={name} color={color as string} size={size} />
-    );
 
   return (
     <Tabs
@@ -25,21 +22,21 @@ export default function CreatorTabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: colors.text3,
-        tabBarStyle: { backgroundColor: colors.tabBar, borderTopColor: colors.hair },
+        tabBarStyle,
       }}
     >
-      <Tabs.Screen name="home" options={{ title: 'Home', tabBarIcon: icon('home') }} />
-      <Tabs.Screen name="explore" options={{ title: 'Explore', tabBarIcon: icon('compass') }} />
-      <Tabs.Screen name="collabs" options={{ title: 'Collabs', tabBarIcon: icon('handshake') }} />
+      <Tabs.Screen name="home" options={{ title: 'Home', tabBarIcon: tabIcon(House) }} />
+      <Tabs.Screen name="explore" options={{ title: 'Explore', tabBarIcon: tabIcon(Compass) }} />
+      <Tabs.Screen name="collabs" options={{ title: 'Collabs', tabBarIcon: tabIcon(Handshake) }} />
       <Tabs.Screen
         name="messages"
         options={{
           title: 'Chats',
-          tabBarIcon: icon('message'),
+          tabBarIcon: tabIcon(ChatCircle),
           tabBarBadge: unread > 0 ? (unread > 99 ? '99+' : unread) : undefined,
         }}
       />
-      <Tabs.Screen name="profile" options={{ title: 'Profile', tabBarIcon: icon('person') }} />
+      <Tabs.Screen name="profile" options={{ title: 'Profile', tabBarIcon: tabIcon(User) }} />
     </Tabs>
   );
 }

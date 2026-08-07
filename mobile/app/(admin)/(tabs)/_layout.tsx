@@ -5,10 +5,12 @@
 import { Tabs } from 'expo-router';
 import type { ColorValue } from 'react-native';
 import { useTheme } from '@/components/ThemeProvider';
+import { useTabBarStyle } from '@/components/nav/useTabBarStyle';
 import { Icon, type IconName } from '@/components/ui';
 
 export default function AdminTabsLayout() {
   const { colors } = useTheme();
+  const tabBarStyle = useTabBarStyle();
 
   const icon =
     (name: IconName) =>
@@ -22,7 +24,7 @@ export default function AdminTabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: colors.text3,
-        tabBarStyle: { backgroundColor: colors.tabBar, borderTopColor: colors.hair },
+        tabBarStyle,
       }}
     >
       <Tabs.Screen name="dashboard" options={{ title: 'Dashboard', tabBarIcon: icon('grid') }} />

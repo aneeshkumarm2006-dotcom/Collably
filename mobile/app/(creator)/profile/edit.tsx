@@ -1,8 +1,13 @@
 /**
  * Edit creator profile (PRD §7.3). A single-scroll form pre-populated from the
- * current profile — bio, niches, location, socials, content types, UGC toggle, and
- * the portfolio grid — saved via `PUT /api/profile/creator`. Mirrors the onboarding
- * field set so the look is identical; on save it returns to the profile tab.
+ * current profile — display name, bio, niches, location, socials, content types, UGC
+ * toggle, and the portfolio grid. Mirrors the onboarding field set so the look is
+ * identical; on save it returns to the profile tab.
+ *
+ * Two endpoints, because the data lives in two places: the display name is on the
+ * User (`PATCH /api/auth/me`) while everything else is on the CreatorProfile
+ * (`PUT /api/profile/creator`). Editing the name does NOT touch the email or the
+ * login — they're separate fields on the same document.
  */
 import { useState } from 'react';
 import { Text, View } from 'react-native';
@@ -13,14 +18,17 @@ import { PortfolioGrid } from '@/components/creator';
 import { Button, Field, TextField, TextArea, SwitchRow, TagChip, SkeletonCard, ErrorState, KeyboardAwareScrollView } from '@/components/ui';
 import { useTheme } from '@/components/ThemeProvider';
 import { NICHES, CONTENT_TYPES, type Niche, type ContentType } from '@/constants';
-import type { GeoLocation, PortfolioItem, CreatorProfile } from '@/types';
+import type { GeoLocation, PortfolioItem, CreatorProfile, PublicUser } from '@/types';
 import { api, isApiError } from '@/lib/api';
 import { useFetch } from '@/lib/useFetch';
-import { pickAndUploadImage, ImagePermissionError } from '@/lib/imageUpload';
+import { useAuthStore } from '@/store/authStore';
+import { pickAndUploadImage, pickAndUploadImages, ImagePermissionError } from '@/lib/imageUpload';
 
 const MAX_PORTFOLIO = 6;
 
 type Form = {
+  /** Display name — lives on the User, not the CreatorProfile. */
+  name: string;
   bio: string;
   niche: Niche[];
   location: GeoLocation;
@@ -37,9 +45,10 @@ type Form = {
   portfolio: PortfolioItem[];
 };
 
-function fromProfile(p: CreatorProfile): Form {
+function fromProfile(p: CreatorProfile, name: string): Form {
   const s = p.socialHandles;
   return {
+    name,
     bio: p.bio ?? '',
     niche: [...p.niche],
     location: { ...p.location },
@@ -105,6 +114,7 @@ function toggle<T>(list: T[], item: T): T[] {
 export default function EditCreatorProfileScreen() {
   const { colors } = useTheme();
   const router = useRouter();
+  const user = useAuthStore((s) => s.user);
 
   const { data: profile, loading, error, reload } = useFetch(async () => {
     const { data } = await api.get<{ profile: CreatorProfile }>('/profile/creator');
@@ -130,39 +140,82 @@ export default function EditCreatorProfileScreen() {
     );
   }
 
-  return <EditForm initial={fromProfile(profile)} />;
+  return <EditForm initial={fromProfile(profile, user?.name ?? '')} />;
 }
 
 function EditForm({ initial }: { initial: Form }) {
   const { colors } = useTheme();
   const router = useRouter();
+  const setUser = useAuthStore((s) => s.setUser);
   const [form, setForm] = useState<Form>(initial);
   const [formError, setFormError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadNote, setUploadNote] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const patch = (p: Partial<Form>) => setForm((f) => ({ ...f, ...p }));
   const setLoc = (p: Partial<GeoLocation>) => patch({ location: { ...form.location, ...p } });
   const setSocial = (p: Partial<Form['social']>) => patch({ social: { ...form.social, ...p } });
 
-  const addImage = async () => {
-    if (form.portfolio.length >= MAX_PORTFOLIO) return;
+  const remaining = MAX_PORTFOLIO - form.portfolio.length;
+
+  const handleUploadError = (err: unknown) => {
+    if (err instanceof ImagePermissionError) setFormError(err.message);
+    else if (isApiError(err)) setFormError(err.message);
+    else setFormError('Could not upload those images. Please try again.');
+  };
+
+  /**
+   * Bulk add: pick up to the remaining slots in ONE trip through the OS picker.
+   * No crop editor here — expo-image-picker can't offer multi-select and cropping
+   * at once — so `cropImage` below covers the case where a shot needs reframing.
+   */
+  const addImages = async () => {
+    if (remaining <= 0) return;
+    setFormError(null);
+    setUploading(true);
+    try {
+      const urls = await pickAndUploadImages('portfolio', {
+        selectionLimit: remaining,
+        onProgress: (done, total) =>
+          setUploadNote(total > 1 ? `Uploading ${done} of ${total}…` : null),
+      });
+      if (urls.length) {
+        patch({ portfolio: [...form.portfolio, ...urls.map((imageUrl) => ({ imageUrl }))] });
+      }
+    } catch (err) {
+      handleUploadError(err);
+    } finally {
+      setUploading(false);
+      setUploadNote(null);
+    }
+  };
+
+  /** Re-pick ONE image with the crop editor, replacing the one at `index`. */
+  const cropImage = async (index: number) => {
     setFormError(null);
     setUploading(true);
     try {
       // Free-form crop so portrait portfolio shots keep their full frame.
       const url = await pickAndUploadImage('portfolio');
-      if (url) patch({ portfolio: [...form.portfolio, { imageUrl: url }] });
+      if (url) {
+        const next = form.portfolio.slice();
+        next[index] = { imageUrl: url };
+        patch({ portfolio: next });
+      }
     } catch (err) {
-      if (err instanceof ImagePermissionError) setFormError(err.message);
-      else if (isApiError(err)) setFormError(err.message);
-      else setFormError('Could not upload that image. Please try again.');
+      handleUploadError(err);
     } finally {
       setUploading(false);
     }
   };
 
   const save = async () => {
+    const name = form.name.trim();
+    if (!name) {
+      setFormError('Your display name cannot be empty.');
+      return;
+    }
     if (form.niche.length < 1) {
       setFormError('Pick at least one niche.');
       return;
@@ -174,6 +227,12 @@ function EditForm({ initial }: { initial: Form }) {
     setFormError(null);
     setSaving(true);
     try {
+      // Name lives on the User, the rest on the CreatorProfile. Only PATCH the name
+      // when it actually changed, so a normal profile save stays one request.
+      if (name !== initial.name) {
+        const { data } = await api.patch<{ user: PublicUser }>('/auth/me', { name });
+        setUser(data.user); // keep the cached session name in sync everywhere
+      }
       await api.put('/profile/creator', toPayload(form));
       router.back();
     } catch (err) {
@@ -187,6 +246,16 @@ function EditForm({ initial }: { initial: Form }) {
       <Header title="Edit profile" onBack={() => router.back()} variant="card" />
       <KeyboardAwareScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
         {formError && <FormBanner message={formError} />}
+
+        <Field label="Display name" hint="The name brands see. Changing it does not affect your email or how you sign in.">
+          <TextField
+            value={form.name}
+            onChangeText={(name) => patch({ name })}
+            placeholder="Your name"
+            autoCapitalize="words"
+            maxLength={80}
+          />
+        </Field>
 
         <Field label="Bio" hint="A short intro brands will read on your profile.">
           <TextArea value={form.bio} onChangeText={(bio) => patch({ bio })} placeholder="Tell brands about yourself…" maxLength={2000} />
@@ -260,10 +329,20 @@ function EditForm({ initial }: { initial: Form }) {
         <PortfolioGrid
           items={form.portfolio}
           editable
-          onAdd={addImage}
+          onAdd={addImages}
+          onPressItem={(_item, i) => void cropImage(i)}
           onRemove={(i) => patch({ portfolio: form.portfolio.filter((_, idx) => idx !== i) })}
         />
-        {uploading && <Text style={{ fontSize: 13, color: colors.text3, marginTop: 12, textAlign: 'center' }}>Uploading…</Text>}
+        <Text style={{ fontSize: 12.5, color: colors.text3, marginTop: 8 }}>
+          {remaining > 0
+            ? `Add up to ${remaining} more at once. Tap a photo to recrop it.`
+            : 'Tap a photo to recrop it.'}
+        </Text>
+        {uploading && (
+          <Text style={{ fontSize: 13, color: colors.text3, marginTop: 12, textAlign: 'center' }}>
+            {uploadNote ?? 'Uploading…'}
+          </Text>
+        )}
 
         <View style={{ marginTop: 24 }}>
           <Button block loading={saving} disabled={uploading} onPress={save}>

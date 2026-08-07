@@ -112,3 +112,65 @@ export async function pickAndUploadImage(
 
   return uploadImage({ uri: compressedUri, mimeType: 'image/jpeg' }, folder);
 }
+
+/**
+ * Pick SEVERAL images at once and upload them all. Returns the hosted URLs in the
+ * order they were picked; an empty array if the user cancelled.
+ *
+ * Why this is separate from `pickAndUploadImage`: expo-image-picker cannot do
+ * `allowsMultipleSelection` and `allowsEditing` together — the OS picker has no
+ * "crop each of these" mode. So the trade is deliberate and explicit: this function
+ * skips the crop editor to let someone add a whole portfolio in one action, and the
+ * caller offers a per-image crop afterwards (which routes back through
+ * `pickAndUploadImage`, editor and all). Bulk add for speed, crop when it matters.
+ *
+ * `onProgress` fires after each upload so a caller can show "3 of 6" instead of one
+ * long indeterminate spinner — uploading six photos is slow enough to need it.
+ */
+export async function pickAndUploadImages(
+  folder: UploadFolder,
+  opts: PickAndUploadOptions & {
+    /** Hard cap on how many the picker will accept. */
+    selectionLimit?: number;
+    /** Called after each successful upload with 1-based progress. */
+    onProgress?: (done: number, total: number) => void;
+  } = {},
+): Promise<string[]> {
+  const {
+    maxDimension = DEFAULT_MAX_DIMENSION,
+    targetBytes = DEFAULT_TARGET_BYTES,
+    selectionLimit,
+    onProgress,
+  } = opts;
+
+  const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  if (!perm.granted) throw new ImagePermissionError();
+
+  const picked = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ['images'],
+    allowsMultipleSelection: true,
+    // 0/undefined means "unlimited" to the OS picker, so only pass a real cap.
+    ...(selectionLimit && selectionLimit > 0 ? { selectionLimit } : {}),
+    quality: 1, // we do our own compression below for a predictable size
+  });
+  if (picked.canceled || !picked.assets?.length) return [];
+
+  const assets = selectionLimit ? picked.assets.slice(0, selectionLimit) : picked.assets;
+  const urls: string[] = [];
+
+  // Sequential, not Promise.all: six parallel Cloudinary uploads on a phone
+  // connection contend for bandwidth and make every one of them slower, and a
+  // partial failure would leave no way to report how far it got.
+  for (const asset of assets) {
+    const compressedUri = await compressImage(
+      asset.uri,
+      asset.width || maxDimension,
+      maxDimension,
+      targetBytes,
+    );
+    urls.push(await uploadImage({ uri: compressedUri, mimeType: 'image/jpeg' }, folder));
+    onProgress?.(urls.length, assets.length);
+  }
+
+  return urls;
+}
