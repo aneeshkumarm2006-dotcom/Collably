@@ -67,8 +67,12 @@ export default function CollabsScreen() {
                 application={item}
                 campaign={item.campaign ?? FALLBACK_CAMPAIGN}
                 businessName={item.campaign?.business?.businessName}
+                // Straight to the campaign. "My collab" is the brief AND my
+                // standing in it, and the campaign screen now shows both (see
+                // YourCollab there). The old /collabs/:id screen still exists as
+                // the target for push deep-links.
                 onPress={() =>
-                  router.push({ pathname: '/(creator)/collabs/[applicationId]', params: { applicationId: item._id } })
+                  router.push({ pathname: '/(creator)/campaign/[id]', params: { id: item.campaignId } })
                 }
                 footer={
                   <View style={{ flexDirection: 'row', gap: 10 }}>

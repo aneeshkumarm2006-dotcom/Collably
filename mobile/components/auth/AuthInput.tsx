@@ -13,6 +13,7 @@ import { Pressable } from '@/components/ui/SafePressable';
 import { TextInput } from '@/components/ui/SafeTextInput';
 import { useTheme } from '@/components/ThemeProvider';
 import { Icon, type IconName, useOnDarkSurface } from '@/components/ui';
+import type { Icon as PhosphorIcon } from 'phosphor-react-native';
 
 // Blue-black "story" palette, reused from the onboarding StoryInput so the auth
 // fields feel like one system when they sit on the cinematic dark ground.
@@ -34,7 +35,14 @@ export type AuthInputProps = {
   label: string;
   value: string;
   onChangeText: (t: string) => void;
-  icon?: IconName;
+  /**
+   * Leading glyph. Accepts either a name from the in-house set or a Phosphor
+   * component — the auth fields use Phosphor because its `duotone`/weighted
+   * drawing reads better at 17px than the hairline in-house glyphs, and because
+   * the in-house set has no envelope (the email field was showing a SPEECH
+   * BUBBLE, `message`, which is a chat icon).
+   */
+  icon?: IconName | PhosphorIcon;
   placeholder?: string;
   /** Password field — masks input and adds a show/hide toggle. */
   secure?: boolean;
@@ -133,7 +141,16 @@ export const AuthInput = forwardRef<RNTextInput, AuthInputProps>(function AuthIn
                 : focused && !error ? colors.brandGreenSoft : colors.card,
             }}
           >
-            <Icon name={icon} size={17} color={iconColor} strokeWidth={1.9} />
+            {typeof icon === 'string' ? (
+              <Icon name={icon} size={17} color={iconColor} strokeWidth={1.9} />
+            ) : (
+              // Phosphor: `bold` at 17px keeps the stroke visible inside the small
+              // rounded chip, where `regular` washes out against the tinted fill.
+              (() => {
+                const Glyph = icon;
+                return <Glyph size={17} color={iconColor} weight="bold" />;
+              })()
+            )}
           </View>
         )}
         <TextInput

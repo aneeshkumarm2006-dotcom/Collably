@@ -10,6 +10,7 @@
 import { useRef, useState } from 'react';
 import { Text, View, type TextInput } from 'react-native';
 import { Pressable } from '@/components/ui/SafePressable';
+import { EnvelopeSimple, LockSimple, Storefront, UserCircle } from 'phosphor-react-native';
 import { AuthInput } from './AuthInput';
 import { GoogleButton } from './GoogleButton';
 import { AppleButton } from './AppleButton';
@@ -139,7 +140,7 @@ export function SignupForm({ role, onPickRole }: SignupFormProps) {
         label={role === 'business' ? 'Business name' : role === 'creator' ? 'Display name' : 'Name'}
         value={name}
         onChangeText={setName}
-        icon={role === 'business' ? 'store' : 'person'}
+        icon={role === 'business' ? Storefront : UserCircle}
         placeholder={role === 'business' ? 'e.g. Maple & Co.' : 'e.g. Priya Sharma'}
         autoCapitalize="words"
         autoComplete="name"
@@ -155,7 +156,7 @@ export function SignupForm({ role, onPickRole }: SignupFormProps) {
         label="Email"
         value={email}
         onChangeText={setEmail}
-        icon="message"
+        icon={EnvelopeSimple}
         placeholder="you@email.com"
         keyboardType="email-address"
         autoComplete="email"
@@ -171,7 +172,7 @@ export function SignupForm({ role, onPickRole }: SignupFormProps) {
         label="Password"
         value={password}
         onChangeText={setPassword}
-        icon="lock"
+        icon={LockSimple}
         placeholder={`At least ${MIN_PASSWORD_LENGTH} characters`}
         secure
         autoComplete="new-password"

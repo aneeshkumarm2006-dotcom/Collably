@@ -10,6 +10,7 @@
 import { useRef, useState } from 'react';
 import { Text, View, type TextInput } from 'react-native';
 import { router } from 'expo-router';
+import { EnvelopeSimple, LockSimple } from 'phosphor-react-native';
 import { AuthInput } from './AuthInput';
 import { GoogleButton } from './GoogleButton';
 import { AppleButton } from './AppleButton';
@@ -84,7 +85,7 @@ export function LoginForm({ onNeedSignup }: { onNeedSignup?: () => void } = {}) 
         label="Email"
         value={email}
         onChangeText={setEmail}
-        icon="message"
+        icon={EnvelopeSimple}
         placeholder="you@email.com"
         keyboardType="email-address"
         autoComplete="email"
@@ -100,7 +101,7 @@ export function LoginForm({ onNeedSignup }: { onNeedSignup?: () => void } = {}) 
         label="Password"
         value={password}
         onChangeText={setPassword}
-        icon="lock"
+        icon={LockSimple}
         placeholder="Enter your password"
         secure
         autoComplete="current-password"

@@ -5,9 +5,9 @@
  * (PRD §8.6), a creator who already applied sees their status, and an eligible
  * creator opens a pitch sheet → `POST /api/campaigns/:id/apply`.
  */
-import { useRef, useState } from 'react';
+import { useRef, useState, useCallback } from 'react';
 import { ScrollView, Text, View } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Header } from '@/components/shared';
 import { CoverImage } from '@/components/campaign/CoverImage';
@@ -39,12 +39,14 @@ import {
 import { useTheme } from '@/components/ThemeProvider';
 import { useAuthStore } from '@/store/authStore';
 import { api, isApiError } from '@/lib/api';
+import * as WebBrowser from 'expo-web-browser';
 import { useFetch } from '@/lib/useFetch';
 import {
   formatReward,
   formatCountdown,
   formatDate,
   formatCompactNumber,
+  formatRelativeTime,
   isOverdue,
 } from '@/lib/utils';
 import type { ApplicationStatus } from '@/constants';
@@ -75,7 +77,10 @@ export default function CampaignDetailScreen() {
   const [pitch, setPitch] = useState('');
   const [applying, setApplying] = useState(false);
   const [applyError, setApplyError] = useState<string | null>(null);
-  const [myStatus, setMyStatus] = useState<ApplicationStatus | null>(null);
+  // The WHOLE application, not just its status: the "Your collab" block needs the
+  // brand's note, the submission and the deadline, and the sticky bar needs the id
+  // to route to the submit screen. Status is derived where it is used.
+  const [myApp, setMyApp] = useState<Application | null>(null);
 
   const { data, loading, error, reload } = useFetch(async () => {
     const { data: res } = await api.get<{ campaign: CampaignWithBusiness }>(`/campaigns/${id}`);
@@ -85,13 +90,17 @@ export default function CampaignDetailScreen() {
         const { data: apps } = await api.get<{ data: Application[] }>('/applications', {
           params: { campaignId: id, limit: 1 },
         });
-        setMyStatus(apps.data[0]?.status ?? null);
+        setMyApp(apps.data[0] ?? null);
       } catch {
-        setMyStatus(null);
+        setMyApp(null);
       }
     }
     return res.campaign;
   }, [id]);
+
+  // Re-pull on focus so returning from the submit screen flips the sticky bar from
+  // "Submit content" to "Update submission" instead of showing stale state.
+  useFocusEffect(useCallback(() => reload(), [reload]));
 
   const others = useFetch(async () => {
     if (!data?.businessId) return [] as CampaignWithBusiness[];
@@ -105,8 +114,11 @@ export default function CampaignDetailScreen() {
     setApplyError(null);
     setApplying(true);
     try {
-      await api.post(`/campaigns/${id}/apply`, pitch.trim() ? { pitch: pitch.trim() } : {});
-      setMyStatus('Pending');
+      const { data: created } = await api.post<{ application: Application }>(
+        `/campaigns/${id}/apply`,
+        pitch.trim() ? { pitch: pitch.trim() } : {},
+      );
+      setMyApp(created.application);
       pitchRef.current?.dismiss();
       setPitch('');
     } catch (err) {
@@ -170,6 +182,13 @@ export default function CampaignDetailScreen() {
         </CoverImage>
 
         <View style={{ padding: 16, gap: 16 }}>
+          {/* YOUR COLLAB — above the brief on purpose.
+              Someone who already has an accepted collab opened this screen to check
+              a deadline, read the brand's feedback, or submit. The brief is
+              reference material they've already read. Ordering by intent is the
+              whole point of merging the old /collabs/:id screen into this one. */}
+          {myApp ? <YourCollab app={myApp} campaign={c} colors={colors} /> : null}
+
           {/* Title + status */}
           <View style={{ gap: 8 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -389,11 +408,21 @@ export default function CampaignDetailScreen() {
           isGuest={isGuest}
           isCreator={isCreator}
           approved={approved}
-          myStatus={myStatus}
+          myApp={myApp}
           canApply={canApply}
           campaignStatus={c.status}
           onLogin={() => router.push('/(auth)/login')}
           onApply={() => pitchRef.current?.present()}
+          onSubmitContent={() =>
+            myApp &&
+            router.push({
+              pathname: '/(creator)/collabs/[applicationId]/submit',
+              params: { applicationId: myApp._id },
+            })
+          }
+          onViewPost={() => {
+            if (myApp?.submissionLink) void WebBrowser.openBrowserAsync(myApp.submissionLink);
+          }}
         />
       </View>
 
@@ -420,25 +449,39 @@ export default function CampaignDetailScreen() {
   );
 }
 
+/**
+ * The sticky bottom action.
+ *
+ * Rule: never render a button when there is nothing to press. A disabled button
+ * reads as a broken one, so states with no available action (Pending review,
+ * Rejected) show a status chip instead. This used to show a bare Badge for EVERY
+ * applied state, which meant an accepted creator had no way to submit from here at
+ * all — they had to find the separate collab screen.
+ */
 function ApplyControl({
   isGuest,
   isCreator,
   approved,
-  myStatus,
+  myApp,
   canApply,
   campaignStatus,
   onLogin,
   onApply,
+  onSubmitContent,
+  onViewPost,
 }: {
   isGuest: boolean;
   isCreator: boolean;
   approved: boolean;
-  myStatus: ApplicationStatus | null;
+  myApp: Application | null;
   canApply: boolean;
   campaignStatus: Campaign['status'];
   onLogin: () => void;
   onApply: () => void;
+  onSubmitContent: () => void;
+  onViewPost: () => void;
 }) {
+  const myStatus: ApplicationStatus | null = myApp?.status ?? null;
   // Guests (and anyone not signed in as a creator) are prompted to log in.
   if (isGuest || !isCreator) {
     return (
@@ -447,8 +490,26 @@ function ApplyControl({
       </Button>
     );
   }
-  if (myStatus) {
-    // Already applied — surface the current state instead of a button.
+  if (myApp && myStatus) {
+    const submitted = !!myApp.submittedAt;
+
+    // Accepted (or overdue) — the whole point of the merge: submit from here.
+    if (myStatus === 'Accepted' || myStatus === 'Overdue') {
+      return (
+        <Button icon={submitted ? 'edit' : 'upload'} onPress={onSubmitContent}>
+          {submitted ? 'Update submission' : 'Submit content'}
+        </Button>
+      );
+    }
+    // Done — the useful action is seeing the live post, not a badge.
+    if (myStatus === 'Completed' && myApp.submissionLink) {
+      return (
+        <Button variant="outline" icon="arrowUR" onPress={onViewPost}>
+          View your post
+        </Button>
+      );
+    }
+    // Pending / Rejected — nothing to do, so no button.
     return <Badge status={myStatus} />;
   }
   if (!approved) {
@@ -626,6 +687,116 @@ function FactRow({
       <Text style={{ flex: 1, fontSize: 14, fontWeight: '600', color: tone, textAlign: 'right' }}>
         {value}
       </Text>
+    </View>
+  );
+}
+
+/**
+ * "Your collab" — the creator's own standing in this campaign, shown above the
+ * brief once they've applied.
+ *
+ * This is the content that used to live on a separate `/collabs/:id` screen. It was
+ * split off because the data lives on the Application rather than the Campaign, but
+ * to a creator "my collab" is one thing: the deal AND where I stand in it. Making
+ * them choose between two screens meant guessing which one held the answer.
+ *
+ * Ordered by urgency, not by data shape: a revision request from the brand outranks
+ * everything, then the deadline, then what you already sent.
+ */
+function YourCollab({
+  app,
+  campaign,
+  colors,
+}: {
+  app: Application;
+  campaign: CampaignWithBusiness;
+  colors: ReturnType<typeof useTheme>['colors'];
+}) {
+  const submitted = !!app.submittedAt;
+  const overdue = app.status === 'Accepted' && !submitted && isOverdue(campaign.deadline ?? '');
+
+  const openLink = (url?: string) => {
+    if (url) void WebBrowser.openBrowserAsync(url);
+  };
+
+  return (
+    <View
+      style={{
+        backgroundColor: colors.cardSunk,
+        borderWidth: 1,
+        borderColor: colors.hair,
+        borderRadius: 16,
+        padding: 14,
+        gap: 12,
+      }}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <Text style={{ fontSize: 12, fontWeight: '800', letterSpacing: 0.6, color: colors.text3 }}>
+          YOUR COLLAB
+        </Text>
+        <View style={{ flex: 1 }} />
+        <Badge status={overdue ? 'Overdue' : app.status} />
+      </View>
+
+      {campaign.deadline ? (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
+          <Icon name="clock" size={15} color={overdue ? colors.danger : colors.text3} strokeWidth={2} />
+          <Text style={{ fontSize: 14, fontWeight: '600', color: overdue ? colors.danger : colors.text2 }}>
+            {formatCountdown(campaign.deadline)}
+          </Text>
+        </View>
+      ) : null}
+
+      {/* The brand asked for something. Highest-priority thing on the screen. */}
+      {app.businessNote ? (
+        <View style={{ backgroundColor: colors.warnSoft, borderRadius: 12, padding: 12, gap: 4 }}>
+          <Text style={{ fontSize: 12, fontWeight: '800', color: colors.text2 }}>NOTE FROM THE BRAND</Text>
+          <Text style={{ fontSize: 14, color: colors.text, lineHeight: 20 }}>{app.businessNote}</Text>
+        </View>
+      ) : null}
+
+      {submitted ? (
+        <View style={{ gap: 8 }}>
+          <Text style={{ fontSize: 12, fontWeight: '800', color: colors.text3 }}>
+            YOU SUBMITTED {formatRelativeTime(app.submittedAt!).toUpperCase()}
+          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            {app.submissionProof ? (
+              <CoverImage src={app.submissionProof} category="Other" radius={10} style={{ width: 56, height: 70 }} />
+            ) : null}
+            <View style={{ flex: 1, gap: 6 }}>
+              {app.submissionNote ? (
+                <Text numberOfLines={3} style={{ fontSize: 13.5, color: colors.text2, lineHeight: 19 }}>
+                  {app.submissionNote}
+                </Text>
+              ) : null}
+              {app.submissionLink ? (
+                <Button variant="ghost" size="sm" icon="arrowUR" onPress={() => openLink(app.submissionLink)}>
+                  View your post
+                </Button>
+              ) : null}
+            </View>
+          </View>
+        </View>
+      ) : null}
+
+      {app.pitch ? (
+        <View style={{ gap: 4 }}>
+          <Text style={{ fontSize: 12, fontWeight: '800', color: colors.text3 }}>YOUR PITCH</Text>
+          <Text numberOfLines={3} style={{ fontSize: 13.5, color: colors.text2, lineHeight: 19 }}>
+            {app.pitch}
+          </Text>
+        </View>
+      ) : null}
+
+      {app.status === 'Completed' ? (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
+          <Icon name="checkcircle" size={16} color={colors.success} />
+          <Text style={{ fontSize: 13.5, fontWeight: '700', color: colors.success }}>
+            Verified &amp; completed{app.verifiedAt ? ` · ${formatRelativeTime(app.verifiedAt)}` : ''}
+          </Text>
+        </View>
+      ) : null}
     </View>
   );
 }
